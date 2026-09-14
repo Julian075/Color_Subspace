@@ -1,8 +1,14 @@
 """
-RUN_GENCOLORBENCH_ISCC_L2.PY -- GenColorBench Batch Generator with FLUX + ISCC-NBS Level 2 Baseline Prompts.
+RUN_GENCOLORBENCH_PCA.PY -- GenColorBench Batch Generator with FLUX + PCA Shift MLP.
 
-Uses official ISCC-NBS Level 2 intermediate hue categories for text conditioning
-and our trained ResMLP_256 for continuous PCA latent steering.
+Generates benchmark images for GenColorBench (e.g. Numerical Color Precision: ncu_*.csv,
+or all benchmark tasks: cna_*, coa_*, ica_*, moc_*, ncu_*) across multiple GPUs & Nodes.
+
+Features:
+  - Multi-GPU & Multi-Node Sharding & Parallel Worker Orchestration
+  - Atomic Checkpointing & Resume Support
+  - Continuous PCA Shift via trained ResMLP_256
+  - Exports Generated PNGs + Detailed Generation Manifest CSV (for offline evaluation)
 """
 
 import os
@@ -23,12 +29,12 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 
-# Ensure parent directory is in sys.path
-_PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-if _PARENT_DIR not in sys.path:
-    sys.path.insert(0, _PARENT_DIR)
+# Ensure current directory is in sys.path
+_CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+if _CURRENT_DIR not in sys.path:
+    sys.path.insert(0, _CURRENT_DIR)
 
-from flux_core import (
+from flux2_core import (
     build_envelope_bands, envelope_weight,
     latent_hw, unpack_to_4d, pack_from_4d, decode_latents_4d, build_mask_latent,
     PERFIL_GENERATORS, setup_flux,
@@ -37,9 +43,9 @@ import utils
 from iscc_nbs import find_nearest_iscc_l2, find_nearest_iscc_l1
 from model_pca import load_mlp_pca
 
-MODEL_ID = "black-forest-labs/FLUX.1-dev"
+MODEL_ID = os.environ.get("FLUX2_MODEL_ID", "black-forest-labs/FLUX.2-dev")
 DTYPE = torch.bfloat16
-NUM_LATENT_CHANNELS = 16
+NUM_LATENT_CHANNELS = 32
 RESOLUTION = 1024
 STEPS = 28
 GUIDANCE = 3.5
@@ -73,12 +79,12 @@ BANDS = build_envelope_bands(
 
 
 # =============================================================================
-# Shift Engine
+# Helper Utilities & Shift Engine
 # =============================================================================
 def shift_pca_4d(latents_4d, m1, m2, m3, mask=None):
     out = latents_4d.clone()
     m_mask = mask[:, 0].to(out.dtype) if mask is not None else None
-    for c in range(16):
+    for c in range(NUM_LATENT_CHANNELS):
         delta_c = float(m1 * U1[c] + m2 * U2[c] + m3 * U3[c])
         if m_mask is not None:
             out[:, c] += delta_c * m_mask
@@ -91,6 +97,10 @@ def shift_pca_4d(latents_4d, m1, m2, m3, mask=None):
 def generate_gencolorbench_image(pipe, vae, mlp_shift, seg_models, device,
                                  prompt_text, obj_word, target_lab, seed,
                                  height=RESOLUTION, width=RESOLUTION):
+    """
+    Generates a benchmark image conditioning FLUX on prompt_text and shifting
+    the segmented object to target_lab using our trained PCA Shift MLP.
+    """
     latent_h, latent_w = latent_hw(pipe, height, width)
     state = {
         "locked": False, "mask_latent": None, "mask_pixel": None,
@@ -163,10 +173,15 @@ def generate_gencolorbench_image(pipe, vae, mlp_shift, seg_models, device,
     pipe.scheduler.step = patched_step
     try:
         latents = pipe(
-            prompt_text, height=height, width=width,
-            guidance_scale=GUIDANCE, num_inference_steps=STEPS,
-            generator=torch.Generator(device=device).manual_seed(seed),
-            output_type="latent", callback_on_step_end=cb
+            prompt=prompt_text,
+            height=height,
+            width=width,
+            guidance_scale=GUIDANCE,
+            num_inference_steps=STEPS,
+            generator=torch.Generator(device="cpu").manual_seed(seed),
+            output_type="latent",
+            callback_on_step_end=cb,
+            callback_on_step_end_tensor_inputs=["latents"],
         ).images
     finally:
         pipe.scheduler.step = orig_step
@@ -220,7 +235,7 @@ def save_checkpoint(checkpoint_path: Path, state: Dict[str, Any]) -> None:
 
 
 # =============================================================================
-# Process a Single Benchmark CSV with ISCC-NBS Level 2 Names
+# Process a Single Benchmark CSV
 # =============================================================================
 def process_csv(csv_path: Path, output_dir: Path, pipe, vae, mlp_shift, seg_models,
                 images_per_prompt: int, checkpoint_state: Dict[str, Any], checkpoint_path: Path,
@@ -240,7 +255,7 @@ def process_csv(csv_path: Path, output_dir: Path, pipe, vae, mlp_shift, seg_mode
             manifest_rows = []
 
     print(f"\n{'='*70}")
-    print(f"[{device}] Processing: {csv_path.name} (ISCC-NBS Level 2 Prompts)")
+    print(f"[{device}] Processing: {csv_path.name}")
     print(f"Total Rows: {len(df)} | Shard: row % {num_shards} == {shard_id}")
     print(f"Output: {csv_output_dir}")
     print(f"{'='*70}")
@@ -273,10 +288,10 @@ def process_csv(csv_path: Path, output_dir: Path, pipe, vae, mlp_shift, seg_mode
         if len(existing) >= images_per_prompt:
             continue
 
-        # Map to nearest ISCC-NBS Level 2 color category name
+        # Color-conditioned semantic prompt using official ISCC-NBS Level 2 intermediate hues
         color_name_selected, dist_to_name = find_nearest_iscc_l2(target_lab)
         
-        # Build ISCC-NBS Level 2 prompt
+        # If the benchmark prompt contains hex/rgb codes, build an enhanced semantic prompt
         if "#" in raw_prompt or "rgb(" in raw_prompt:
             prompt_text = f"a photo of a {color_name_selected} {obj_word}, studio lighting, high quality, 8k"
         else:
@@ -377,7 +392,7 @@ def run_benchmark_generation(prompts_dir: Path, output_dir: Path, mlp_shift_ckpt
         print(f"  - {f.name}")
 
     pipe, vae = setup_flux(MODEL_ID, device, DTYPE, NUM_LATENT_CHANNELS)
-    seg_models = utils.setup_seg_models(device)
+    seg_models = utils.setup_seg_models("cpu")
     mlp_shift = load_mlp_pca(mlp_shift_ckpt, device)
 
     for csv_path in csv_files:
@@ -395,7 +410,7 @@ def run_benchmark_generation(prompts_dir: Path, output_dir: Path, mlp_shift_ckpt
 
 
 # =============================================================================
-# Auto Multi-GPU Launcher
+# Auto Multi-GPU Launcher (Supports Single-Node or Multi-Node Offsets)
 # =============================================================================
 def launch_auto_multi_gpu(args: argparse.Namespace) -> None:
     parent_cvd = os.environ.get("CUDA_VISIBLE_DEVICES")
@@ -410,7 +425,7 @@ def launch_auto_multi_gpu(args: argparse.Namespace) -> None:
     shard_offset = args.shard_offset
 
     print(f"\n{'='*70}")
-    print(f">>> LAUNCHING GENCOLORBENCH (ISCC-NBS LEVEL 2) MULTI-GPU GENERATOR")
+    print(f">>> LAUNCHING GENCOLORBENCH MULTI-GPU GENERATOR")
     print(f"    Local Worker GPUs ({num_local_workers}): {worker_gpus}")
     print(f"    Shard Range: Shards {shard_offset} to {shard_offset + num_local_workers - 1} (of {total_shards} total)")
     print(f"    Prompts Dir: {args.prompts_dir}")
@@ -454,18 +469,18 @@ def launch_auto_multi_gpu(args: argparse.Namespace) -> None:
 # CLI
 # =============================================================================
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run GenColorBench with ISCC-NBS Level 2 Prompts + FLUX PCA MLP")
+    parser = argparse.ArgumentParser(description="Run GenColorBench Generation with FLUX PCA MLP")
     parser.add_argument("--prompts-dir", type=str, default="/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/gencolorbench/mini_bench_prompts")
-    parser.add_argument("--output-dir", type=str, default="./gencolorbench_iscc_l2_out")
+    parser.add_argument("--output-dir", type=str, default="./gencolorbench_flux_pca_out")
     parser.add_argument("--mlp-shift-ckpt", type=str, default=DEFAULT_CKPT_PATH)
-    parser.add_argument("--pattern", type=str, default="ncu_*.csv", help="Glob pattern for benchmark tasks")
+    parser.add_argument("--pattern", type=str, default="ncu_*.csv", help="Glob pattern for benchmark tasks (e.g. 'ncu_*.csv' or '*.csv')")
     parser.add_argument("--images-per-prompt", type=int, default=4)
     parser.add_argument("--device", type=str, default="cuda")
     parser.add_argument("--auto-multi-gpu", action="store_true")
     parser.add_argument("--shard-id", type=int, default=0)
     parser.add_argument("--num-shards", type=int, default=1)
-    parser.add_argument("--shard-offset", type=int, default=0)
-    parser.add_argument("--total-shards", type=int, default=0)
+    parser.add_argument("--shard-offset", type=int, default=0, help="Offset for global shard ID in multi-node runs")
+    parser.add_argument("--total-shards", type=int, default=0, help="Total number of shards across all nodes (0 = autodetect local)")
     args = parser.parse_args()
 
     if args.auto_multi_gpu:

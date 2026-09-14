@@ -1,0 +1,46 @@
+# Visual Assets & Media
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.gif
+*.webp
+
+# Data, Logs & Results
+*.csv
+*.tsv
+*.log
+*.out
+*.err
+slurm*
+_tmp_chunks*/
+_csv_parts/
+
+# Non-essential JSON results & metrics (keep only pca_axes*.json)
+*results*.json
+*schedule*.json
+*summary*.json
+*metrics*.json
+*metadata*.json
+chunk*.json
+
+# Shell scripts
+*.sh
+
+# Python environment & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.ipynb_checkpoints/
+.env
+.venv/
+env/
+venv/
+
+# Excluded experimental branches & directories
+gamut/
+illuminant/
+white_balance/
+whute_balance_2/
+results/
