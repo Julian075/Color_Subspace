@@ -74,6 +74,44 @@ def shift_pca_4d(latents_4d: torch.Tensor, m1: float, m2: float, m3: float, u1: 
     return out
 
 
+def compute_color_metrics(target_lab: Tuple[float, float, float], measured_lab: Tuple[float, float, float]) -> Dict[str, Any]:
+    L_t, a_t, b_t = target_lab
+    L_m, a_m, b_m = measured_lab
+
+    # Delta E CIEDE2000 & CIE76
+    de00 = utils.ciede2000(target_lab, measured_lab)
+    de76 = math.sqrt((L_m - L_t) ** 2 + (a_m - a_t) ** 2 + (b_m - b_t) ** 2)
+
+    # Chroma
+    c_t = math.sqrt(a_t ** 2 + b_t ** 2)
+    c_m = math.sqrt(a_m ** 2 + b_m ** 2)
+    d_chroma = c_m - c_t
+    d_chroma_abs = abs(d_chroma)
+
+    # Hue (degrees [0, 360))
+    h_t = math.degrees(math.atan2(b_t, a_t)) % 360.0
+    h_m = math.degrees(math.atan2(b_m, a_m)) % 360.0
+
+    # Angular Delta Hue (degrees [-180, 180])
+    d_h_deg = ((h_m - h_t + 180.0) % 360.0) - 180.0
+    d_h_abs_deg = abs(d_h_deg)
+
+    # Metric Delta Hue (Delta H*ab)
+    d_H_ab = 2.0 * math.sqrt(max(c_t * c_m, 0.0)) * math.sin(math.radians(d_h_deg) / 2.0)
+    d_H_ab_abs = abs(d_H_ab)
+
+    return {
+        "delta_e00": de00,
+        "delta_e76": de76,
+        "delta_chroma": d_chroma,
+        "delta_chroma_abs": d_chroma_abs,
+        "delta_hue_deg": d_h_deg,
+        "delta_hue_abs_deg": d_h_abs_deg,
+        "delta_H_ab": d_H_ab,
+        "delta_H_ab_abs": d_H_ab_abs,
+    }
+
+
 def run_color_steering_inference(
     prompt: str,
     target_color_spec: Any = "#A52A2A",
@@ -87,6 +125,7 @@ def run_color_steering_inference(
     save_baseline: bool = True,
     save_comparison: bool = True,
     mlp_ckpt_path: Optional[str] = None,
+    metrics: bool = False,
 ) -> Dict[str, Any]:
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
@@ -253,17 +292,36 @@ def run_color_steering_inference(
     steered_img.save(steered_path)
     print(f"\n  Saved steered image to: {steered_path}")
 
-    # 5. Measure achieved color & Delta E
+    # 5. Measure achieved color & Delta E / metrics
     achieved_lab = None
     delta_e = None
-    if state["mask_pixel"] is not None:
+    color_metrics_res = None
+    if state["mask_pixel"] is not None or metrics:
         final_mask = utils.get_object_mask(steered_img, object_word, seg_models)
         eval_mask = final_mask if (final_mask is not None and final_mask.sum() >= 50) else state["mask_pixel"]
-        achieved_lab = utils.measure_color_gt(steered_np, eval_mask)
+        if eval_mask is not None:
+            achieved_lab = utils.measure_color_gt(steered_np, eval_mask)
+            if achieved_lab is not None:
+                delta_e = utils.ciede2000(target_lab, achieved_lab)
+                print(f"  Achieved Color:  L*={achieved_lab[0]:.1f}, a*={achieved_lab[1]:.1f}, b*={achieved_lab[2]:.1f}")
+                print(f"  CIEDE2000 ΔE00:  {delta_e:.2f} (Perceptual precision)")
+
+    if metrics:
         if achieved_lab is not None:
-            delta_e = utils.ciede2000(target_lab, achieved_lab)
-            print(f"  Achieved Color:  L*={achieved_lab[0]:.1f}, a*={achieved_lab[1]:.1f}, b*={achieved_lab[2]:.1f}")
-            print(f"  CIEDE2000 ΔE00:  {delta_e:.2f} (Perceptual precision)")
+            color_metrics_res = compute_color_metrics(target_lab, achieved_lab)
+            print("\n" + "=" * 65)
+            print("COLOR EVALUATION METRICS (Output Image vs. Target Color)")
+            print("=" * 65)
+            print(f"  Target Color (CIELAB):     L*={target_lab[0]:.2f}, a*={target_lab[1]:.2f}, b*={target_lab[2]:.2f}")
+            print(f"  Achieved Color (CIELAB):   L*={achieved_lab[0]:.2f}, a*={achieved_lab[1]:.2f}, b*={achieved_lab[2]:.2f}")
+            print(f"  Delta E (CIEDE2000 ΔE00):  {color_metrics_res['delta_e00']:.2f}")
+            print(f"  Delta E (CIE76 ΔE76):      {color_metrics_res['delta_e76']:.2f}")
+            print(f"  Delta Chroma (ΔC*):        {color_metrics_res['delta_chroma']:+.2f}  (|ΔC*| = {color_metrics_res['delta_chroma_abs']:.2f})")
+            print(f"  Delta Hue (Δh°):           {color_metrics_res['delta_hue_deg']:+.2f}° (|Δh°| = {color_metrics_res['delta_hue_abs_deg']:.2f}°)")
+            print(f"  Delta Hue (metric ΔH*):    {color_metrics_res['delta_H_ab']:+.2f}  (|ΔH*| = {color_metrics_res['delta_H_ab_abs']:.2f})")
+            print("=" * 65 + "\n")
+        else:
+            print("\n[Warning] Could not measure achieved object color for --metrics (mask empty).\n")
 
     # 6. Save Comparison Panel if requested
     if save_comparison and baseline_img is not None:
@@ -293,6 +351,7 @@ def run_color_steering_inference(
         "target_lab": target_lab,
         "achieved_lab": achieved_lab,
         "delta_e00": delta_e,
+        "metrics": color_metrics_res,
     }
 
 
@@ -371,6 +430,8 @@ def main():
                         help="Output directory")
     parser.add_argument("--no-baseline", action="store_true", help="Do not save unperturbed baseline image")
     parser.add_argument("--no-comparison", action="store_true", help="Do not save comparison figure")
+    parser.add_argument("--metrics", action="store_true",
+                        help="Print Delta E, Delta Chroma, and Delta Hue between output image and target color in terminal")
 
     args = parser.parse_args()
 
@@ -390,6 +451,7 @@ def main():
         out_dir=args.out_dir,
         save_baseline=not args.no_baseline,
         save_comparison=not args.no_comparison,
+        metrics=args.metrics,
     )
 
 
