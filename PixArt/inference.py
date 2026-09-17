@@ -49,22 +49,9 @@ DEFAULT_STEPS = 20
 DEFAULT_GUIDANCE = 4.5
 
 
-def extract_hex_from_text(text: str) -> Optional[str]:
-    match = re.search(r"#[0-9a-fA-F]{6}", text)
-    return match.group(0) if match else None
-
-
-def extract_object_from_text(text: str) -> str:
-    common_objs = [
-        "dog", "cat", "car", "chair", "mug", "apple", "shoe", "backpack",
-        "skateboard", "boat", "bird", "flower", "bicycle", "umbrella",
-        "vase", "mailbox", "kite", "scarf", "balloon", "bottle", "sphere"
-    ]
-    lower = text.lower()
-    for obj in common_objs:
-        if re.search(rf"\b{obj}\b", lower):
-            return obj
-    return "object"
+extract_hex_from_text = utils.extract_hex_from_text
+extract_color_spec_from_text = utils.extract_color_spec_from_text
+extract_object_from_text = utils.extract_object_from_text
 
 
 def load_pca_basis(variant: str):
@@ -96,7 +83,7 @@ def load_winning_schedule(variant: str):
 
 def run_color_steering_inference(
     prompt: str,
-    target_color_spec: str = "#A52A2A",
+    target_color_spec: Any = "#A52A2A",
     object_word: Optional[str] = None,
     variant: str = "sigma",
     seed: int = 42,
@@ -112,26 +99,25 @@ def run_color_steering_inference(
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
 
-    target_hex = target_color_spec if target_color_spec.startswith("#") else f"#{target_color_spec}"
-    target_rgb = utils.hex_to_rgb(target_hex)
-    target_lab = utils.rgb_to_lab_single_np(target_rgb)
+    # 1. Parse Target Color & Object using utils
+    target_lab = utils.parse_target_color(target_color_spec)
+    target_rgb = utils.lab_to_rgb_single_np(target_lab)
+    target_hex = f"#{target_rgb[0]:02X}{target_rgb[1]:02X}{target_rgb[2]:02X}"
     nearest_name, _ = utils.nearest_color_name(target_lab)
 
     if object_word is None or object_word.strip() == "":
-        object_word = extract_object_from_text(prompt)
+        object_word = utils.extract_object_from_text(prompt)
+
+    clean_prompt = utils.clean_prompt_for_diffusion(prompt, nearest_name)
 
     print("=" * 80)
     print(f"RUNNING PIXART-{variant.upper()} DOWNSTREAM OBJECT COLOR STEERING")
     print(f"Raw Prompt:       \"{prompt}\"")
     print(f"Target Object:    \"{object_word}\"")
     print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest: '{nearest_name}')")
+    print(f"Semantic Prompt:  \"{clean_prompt}\"")
     print(f"Seed: {seed} | Steps: {steps} | Guidance: {guidance} | Res: {resolution}x{resolution} | Device: {device}")
     print("=" * 80)
-
-    clean_prompt = prompt
-    if "#" in clean_prompt:
-        clean_prompt = re.sub(r"#[0-9a-fA-F]{6}", nearest_name, clean_prompt)
-        clean_prompt = re.sub(r"\bat color\b", "colored", clean_prompt)
 
     pipe, vae = setup_pixart(model_type=variant, device=device, dtype=DTYPE)
     seg_models = utils.setup_seg_models(device)
@@ -361,8 +347,8 @@ def main():
     parser.add_argument("--prompt", type=str,
                         default="a photo of a ceramic mug on a wooden desk",
                         help="Text prompt")
-    parser.add_argument("--target-color", "--hex", type=str, default="#A52A2A",
-                        help="Target hex code (e.g. #A52A2A) or RGB")
+    parser.add_argument("--target-color", "--hex", type=str, default=None,
+                        help="Target color specification (Hex, RGB, CIELAB, or name). Auto-detected from prompt if omitted.")
     parser.add_argument("--variant", choices=["sigma", "alpha"], default="sigma",
                         help="PixArt variant (sigma or alpha)")
     parser.add_argument("--object", type=str, default=None,
@@ -378,12 +364,12 @@ def main():
 
     args = parser.parse_args()
 
-    hex_in_prompt = extract_hex_from_text(args.prompt)
-    target_hex = args.target_color or hex_in_prompt or "#A52A2A"
+    color_in_prompt = extract_color_spec_from_text(args.prompt)
+    target_spec = args.target_color or color_in_prompt or "#A52A2A"
 
     run_color_steering_inference(
         prompt=args.prompt,
-        target_color_spec=target_hex,
+        target_color_spec=target_spec,
         object_word=args.object,
         variant=args.variant,
         seed=args.seed,

@@ -10,11 +10,12 @@ en el pipeline de SDXL no rompe nada ac, y viceversa.
 """
 
 import math
+import os
+import re
+from typing import Optional, Tuple, Dict, Any, List
 import numpy as np
 import torch
-
-
-import os
+from PIL import Image
 
 def _resolve_hf_snapshot(repo_id):
     hf_home = os.environ.get("HF_HOME", "/leonardo_work/AIFAC_S07_004/jsantamaria/.cache/huggingface")
@@ -248,37 +249,220 @@ def ciede2000(lab1, lab2):
 
 # =========================== color: hex/rgb/lab -> Lab (parseo de targets) ===========================
 def rgb_to_lab_single_np(rgb255):
-    return rgb_to_lab_batch_np(np.asarray(rgb255).reshape(1, 3))[0]
+    return rgb_to_lab_batch_np(np.asarray(rgb255, dtype=np.float32).reshape(1, 3))[0]
 
 
-def hex_to_rgb(hex_code):
-    hex_code = hex_code.lstrip("#")
-    if len(hex_code) != 6:
-        raise ValueError(f"hex invalido: {hex_code!r} (esperado 6 digitos, ej. '0000FF')")
-    return tuple(int(hex_code[i:i + 2], 16) for i in (0, 2, 4))
+def lab_to_rgb_single_np(lab):
+    """Convierte un punto Lab (L, a, b) escalar a sRGB [0..255] uint8."""
+    L, a, b = float(lab[0]), float(lab[1]), float(lab[2])
+    # Lab -> XYZ (D65, 2 deg)
+    fy = (L + 16.0) / 116.0
+    fx = a / 500.0 + fy
+    fz = fy - b / 200.0
+
+    def f_inv(t):
+        t3 = t ** 3
+        return t3 if t3 > 0.008856 else (t - 16.0 / 116.0) / 7.787
+
+    xr, yr, zr = 0.95047, 1.00000, 1.08883
+    X = xr * f_inv(fx)
+    Y = yr * f_inv(fy)
+    Z = zr * f_inv(fz)
+
+    # XYZ -> linear RGB (sRGB D65)
+    r_lin = 3.2404542 * X - 1.5371385 * Y - 0.4985314 * Z
+    g_lin = -0.9692660 * X + 1.8760108 * Y + 0.0415560 * Z
+    b_lin = 0.0556434 * X - 0.2040259 * Y + 1.0572252 * Z
+
+    def gamma(u):
+        u_clamped = max(0.0, min(1.0, u))
+        if u_clamped <= 0.0031308:
+            return 12.92 * u_clamped
+        return 1.055 * (u_clamped ** (1.0 / 2.4)) - 0.055
+
+    r = int(round(gamma(r_lin) * 255.0))
+    g = int(round(gamma(g_lin) * 255.0))
+    b_val = int(round(gamma(b_lin) * 255.0))
+    return (max(0, min(255, r)), max(0, min(255, g)), max(0, min(255, b_val)))
 
 
-def parse_target_color(spec):
-    """Acepta el color target en varios formatos y devuelve SIEMPRE Lab
-    (L,a,b):
-      - hex: "#0000FF" o "0000FF"
-      - rgb: (r,g,b) o [r,g,b] o "rgb(0,0,255)" con valores 0..255
-      - lab: dict {"lab": (L,a,b)} o "lab(53.2,79.2,-107.9)" -- ya en Lab,
-        se devuelve tal cual (sin conversion)."""
+def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
+    """Parsea codigo hexadecimal a RGB (r, g, b).
+    Tolera 6 digitos (#RRGGBB o RRGGBB), 3 digitos (#RGB),
+    o errores comunes de tipeo (ej. 5 o 7 digitos completados o recortados a 6)."""
+    s = hex_code.strip().lstrip("#")
+    if len(s) == 3:
+        return (int(s[0] * 2, 16), int(s[1] * 2, 16), int(s[2] * 2, 16))
+    if len(s) == 6:
+        return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+    if len(s) == 5:
+        # Typo comun (ej #FFFF0 -> #FFFF00)
+        s = s + "0"
+        return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+    if len(s) > 6:
+        return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
+    raise ValueError(f"hex invalido: {hex_code!r}")
+
+
+def parse_target_color(spec: Any) -> Tuple[float, float, float]:
+    """Acepta el color target en cualquier formato y devuelve SIEMPRE Lab (L, a, b):
+      - hex: '#0000FF', '0000FF', '#FFF', etc.
+      - rgb: (r, g, b) o [r, g, b] o 'rgb(0, 0, 255)' o '(0, 0, 255)' con valores 0..255
+      - lab: dict {'lab': (L, a, b)} o 'lab(53.2, 79.2, -107.9)'
+      - nombre comun de color: 'red', 'light blue', etc.
+    """
     if isinstance(spec, dict) and "lab" in spec:
         return tuple(float(x) for x in spec["lab"])
     if isinstance(spec, (tuple, list, np.ndarray)) and len(spec) == 3:
-        return tuple(rgb_to_lab_single_np(spec))
+        # Si los valores son float <= 1.0, verificar si es float rgb [0, 1]
+        vals = [float(x) for x in spec]
+        if all(0.0 <= v <= 1.0 for v in vals) and any(v > 0 and v < 1.0 for v in vals):
+            vals = [v * 255.0 for v in vals]
+        return tuple(rgb_to_lab_single_np(vals))
     if isinstance(spec, str):
         s = spec.strip()
-        if s.lower().startswith("lab("):
-            vals = [float(x) for x in s[4:-1].split(",")]
-            return tuple(vals)
-        if s.lower().startswith("rgb("):
-            vals = [float(x) for x in s[4:-1].split(",")]
-            return tuple(rgb_to_lab_single_np(vals))
-        return tuple(rgb_to_lab_single_np(hex_to_rgb(s)))
-    raise ValueError(f"no se pudo interpretar el color target: {spec!r}")
+        # Formato lab(L, a, b)
+        if s.lower().startswith("lab(") and s.endswith(")"):
+            inner = s[4:-1]
+            parts = [float(x.strip()) for x in inner.split(",") if x.strip()]
+            if len(parts) == 3:
+                return (parts[0], parts[1], parts[2])
+        # Formato rgb(r, g, b)
+        if s.lower().startswith("rgb(") and s.endswith(")"):
+            inner = s[4:-1]
+            parts = [float(x.strip()) for x in inner.split(",") if x.strip()]
+            if len(parts) == 3:
+                return tuple(rgb_to_lab_single_np(parts))
+        # Formato "(r, g, b)" o "r, g, b"
+        if (s.startswith("(") and s.endswith(")")) or (s.startswith("[") and s.endswith("]")):
+            inner = s[1:-1]
+            try:
+                parts = [float(x.strip()) for x in inner.split(",") if x.strip()]
+                if len(parts) == 3:
+                    return tuple(rgb_to_lab_single_np(parts))
+            except ValueError:
+                pass
+        # Formato hex (con o sin #)
+        cleaned = s.lstrip("#")
+        if re.fullmatch(r"[0-9a-fA-F]{3,8}", cleaned):
+            return tuple(rgb_to_lab_single_np(hex_to_rgb(s)))
+        # Nombre de color conocido (CSS / PIL)
+        try:
+            from PIL import ImageColor
+            rgb = ImageColor.getrgb(s)
+            return tuple(rgb_to_lab_single_np(rgb))
+        except Exception:
+            pass
+
+    raise ValueError(f"No se pudo interpretar el color target: {spec!r}")
+
+
+# =========================== Prompt & Object Extraction Agnosticos ===========================
+def extract_hex_from_text(text: str) -> Optional[str]:
+    """Busca codigos hexadecimales en el texto."""
+    match = re.search(r"#[0-9a-fA-F]{3,8}\b", text)
+    if match:
+        return match.group(0)
+    match = re.search(r"\b[0-9a-fA-F]{6}\b", text)
+    if match:
+        return f"#{match.group(0)}"
+    return None
+
+
+def extract_color_spec_from_text(text: str) -> Optional[str]:
+    """Busca cualquier especificacion numerica de color en el texto (hex, rgb(...), lab(...))."""
+    # 1. Hex
+    hex_match = extract_hex_from_text(text)
+    if hex_match:
+        return hex_match
+    # 2. rgb(...)
+    rgb_match = re.search(r"rgb\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", text, re.IGNORECASE)
+    if rgb_match:
+        return rgb_match.group(0)
+    # 3. lab(...)
+    lab_match = re.search(r"lab\s*\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)", text, re.IGNORECASE)
+    if lab_match:
+        return lab_match.group(0)
+    return None
+
+
+def extract_object_from_text(text: str) -> str:
+    """Descubre dinamicamente el objeto objetivo a partir del prompt sin lista fija (hardcodeada).
+    Soporta los patrones de GenColorBench (NCU) y lenguaje natural abierto.
+    Ejemplos:
+      - 'A photo of a [obj] in the color #HEX' -> '[obj]'
+      - 'A [obj] colored with rgb(r, g, b)' -> '[obj]'
+      - 'a photo of a ceramic mug on a wooden desk' -> 'ceramic mug' / 'mug'
+    """
+    clean_text = text.strip()
+
+    # Patron 1: GenColorBench NCU "A photo/rendering/etc of a/an <OBJ> in the color / with color / at color ..."
+    match = re.search(
+        r"(?:photo|rendering|picture|image|shot|drawing|illustration)?\s*(?:of)?\s*(?:a|an|the)\s+([a-zA-Z0-9_\-\s]+?)\s+(?:in\s+(?:the\s+)?color|with\s+(?:the\s+)?color|colored\s+(?:with|in|as)?|at\s+color|having\s+(?:the\s+)?color|painted\s+in)\b",
+        clean_text,
+        re.IGNORECASE
+    )
+    if match:
+        obj = match.group(1).strip()
+        obj = re.sub(r"^(?:photo|picture|image|rendering)\s+of\s+(?:a|an|the\s+)?", "", obj, flags=re.IGNORECASE).strip()
+        if obj:
+            return obj
+
+    # Patron 2: "A/An <OBJ> in/with/at <COLOR_SPEC>"
+    match = re.search(
+        r"(?:a|an|the)\s+([a-zA-Z0-9_\-\s]+?)\s+(?:in|with|at)\s+(?:#|rgb|lab)",
+        clean_text,
+        re.IGNORECASE
+    )
+    if match:
+        obj = match.group(1).strip()
+        if obj:
+            return obj
+
+    # Patron 3: GenColorBench color al principio: "[Color] <OBJ> ..." o "A/An [Color] <OBJ> ..."
+    match = re.search(
+        r"(?:a|an|the)?\s*(?:#[0-9a-fA-F]{3,8}|rgb\([^\)]+\)|lab\([^\)]+\))\s+([a-zA-Z0-9_\-]+)",
+        clean_text,
+        re.IGNORECASE
+    )
+    if match:
+        obj = match.group(1).strip()
+        if obj:
+            return obj
+
+    # Patron 4: "photo of a/an <OBJ> [context...]"
+    match = re.search(
+        r"(?:photo|rendering|picture|image|shot|drawing|illustration)\s+of\s+(?:a|an|the)\s+([a-zA-Z0-9_\-]+)",
+        clean_text,
+        re.IGNORECASE
+    )
+    if match:
+        return match.group(1).strip()
+
+    # Fallback: primera palabra sustantiva tras articulo
+    match = re.search(r"\b(?:a|an|the)\s+([a-zA-Z0-9_\-]+)", clean_text, re.IGNORECASE)
+    if match:
+        candidate = match.group(1).strip().lower()
+        if candidate not in {"photo", "picture", "image", "rendering", "shot", "illustration"}:
+            return candidate
+
+    return "object"
+
+
+def clean_prompt_for_diffusion(prompt: str, color_name: str) -> str:
+    """Reemplaza codigos numericos de color en el prompt por un nombre semantico comprensible
+    por el text encoder del modelo de difusion."""
+    clean = prompt
+    # Reemplazar patrones de color numerico
+    clean = re.sub(r"#[0-9a-fA-F]{3,8}\b", color_name, clean)
+    clean = re.sub(r"rgb\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", color_name, clean, flags=re.IGNORECASE)
+    clean = re.sub(r"lab\s*\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)", color_name, clean, flags=re.IGNORECASE)
+
+    # Suavizar frases sintacticas como "in the color blue" -> "colored blue" o "blue"
+    clean = re.sub(rf"\bin the color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
+    clean = re.sub(rf"\bat color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
+    clean = re.sub(rf"\bwith the color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
+    return clean
 
 
 # =========================== color: mapeo Lab -> nombre de color mas cercano ===========================

@@ -81,50 +81,56 @@ Inside each architecture directory:
 
 ## 🚀 Standalone Inference Quickstart
 
-Every model includes a self-contained `inference.py` script that generates images directly from a text prompt and target color specification (Hex, RGB, or color name).
+Every model includes a self-contained `inference.py` script that performs in-flight closed-loop object color steering. The inference engine is **format-agnostic** and **automatically infers** both the target object and target color directly from the prompt text, with optional CLI flag overrides.
 
-### 1. Stable Diffusion XL (SDXL)
+### 🌟 Key Inference Capabilities:
+- **Prompt-Only Execution (Zero-Config)**: Simply pass `--prompt`. The target object and color specification are dynamically extracted from the prompt text (supporting GenColorBench NCU formats and open natural language).
+- **Format-Agnostic Color Parsing**: Accepts:
+  - **Hex**: `#800000`, `800000`, `#FFF`, or typo-tolerant inputs like `#FFFF0`.
+  - **RGB**: Strings (`"rgb(255, 0, 255)"`), tuples `(255, 0, 255)`, lists `[255, 0, 255]`, or normalized floats `[1.0, 0.0, 0.0]`.
+  - **CIELAB**: Strings (`"lab(53.2, 79.2, -107.9)"`), dicts `{"lab": (53.2, 79.2, -107.9)}`, or raw tuples.
+  - **Named colors**: CSS/X11 and ISCC names (`maroon`, `darkorange`, `cyan`, etc.).
+- **Dynamic Object Extraction**: Open parser identifies target objects (`cat`, `parrot`, `suit`, `towel`, `wallet`, `ceramic mug`, etc.) directly from prompt phrasing without hardcoded word whitelists.
+- **Semantic Text Prompt Adaptation**: Numerical color tokens are converted to natural color names for the diffusion text encoder (`"in the color #800000"` $\to$ `"colored maroon"`), while exact CIELAB numerical coordinates guide the latent steering.
+- **Optional Overrides**: Passing `--target-color` or `--object` explicitly overrides automatic discovery.
+
+---
+
+### Usage Examples
+
+#### 1. Auto-Discovery from Prompt (Single Argument)
 ```bash
-python SDXL/inference.py \
+# Hex color
+python SDXL/inference.py --prompt "A photo of a cat in the color #800000"
+
+# RGB color
+python Flux/inference.py --prompt "A photo of a backpack in the color rgb(120, 200, 50)"
+
+# Typo-tolerant hex
+python sd3.5_m/inference.py --prompt "A photo of a suit in the color #FFFF0"
+```
+
+#### 2. Explicit Overrides
+```bash
+python SD3/inference.py \
     --prompt "a photo of a ceramic mug on a wooden desk" \
-    --target-color "#A52A2A" \
+    --target-color "#FF8C00" \
+    --object "mug" \
     --seed 42 \
     --out-dir ./inference_outputs
 ```
 
-### 2. FLUX.1-dev
-```bash
-python Flux/inference.py \
-    --prompt "a photo of a ceramic mug on a wooden desk" \
-    --target-color "#008080" \
-    --seed 42 \
-    --out-dir ./inference_outputs
-```
+---
 
-### 3. Stable Diffusion 3.5 Medium
-```bash
-python sd3.5_m/inference.py \
-    --prompt "a sleek sports car parked on an urban street" \
-    --target-color "#FFD700" \
-    --seed 42 \
-    --out-dir ./inference_outputs
-```
-
-### 4. PixArt (Sigma / Alpha)
-```bash
-python PixArt/inference.py \
-    --variant sigma \
-    --prompt "a leather backpack resting on a wooden chair" \
-    --target-color "#800080" \
-    --seed 42 \
-    --out-dir ./inference_outputs
-```
-
-### Arguments:
-*   `--prompt`: Descriptive text prompt (e.g., `"a photo of a car on a road"`).
-*   `--target-color` / `--hex`: Desired target object color (e.g. `"#A52A2A"`, `"teal"`, or `"255,0,0"`).
-*   `--object`: Object word to segment with SAM-3 (auto-detected from prompt if omitted).
+### CLI Arguments:
+*   `--prompt`: Input text prompt (e.g., `"A photo of a parrot in the color #FF8C00"`).
+*   `--target-color` / `--hex`: *(Optional)* Target color specification (Hex, RGB, CIELAB, or name). Auto-detected from prompt if omitted.
+*   `--object`: *(Optional)* Target object to segment with SAM-3. Auto-detected from prompt if omitted.
 *   `--seed`: Random seed for reproducibility (default: `42`).
 *   `--device`: PyTorch device (default: `"cuda:0"` if available, else `"cpu"`).
+*   `--steps`: Number of diffusion steps (model-specific default).
+*   `--guidance`: Classifier-free guidance scale.
+*   `--resolution`: Image resolution (default: `1024`).
 *   `--out-dir`: Destination folder for generated images (default: `./inference_outputs`).
+*   `--no-baseline`: Suppress generation of the unperturbed baseline image.
 *   `--no-comparison`: Suppress generation of the 3-panel comparison figure (baseline vs. steered vs. mask).

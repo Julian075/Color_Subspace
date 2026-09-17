@@ -11,6 +11,7 @@ Provides:
 
 import os
 import math
+import re
 from typing import Optional, Tuple, Dict, Any, List
 import numpy as np
 import torch
@@ -95,7 +96,156 @@ def hex_to_rgb(hex_str: str) -> Tuple[int, int, int]:
     hex_clean = hex_str.strip().lstrip("#")
     if len(hex_clean) == 3:
         hex_clean = "".join([c * 2 for c in hex_clean])
+    elif len(hex_clean) == 5:
+        hex_clean = hex_clean.ljust(6, "0")
+    elif len(hex_clean) != 6:
+        raise ValueError(f"Invalid Hex code: {hex_str!r}")
     return int(hex_clean[0:2], 16), int(hex_clean[2:4], 16), int(hex_clean[4:6], 16)
+
+
+def parse_target_color(spec: Any) -> Tuple[float, float, float]:
+    """
+    Parses color specifications in multiple formats into a CIELAB (L, a, b) tuple:
+      - Hex: "#FF5733" or "FF5733" or "#F00"
+      - RGB: (255, 87, 51) or [255, 87, 51] or "rgb(255, 87, 51)"
+      - CIELAB: {"lab": (60, 45, 50)} or "lab(60.0, 45.0, 50.0)"
+      - Color name: "crimson", "maroon", etc.
+    """
+    if isinstance(spec, dict):
+        if "lab" in spec:
+            return tuple(float(x) for x in spec["lab"])
+        if all(k in spec for k in ("r", "g", "b")):
+            return tuple(rgb_to_lab_single_np((int(spec["r"]), int(spec["g"]), int(spec["b"]))))
+    if isinstance(spec, (tuple, list, np.ndarray)) and len(spec) == 3:
+        return tuple(rgb_to_lab_single_np(spec))
+    if isinstance(spec, str):
+        s = spec.strip()
+        if s.lower().startswith("lab(") and s.endswith(")"):
+            vals = [float(x.strip()) for x in s[4:-1].split(",")]
+            return (vals[0], vals[1], vals[2])
+        if s.lower().startswith("rgb(") and s.endswith(")"):
+            vals = [float(x.strip()) for x in s[4:-1].split(",")]
+            return tuple(rgb_to_lab_single_np(vals))
+        # Hex attempt
+        try:
+            return tuple(rgb_to_lab_single_np(hex_to_rgb(s)))
+        except Exception:
+            pass
+        # Named color attempt via PIL
+        try:
+            from PIL import ImageColor
+            return tuple(rgb_to_lab_single_np(ImageColor.getrgb(s)))
+        except Exception:
+            pass
+        # Named color attempt via ISCC-NBS
+        try:
+            from iscc_nbs import get_iscc_l2_centroid
+            return get_iscc_l2_centroid(s)
+        except Exception:
+            pass
+    raise ValueError(f"Unable to parse target color: {spec!r}")
+
+
+def extract_hex_from_text(text: str) -> Optional[str]:
+    """Matches any 3, 6, or 8-digit hex code in text."""
+    match = re.search(r"#[0-9a-fA-F]{3,8}", text)
+    return match.group(0) if match else None
+
+
+def extract_color_spec_from_text(text: str) -> Optional[str]:
+    """Discovers color specification (hex, rgb, lab) from prompt text."""
+    m_rgb = re.search(r"rgb\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", text, re.IGNORECASE)
+    if m_rgb:
+        return m_rgb.group(0)
+    m_lab = re.search(r"lab\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)", text, re.IGNORECASE)
+    if m_lab:
+        return m_lab.group(0)
+    m_hex = re.search(r"#[0-9a-fA-F]{3,8}", text)
+    if m_hex:
+        return m_hex.group(0)
+    m_hex_kw = re.search(r"\bhex\s+([0-9a-fA-F]{6})\b", text, re.IGNORECASE)
+    if m_hex_kw:
+        return f"#{m_hex_kw.group(1)}"
+    return None
+
+
+def extract_object_from_text(text: str) -> str:
+    """
+    Dynamically discovers the target object from prompt text without hardcoded object whitelists.
+    Fully compatible with GenColorBench NCU prompt templates and open natural language prompts.
+    """
+    cleaned = text.strip().rstrip(".")
+
+    # 1. '<HEX/RGB/LAB>-colored <OBJ>' pattern
+    m = re.search(r"(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\))-colored\s+([^,.;]+)", cleaned, re.IGNORECASE)
+    if m:
+        return m.group(1).strip()
+
+    # 2. Color clause pattern matching tail
+    color_clause_pattern = (
+        r"(?:\s+(?:in\s+(?:the\s+|hex\s+|rgb\s+)?color"
+        r"|in\s+hex"
+        r"|in\s+rgb"
+        r"|in"
+        r"|colored"
+        r"|with\s+(?:the\s+)?color"
+        r"|with\s+hex\s+color"
+        r"|rendered\s+(?:entirely\s+)?in(?:\s+(?:rgb|hex))?(?:\s+color)?"
+        r"|designed\s+in)"
+        r"\s+(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\)|[a-zA-Z]+)(?:\s+color)?)"
+    )
+
+    # Priority A: prompt starting with photo/image/close-up/picture of ...
+    m = re.search(r"^(?:an?\s+)?(?:photo|image|close-up|picture)\s+of\s+(?:an?\s+)?(.*?)(?=" + color_clause_pattern + r"|$)", cleaned, re.IGNORECASE)
+    if m and m.group(1).strip():
+        candidate = m.group(1).strip()
+        candidate = re.sub(r"^(?:highly\s+detailed|realistic|single)\s+", "", candidate, flags=re.IGNORECASE)
+        candidate = re.split(r"\s+(?:on|at|in|near|by|with|under|over)\s+", candidate, flags=re.IGNORECASE)[0]
+        if candidate.strip():
+            return candidate.strip()
+
+    # Priority B: prompt starting with adjectives like highly detailed / realistic
+    m = re.search(r"^(?:an?\s+)?(?:highly\s+detailed|realistic|single)\s+(.*?)(?=" + color_clause_pattern + r"|$)", cleaned, re.IGNORECASE)
+    if m and m.group(1).strip():
+        candidate = m.group(1).strip()
+        candidate = re.split(r"\s+(?:on|at|in|near|by|with|under|over)\s+", candidate, flags=re.IGNORECASE)[0]
+        if candidate.strip():
+            return candidate.strip()
+
+    # Priority C: general prefix before color clause
+    m = re.search(r"^(?:an?\s+)?(.*?)(?=" + color_clause_pattern + r")", cleaned, re.IGNORECASE)
+    if m and m.group(1).strip():
+        candidate = m.group(1).strip()
+        candidate = re.split(r"\s+(?:on|at|in|near|by|with|under|over)\s+", candidate, flags=re.IGNORECASE)[0]
+        if candidate.strip():
+            return candidate.strip()
+
+    # Fallback
+    clean = re.sub(r"^(?:an?\s+)?(?:photo|image|close-up|picture)\s+of\s+(?:an?\s+)?", "", cleaned, flags=re.IGNORECASE)
+    clean = re.split(r"\s+(?:on|at|in|near|by|with|under|over)\s+", clean, flags=re.IGNORECASE)[0]
+    return clean.strip() if clean.strip() else "object"
+
+
+def clean_prompt_for_diffusion(prompt: str, color_name: str) -> str:
+    """
+    Substitutes numerical color codes in the prompt with natural language color names,
+    preserving natural semantics for text-to-image backbones.
+    """
+    p = prompt
+    p = re.sub(r"#[0-9a-fA-F]{3,8}-colored", f"{color_name}-colored", p)
+    p = re.sub(r"rgb\([^)]+\)-colored", f"{color_name}-colored", p, flags=re.IGNORECASE)
+    p = re.sub(r"lab\([^)]+\)-colored", f"{color_name}-colored", p, flags=re.IGNORECASE)
+
+    p = re.sub(r"\b(?:in\s+(?:the\s+|hex\s+|rgb\s+)?color|with\s+(?:the\s+|hex\s+)?color|in\s+hex|in\s+rgb)\s+(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\))", f"colored {color_name}", p, flags=re.IGNORECASE)
+    p = re.sub(r"\bdesigned\s+in\s+(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\))(?:\s+color)?", f"colored {color_name}", p, flags=re.IGNORECASE)
+    p = re.sub(r"\brendered\s+in\s+(?:RGB\s+color\s+|hex\s+color\s+)?(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\))(?:\s+color)?", f"colored {color_name}", p, flags=re.IGNORECASE)
+    p = re.sub(r"\bcolored\s+(?:#[0-9a-fA-F]{3,8}|rgb\([^)]+\)|lab\([^)]+\))", f"colored {color_name}", p, flags=re.IGNORECASE)
+
+    p = re.sub(r"#[0-9a-fA-F]{3,8}", color_name, p)
+    p = re.sub(r"rgb\([^)]+\)", color_name, p, flags=re.IGNORECASE)
+    p = re.sub(r"lab\([^)]+\)", color_name, p, flags=re.IGNORECASE)
+    p = re.sub(r"\bat\s+color\b", "colored", p, flags=re.IGNORECASE)
+    return p.strip()
 
 
 # =========================== COLOR DIFFERENCE METRICS ===========================
@@ -308,3 +458,13 @@ CSS_COLORS: Dict[str, Tuple[float, float, float]] = {
 def get_css_lab(color_name: str) -> Optional[Tuple[float, float, float]]:
     clean = color_name.strip().lower()
     return CSS_COLORS.get(clean, None)
+
+
+def nearest_color_name(target_lab: Tuple[float, float, float]) -> Tuple[str, float]:
+    """Finds nearest CSS color name via CIEDE2000 distance."""
+    best_name, best_dist = None, float("inf")
+    for name, c_lab in CSS_COLORS.items():
+        d = ciede2000(target_lab, c_lab)
+        if d < best_dist:
+            best_name, best_dist = name, d
+    return best_name or "color", best_dist
