@@ -132,7 +132,6 @@ python SD3/inference.py \
 *   `--guidance`: Classifier-free guidance scale.
 *   `--resolution`: Image resolution (default: `1024`).
 *   `--out-dir`: Destination folder for generated images (default: `./inference_outputs`).
-*   `--no-baseline`: Suppress generation of the unperturbed baseline image.
-*   `--no-comparison`: Suppress generation of the 3-panel comparison figure (baseline vs. steered vs. mask).
 *   `--metrics`: Measure and print color accuracy metrics in the terminal ($\Delta E^*_{00}$, $\Delta E^*_{76}$, $\Delta C^*$, $|\Delta C^*|$, $\Delta h^\circ$, $|\Delta h^\circ|$, and $\Delta H^*_{ab}$) between the segmented object in the generated image and the target color.
+
 

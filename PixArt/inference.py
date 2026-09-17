@@ -136,8 +136,6 @@ def run_color_steering_inference(
     guidance: float = DEFAULT_GUIDANCE,
     resolution: int = DEFAULT_RESOLUTION,
     out_dir: str = "./inference_outputs",
-    save_baseline: bool = True,
-    save_comparison: bool = True,
     mlp_ckpt_path: Optional[str] = None,
     metrics: bool = False,
 ) -> Dict[str, Any]:
@@ -183,26 +181,7 @@ def run_color_steering_inference(
     latent_h, latent_w = latent_hw(resolution, resolution)
     max_seq_len = MAX_SEQ_LEN_SIGMA if variant == "sigma" else MAX_SEQ_LEN_ALPHA
 
-    baseline_img = None
-    if save_baseline or save_comparison:
-        print("\n[Step 1/2] Generating unperturbed baseline image...")
-        latents_base = pipe(
-            clean_prompt,
-            height=resolution,
-            width=resolution,
-            guidance_scale=guidance,
-            num_inference_steps=steps,
-            max_sequence_length=max_seq_len,
-            generator=torch.Generator(device=device).manual_seed(seed),
-            output_type="latent",
-        ).images
-        base_np = decode_latents_4d(vae, latents_base)
-        baseline_img = Image.fromarray(base_np)
-        base_path = out_path / f"baseline_{variant}_{object_word}_seed_{seed}.png"
-        baseline_img.save(base_path)
-        print(f"  Saved baseline: {base_path.name}")
-
-    print(f"\n[Step 2/2] Generating color-steered image with target {target_hex}...")
+    print(f"\nGenerating color-steered image with target {target_hex}...")
     state = {
         "locked": False, "mask_latent": None, "mask_pixel": None,
         "init_lab": None, "m_pred": None, "img_x0": None, "failed": False, "reason": None
@@ -327,85 +306,16 @@ def run_color_steering_inference(
         else:
             print("\n[Warning] Could not measure achieved object color for --metrics (mask empty).\n")
 
-    if save_comparison and baseline_img is not None:
-        comp_path = out_path / f"comparison_{variant}_{object_word}_{hex_clean}_seed_{seed}.png"
-        create_comparison_figure(
-            baseline_img=baseline_img,
-            steered_img=steered_img,
-            mask_np=state["mask_pixel"],
-            target_rgb=target_rgb,
-            target_hex=target_hex,
-            init_lab=state["init_lab"],
-            achieved_lab=achieved_lab,
-            delta_e=delta_e,
-            object_word=object_word,
-            prompt=prompt,
-            save_path=comp_path,
-        )
-        print(f"  Saved comparison panel to: {comp_path}")
-
     print("\n" + "=" * 80)
     print(f"PixArt-{variant.upper()} Color Steering Inference Completed Successfully!")
     return {
         "steered_img": steered_img,
-        "baseline_img": baseline_img,
         "steered_path": str(steered_path),
         "target_lab": target_lab,
         "achieved_lab": achieved_lab,
         "delta_e00": delta_e,
         "metrics": color_metrics_res,
     }
-
-
-def create_comparison_figure(
-    baseline_img: Image.Image,
-    steered_img: Image.Image,
-    mask_np: Optional[np.ndarray],
-    target_rgb: Tuple[int, int, int],
-    target_hex: str,
-    init_lab: Optional[Tuple[float, float, float]],
-    achieved_lab: Optional[Tuple[float, float, float]],
-    delta_e: Optional[float],
-    object_word: str,
-    prompt: str,
-    save_path: Path,
-):
-    import matplotlib.pyplot as plt
-
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6.5))
-
-    axes[0].imshow(baseline_img)
-    init_str = f"L*={init_lab[0]:.1f}, a*={init_lab[1]:.1f}, b*={init_lab[2]:.1f}" if init_lab else "N/A"
-    axes[0].set_title(f"Baseline PixArt (Unsteered)\nMeasured {object_word}: {init_str}", fontsize=13, weight="bold")
-    axes[0].axis("off")
-
-    axes[1].imshow(steered_img)
-    ach_str = f"L*={achieved_lab[0]:.1f}, a*={achieved_lab[1]:.1f}, b*={achieved_lab[2]:.1f}" if achieved_lab else "N/A"
-    de_str = f" | ΔE00={delta_e:.2f}" if delta_e is not None else ""
-    axes[1].set_title(f"Subspace Steered ({target_hex})\nAchieved {object_word}: {ach_str}{de_str}", fontsize=13, weight="bold", color="darkred")
-    axes[1].axis("off")
-
-    swatch_h, swatch_w = 1024, 1024
-    info_canvas = np.zeros((swatch_h, swatch_w, 3), dtype=np.uint8)
-    info_canvas[:512, :] = target_rgb
-    if mask_np is not None:
-        base_arr = np.array(baseline_img.resize((swatch_w, 512)))
-        mask_resized = np.array(Image.fromarray(mask_np.astype(np.uint8) * 255).resize((swatch_w, 512))) > 128
-        overlay = base_arr.copy()
-        overlay[mask_resized] = [0, 220, 0]
-        blended = (base_arr * 0.4 + overlay * 0.6).astype(np.uint8)
-        info_canvas[512:, :] = blended
-    else:
-        info_canvas[512:, :] = 40
-
-    axes[2].imshow(info_canvas)
-    axes[2].set_title(f"Target Swatch {target_hex} (Top)\nSAM3 Segmented Object Mask (Bottom)", fontsize=13, weight="bold")
-    axes[2].axis("off")
-
-    fig.suptitle(f"PixArt Color Subspace Steering\nPrompt: \"{prompt}\"", fontsize=15, weight="bold", y=1.02)
-    fig.tight_layout()
-    fig.savefig(save_path, dpi=130, bbox_inches="tight")
-    plt.close(fig)
 
 
 def main():
@@ -425,8 +335,6 @@ def main():
     parser.add_argument("--guidance", type=float, default=DEFAULT_GUIDANCE, help="Guidance scale")
     parser.add_argument("--resolution", type=int, default=DEFAULT_RESOLUTION, help="Image resolution")
     parser.add_argument("--out-dir", type=str, default="./inference_outputs", help="Output directory")
-    parser.add_argument("--no-baseline", action="store_true", help="Do not save unperturbed baseline image")
-    parser.add_argument("--no-comparison", action="store_true", help="Do not save comparison figure")
     parser.add_argument("--metrics", action="store_true",
                         help="Print Delta E, Delta Chroma, and Delta Hue between output image and target color in terminal")
 
@@ -446,8 +354,6 @@ def main():
         guidance=args.guidance,
         resolution=args.resolution,
         out_dir=args.out_dir,
-        save_baseline=not args.no_baseline,
-        save_comparison=not args.no_comparison,
         metrics=args.metrics,
     )
 

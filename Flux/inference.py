@@ -122,8 +122,6 @@ def run_color_steering_inference(
     guidance: float = DEFAULT_GUIDANCE,
     resolution: int = DEFAULT_RESOLUTION,
     out_dir: str = "outs_paper",
-    save_baseline: bool = True,
-    save_comparison: bool = True,
     mlp_ckpt_path: Optional[str] = None,
     metrics: bool = False,
 ) -> Dict[str, Any]:
@@ -179,27 +177,8 @@ def run_color_steering_inference(
 
     latent_h, latent_w = latent_hw(pipe, resolution, resolution)
 
-    # 3. Baseline generation (if requested)
-    baseline_img = None
-    if save_baseline or save_comparison:
-        print("\n[Step 1/2] Generating unperturbed baseline image...")
-        latents_base = pipe(
-            clean_prompt,
-            height=resolution,
-            width=resolution,
-            guidance_scale=guidance,
-            num_inference_steps=steps,
-            generator=torch.Generator(device=device).manual_seed(seed),
-            output_type="latent",
-        ).images
-        base_np = decode_latents_4d(vae, unpack_to_4d(pipe, latents_base, resolution, resolution))
-        baseline_img = Image.fromarray(base_np)
-        base_path = out_path / f"baseline_{object_word}_seed_{seed}.png"
-        baseline_img.save(base_path)
-        print(f"  Saved baseline: {base_path.name}")
-
-    # 4. Steered generation (Phase B closed-loop object color intervention)
-    print(f"\n[Step 2/2] Generating color-steered image with target {target_hex}...")
+    # 3. Steered generation (Phase B closed-loop object color intervention)
+    print(f"\nGenerating color-steered image with target {target_hex}...")
     state = {
         "locked": False, "mask_latent": None, "mask_pixel": None,
         "init_lab": None, "m_pred": None, "img_x0": None, "failed": False, "reason": None
@@ -323,93 +302,16 @@ def run_color_steering_inference(
         else:
             print("\n[Warning] Could not measure achieved object color for --metrics (mask empty).\n")
 
-    # 6. Save Comparison Panel if requested
-    if save_comparison and baseline_img is not None:
-        comp_path = out_path / f"comparison_{object_word}_{hex_clean}_seed_{seed}.png"
-        create_comparison_figure(
-            baseline_img=baseline_img,
-            steered_img=steered_img,
-            mask_np=state["mask_pixel"],
-            target_rgb=target_rgb,
-            target_hex=target_hex,
-            target_lab=target_lab,
-            init_lab=state["init_lab"],
-            achieved_lab=achieved_lab,
-            delta_e=delta_e,
-            object_word=object_word,
-            prompt=prompt,
-            save_path=comp_path,
-        )
-        print(f"  Saved comparison panel to: {comp_path}")
-
     print("\n" + "=" * 80)
     print("FLUX Color Steering Application Completed Successfully!")
     return {
         "steered_img": steered_img,
-        "baseline_img": baseline_img,
         "steered_path": str(steered_path),
         "target_lab": target_lab,
         "achieved_lab": achieved_lab,
         "delta_e00": delta_e,
         "metrics": color_metrics_res,
     }
-
-
-def create_comparison_figure(
-    baseline_img: Image.Image,
-    steered_img: Image.Image,
-    mask_np: Optional[np.ndarray],
-    target_rgb: Tuple[int, int, int],
-    target_hex: str,
-    target_lab: Tuple[float, float, float],
-    init_lab: Optional[Tuple[float, float, float]],
-    achieved_lab: Optional[Tuple[float, float, float]],
-    delta_e: Optional[float],
-    object_word: str,
-    prompt: str,
-    save_path: Path,
-):
-    import matplotlib.pyplot as plt
-
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6.5))
-
-    # Panel 1: Baseline
-    axes[0].imshow(baseline_img)
-    init_str = f"L*={init_lab[0]:.1f}, a*={init_lab[1]:.1f}, b*={init_lab[2]:.1f}" if init_lab else "N/A"
-    axes[0].set_title(f"Baseline FLUX (Unsteered)\nMeasured {object_word}: {init_str}", fontsize=13, weight="bold")
-    axes[0].axis("off")
-
-    # Panel 2: Steered
-    axes[1].imshow(steered_img)
-    ach_str = f"L*={achieved_lab[0]:.1f}, a*={achieved_lab[1]:.1f}, b*={achieved_lab[2]:.1f}" if achieved_lab else "N/A"
-    de_str = f" | ΔE00={delta_e:.2f}" if delta_e is not None else ""
-    axes[1].set_title(f"Subspace Steered ({target_hex})\nAchieved {object_word}: {ach_str}{de_str}", fontsize=13, weight="bold", color="darkred")
-    axes[1].axis("off")
-
-    # Panel 3: Mask + Target Swatch
-    swatch_h, swatch_w = 1024, 1024
-    info_canvas = np.zeros((swatch_h, swatch_w, 3), dtype=np.uint8)
-    # Top half: target color swatch
-    info_canvas[:512, :] = target_rgb
-    # Bottom half: mask overlay on base
-    if mask_np is not None:
-        base_arr = np.array(baseline_img.resize((swatch_w, 512)))
-        mask_resized = np.array(Image.fromarray(mask_np.astype(np.uint8) * 255).resize((swatch_w, 512))) > 128
-        overlay = base_arr.copy()
-        overlay[mask_resized] = [0, 220, 0] # highlight mask in bright green
-        blended = (base_arr * 0.4 + overlay * 0.6).astype(np.uint8)
-        info_canvas[512:, :] = blended
-    else:
-        info_canvas[512:, :] = 40
-
-    axes[2].imshow(info_canvas)
-    axes[2].set_title(f"Target Swatch {target_hex} (Top)\nSAM3 Segmented Object Mask (Bottom)", fontsize=13, weight="bold")
-    axes[2].axis("off")
-
-    fig.suptitle(f"FLUX.1-dev Downstream Application: Target Object Color Steering\nPrompt: \"{prompt}\"", fontsize=15, weight="bold", y=1.02)
-    fig.tight_layout()
-    fig.savefig(save_path, dpi=130, bbox_inches="tight")
-    plt.close(fig)
 
 
 def main():
@@ -428,8 +330,6 @@ def main():
     parser.add_argument("--resolution", type=int, default=DEFAULT_RESOLUTION, help="Image resolution")
     parser.add_argument("--out-dir", type=str, default="./inference_outputs",
                         help="Output directory")
-    parser.add_argument("--no-baseline", action="store_true", help="Do not save unperturbed baseline image")
-    parser.add_argument("--no-comparison", action="store_true", help="Do not save comparison figure")
     parser.add_argument("--metrics", action="store_true",
                         help="Print Delta E, Delta Chroma, and Delta Hue between output image and target color in terminal")
 
@@ -449,8 +349,6 @@ def main():
         guidance=args.guidance,
         resolution=args.resolution,
         out_dir=args.out_dir,
-        save_baseline=not args.no_baseline,
-        save_comparison=not args.no_comparison,
         metrics=args.metrics,
     )
 
