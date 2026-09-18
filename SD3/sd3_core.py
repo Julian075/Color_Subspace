@@ -30,42 +30,37 @@ GUIDANCE = 7.0
 
 def build_envelope_bands(gate_frac: float,
                          profile_vals: List[float],
-                         transition_mode: str = "ramp_down") -> List[Tuple[float, float, float, str]]:
+                         transition_mode: str = "ramp_down") -> List[Tuple[float, float, float, float]]:
     """
-    Partitions [gate_frac, 1.0] into len(profile_vals) equal bands, each with peak magnitude profile_vals[i].
-    gate_frac: fraction of trajectory where color gate opens (e.g. 0.75 -> step 21 of 28).
+    Builds piecewise-linear temporal envelope bands w(t) for Flow-Matching denoising.
+    gate_frac: fraction of trajectory where color control is active [0, gate_frac].
     """
     n = len(profile_vals)
-    if n == 0 or gate_frac >= 1.0:
+    if n == 0 or gate_frac <= 0.0:
         return []
-    edges = np.linspace(gate_frac, 1.0, n + 1)
-    return [(float(edges[i]), float(edges[i + 1]), float(profile_vals[i]), transition_mode) for i in range(n)]
+
+    band_len = gate_frac / n
+    bands = []
+    for i, val in enumerate(profile_vals):
+        t_start = i * band_len
+        t_end = (i + 1) * band_len
+        bands.append((t_start, t_end, val, val))
+
+    if transition_mode == "ramp_down" and bands:
+        last_s, last_e, _, _ = bands[-1]
+        bands[-1] = (last_s, last_e, profile_vals[-1], 0.0)
+
+    return bands
 
 
-def shift_schedule(frac: float, lo: float, hi: float, peak: float, mode: str = "ramp_down") -> float:
-    if frac < lo or frac > hi:
-        return 0.0
-    p = (frac - lo) / max(hi - lo, 1e-8)
-    p = float(min(max(p, 0.0), 1.0))
-    w = (1.0 - p) if mode == "ramp_down" else 1.0
-    return float(peak * w)
-
-
-def envelope_weight(frac: float, bands: List[Any]) -> float:
-    total_w = 0.0
-    for b in bands:
-        if len(b) == 4 and isinstance(b[3], str):
-            lo, hi, peak, mode = b
-            total_w += shift_schedule(frac, lo, hi, peak, mode)
-        elif len(b) == 4:
-            t_s, t_e, w_s, w_e = b
-            if t_s <= frac <= t_e:
-                if t_e == t_s:
-                    total_w += float(w_s)
-                else:
-                    alpha = (frac - t_s) / (t_e - t_s)
-                    total_w += float(w_s + alpha * (w_e - w_s))
-    return total_w
+def envelope_weight(frac: float, bands: List[Tuple[float, float, float, float]]) -> float:
+    for t_s, t_e, w_s, w_e in bands:
+        if t_s <= frac <= t_e:
+            if t_e == t_s:
+                return float(w_s)
+            alpha = (frac - t_s) / (t_e - t_s)
+            return float(w_s + alpha * (w_e - w_s))
+    return 0.0
 
 
 PERFIL_GENERATORS: Dict[str, Callable[[int], List[float]]] = {
