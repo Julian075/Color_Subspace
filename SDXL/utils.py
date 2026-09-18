@@ -412,14 +412,11 @@ ACHROMATIC_NAMES = {name for name, (L, a, b) in COLOR_NAMES_LAB.items()
 CHROMATIC_NAMES = [n for n in COLOR_NAMES if n not in ACHROMATIC_NAMES]
 
 
-def nearest_color_name(target_lab):
-    L, a, b = target_lab
-    chroma = math.sqrt(a ** 2 + b ** 2)
-    candidates = ACHROMATIC_NAMES if chroma < CHROMA_THRESHOLD else CHROMATIC_NAMES
+def nearest_color_name(target_lab) -> Tuple[str, float]:
+    """
+    Finds the closest ISCC-NBS Level 2 color name to target_lab (L, a, b)
+    using CIEDE2000 color difference.
+    """
+    from iscc_nbs import find_nearest_iscc_l2
+    return find_nearest_iscc_l2(target_lab, ciede2000_fn=ciede2000)
 
-    best_name, best_dist = None, float("inf")
-    for name in candidates:
-        d = ciede2000(target_lab, COLOR_NAMES_LAB[name])
-        if d < best_dist:
-            best_name, best_dist = name, d
-    return best_name, best_dist

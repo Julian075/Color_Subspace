@@ -460,11 +460,11 @@ def get_css_lab(color_name: str) -> Optional[Tuple[float, float, float]]:
     return CSS_COLORS.get(clean, None)
 
 
-def nearest_color_name(target_lab: Tuple[float, float, float]) -> Tuple[str, float]:
-    """Finds nearest CSS color name via CIEDE2000 distance."""
-    best_name, best_dist = None, float("inf")
-    for name, c_lab in CSS_COLORS.items():
-        d = ciede2000(target_lab, c_lab)
-        if d < best_dist:
-            best_name, best_dist = name, d
-    return best_name or "color", best_dist
+def nearest_color_name(target_lab: Tuple[float, float, float] | Any) -> Tuple[str, float]:
+    """
+    Finds the closest ISCC-NBS Level 2 color name to target_lab (L, a, b)
+    using CIEDE2000 color difference.
+    """
+    from iscc_nbs import find_nearest_iscc_l2
+    return find_nearest_iscc_l2(target_lab, ciede2000_fn=ciede2000)
+

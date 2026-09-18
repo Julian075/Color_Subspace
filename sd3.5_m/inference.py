@@ -148,7 +148,7 @@ def run_color_steering_inference(
     print("RUNNING SD3.5-M DOWNSTREAM OBJECT COLOR STEERING")
     print(f"Raw Prompt:       \"{prompt}\"")
     print(f"Target Object:    \"{object_word}\"")
-    print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest: '{nearest_name}')")
+    print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest ISCC-NBS L2: '{nearest_name}')")
     print(f"Semantic Prompt:  \"{clean_prompt}\"")
     print(f"Seed: {seed} | Steps: {steps} | Guidance: {guidance} | Res: {resolution}x{resolution} | Device: {device}")
     print("=" * 80)
@@ -206,13 +206,17 @@ def run_color_steering_inference(
             state["img_x0"] = img_x0
 
             mask_pixel = utils.get_object_mask(Image.fromarray(img_x0), object_word, seg_models)
-            state["locked"] = True
 
+            max_gate_step = int(steps * max(sched_cfg.get("gate_frac", 0.60) * 0.65, 0.40))
             if mask_pixel is None or mask_pixel.sum() < 50:
-                print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count. Proceeding without steering.")
-                state["failed"] = True
-                state["reason"] = "Mask detection failed"
-                return callback_kwargs
+                if step_index < max_gate_step:
+                    return callback_kwargs
+                print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count after retries. Using spatial center prior fallback.")
+                h_img, w_img = img_x0.shape[:2]
+                yy, xx = np.ogrid[:h_img, :w_img]
+                mask_pixel = ((xx - w_img / 2) ** 2 + (yy - h_img / 2) ** 2) <= (min(h_img, w_img) * 0.35) ** 2
+
+            state["locked"] = True
 
             init_lab = utils.measure_color_gt(img_x0, mask_pixel)
             if init_lab is None:

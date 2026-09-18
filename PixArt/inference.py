@@ -83,8 +83,8 @@ def load_winning_schedule(variant: str):
         with open(sched_path) as f:
             return json.load(f)
     if variant == "sigma":
-        return {"gate_frac": 0.75, "n_partes": 3, "perfil_name": "triangular"}
-    return {"gate_frac": 0.50, "n_partes": 3, "perfil_name": "triangular"}
+        return {"gate_frac": 0.75, "n_partes": 1, "perfil_name": "plano"}
+    return {"gate_frac": 0.50, "n_partes": 1, "perfil_name": "plano"}
 
 
 def compute_color_metrics(target_lab: Tuple[float, float, float], measured_lab: Tuple[float, float, float]) -> Dict[str, Any]:
@@ -157,7 +157,7 @@ def run_color_steering_inference(
     print(f"RUNNING PIXART-{variant.upper()} DOWNSTREAM OBJECT COLOR STEERING")
     print(f"Raw Prompt:       \"{prompt}\"")
     print(f"Target Object:    \"{object_word}\"")
-    print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest: '{nearest_name}')")
+    print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest ISCC-NBS L2: '{nearest_name}')")
     print(f"Semantic Prompt:  \"{clean_prompt}\"")
     print(f"Seed: {seed} | Steps: {steps} | Guidance: {guidance} | Res: {resolution}x{resolution} | Device: {device}")
     print("=" * 80)
@@ -216,13 +216,18 @@ def run_color_steering_inference(
             state["img_x0"] = img_x0
 
             mask_pixel = utils.get_object_mask(Image.fromarray(img_x0), object_word, seg_models)
-            state["locked"] = True
 
+            gate_step = int(round(sched_cfg.get("gate_frac", 0.75 if variant == "sigma" else 0.5) * (steps - 1)))
+            max_gate_step = min(gate_step + 2, steps - 2)
             if mask_pixel is None or mask_pixel.sum() < 50:
-                print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count. Proceeding without steering.")
-                state["failed"] = True
-                state["reason"] = "Mask detection failed"
-                return
+                if step_index < max_gate_step:
+                    return
+                print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count after retries. Using spatial center prior fallback.")
+                h_img, w_img = img_x0.shape[:2]
+                yy, xx = np.ogrid[:h_img, :w_img]
+                mask_pixel = ((xx - w_img / 2) ** 2 + (yy - h_img / 2) ** 2) <= (min(h_img, w_img) * 0.35) ** 2
+
+            state["locked"] = True
 
             init_lab = utils.measure_color_gt(img_x0, mask_pixel)
             if init_lab is None:
@@ -261,6 +266,7 @@ def run_color_steering_inference(
             max_sequence_length=max_seq_len,
             generator=torch.Generator(device=device).manual_seed(seed),
             output_type="latent",
+            clean_caption=False,
             callback=callback_fn,
             callback_steps=1,
         ).images

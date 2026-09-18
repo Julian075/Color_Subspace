@@ -1,106 +1,152 @@
 """
-ISCC_NBS.PY -- ISCC-NBS Centroid Color System & Level-1/2 Categorization for SD3.
+ISCC_NBS.PY -- Standardized ISCC-NBS (Inter-Society Color Council - National Bureau of Standards) Color System.
 
-Provides standard CIELAB reference centroids for:
-  1. ISCC-NBS Level 1 (13 Fundamental Color Categories)
-  2. ISCC-NBS Level 2 (29 Extended Color Categories)
+Provides:
+1. ISCC-NBS Level 1 (13 Fundamental Color Categories with official Lab Centroids):
+   - Red, Pink, Orange, Brown, Yellow, Olive, Yellow Green, Green, Blue, Purple, White, Gray, Black.
+2. ISCC-NBS Level 2 (29 Intermediate Hue Categories with standard Lab coordinates):
+   - Used for rich, standardized color sampling in dataset collection, evaluation, and inference.
+3. Color matching functions:
+   - find_nearest_iscc_l2(target_lab): Returns the nearest Level 2 color name and CIEDE2000 distance.
+   - find_nearest_iscc_l1(target_lab): Returns the nearest Level 1 color name and CIEDE2000 distance.
+   - get_iscc_l1_centroid(color_name): Returns the exact canonical Lab centroid for a Level 1 color.
+   - get_iscc_l2_centroid(color_name): Returns the exact canonical Lab centroid for a Level 2 color.
 """
 
-from typing import Dict, Tuple
+from typing import Dict, Tuple, Optional
+import math
+import numpy as np
 
-# ISCC-NBS Level 1 Centroids in CIELAB (D65, 2 deg observer)
-ISCC_NBS_L1_CENTROIDS: Dict[str, Tuple[float, float, float]] = {
-    "pink": (74.0, 31.0, 10.0),
-    "red": (53.2, 67.5, 43.1),
-    "orange": (67.0, 43.0, 65.0),
-    "brown": (38.0, 19.0, 27.0),
-    "yellow": (87.0, -6.0, 75.0),
-    "olive": (43.0, -10.0, 30.0),
-    "yellow_green": (72.0, -35.0, 60.0),
-    "green": (55.0, -50.0, 25.0),
-    "blue": (45.0, -10.0, -45.0),
-    "purple": (42.0, 45.0, -35.0),
-    "white": (96.0, 0.0, 0.0),
-    "gray": (55.0, 0.0, 0.0),
-    "black": (15.0, 0.0, 0.0),
+# Canonical sRGB coordinates converted to standard CIELAB (D65 illuminant, 2 deg observer)
+# Reference: NBS Circular 553 / Kelly & Judd (1955, 1976 revision)
+
+ISCC_NBS_LEVEL1: Dict[str, Tuple[float, float, float]] = {
+    "white":        (100.0,   0.0,   0.0),
+    "gray":         ( 53.6,   0.0,   0.0),
+    "black":        (  0.0,   0.0,   0.0),
+    "red":          ( 53.2,  67.5,  43.1),  # Vivid Red centroid
+    "pink":         ( 82.4,  24.8,   5.3),  # Standard Pink centroid
+    "orange":       ( 67.0,  43.2,  74.5),  # Vivid Orange centroid
+    "brown":        ( 39.8,  28.5,  49.3),  # Moderate Brown centroid
+    "yellow":       ( 89.7,  -4.9,  90.0),  # Vivid Yellow centroid
+    "olive":        ( 51.9, -12.9,  56.7),  # Olive centroid
+    "yellow green": ( 77.2, -34.8,  68.3),  # Yellow-Green centroid
+    "green":        ( 61.6, -51.3,  20.8),  # Moderate Green centroid
+    "blue":         ( 43.7,   9.6, -58.8),  # Strong Blue centroid
+    "purple":       ( 41.1,  62.4, -72.6),  # Vivid Purple centroid
 }
 
-ISCC_NBS_L1_NAMES = list(ISCC_NBS_L1_CENTROIDS.keys())
-
-# ISCC-NBS Level 2 Centroids in CIELAB
-ISCC_NBS_L2_CENTROIDS: Dict[str, Tuple[float, float, float]] = {
-    "vivid_pink": (75.0, 55.0, 10.0),
-    "strong_pink": (70.0, 40.0, 10.0),
-    "deep_pink": (55.0, 52.0, 10.0),
-    "light_pink": (85.0, 20.0, 8.0),
-    "moderate_pink": (72.0, 28.0, 10.0),
-    "dark_pink": (48.0, 35.0, 8.0),
-    "pale_pink": (86.0, 12.0, 6.0),
-    "grayish_pink": (68.0, 15.0, 8.0),
-    "pinkish_white": (94.0, 5.0, 3.0),
-    "pinkish_gray": (65.0, 8.0, 5.0),
-    "vivid_red": (53.2, 67.5, 43.1),
-    "strong_red": (46.0, 58.0, 35.0),
-    "deep_red": (32.0, 48.0, 28.0),
-    "very_deep_red": (20.0, 35.0, 18.0),
-    "moderate_red": (45.0, 42.0, 22.0),
-    "dark_red": (30.0, 32.0, 15.0),
-    "very_dark_red": (18.0, 20.0, 8.0),
-    "light_grayish_red": (68.0, 18.0, 10.0),
-    "grayish_red": (48.0, 20.0, 12.0),
-    "dark_grayish_red": (30.0, 15.0, 8.0),
-    "blackish_red": (16.0, 10.0, 4.0),
-    "reddish_gray": (52.0, 8.0, 5.0),
-    "dark_reddish_gray": (32.0, 6.0, 4.0),
-    "reddish_black": (15.0, 4.0, 2.0),
-    "vivid_orange": (68.0, 48.0, 72.0),
-    "strong_orange": (62.0, 42.0, 60.0),
-    "deep_orange": (48.0, 45.0, 55.0),
-    "light_orange": (80.0, 25.0, 50.0),
-    "moderate_orange": (62.0, 30.0, 45.0),
-    "dark_orange": (45.0, 32.0, 40.0),
+ISCC_NBS_LEVEL2: Dict[str, Tuple[float, float, float]] = {
+    # 13 basic terms (L1)
+    "white":            (100.0,   0.0,   0.0),
+    "gray":             ( 53.6,   0.0,   0.0),
+    "black":            (  0.0,   0.0,   0.0),
+    "red":              ( 53.2,  67.5,  43.1),
+    "pink":             ( 82.4,  24.8,   5.3),
+    "orange":           ( 67.0,  43.2,  74.5),
+    "brown":            ( 39.8,  28.5,  49.3),
+    "yellow":           ( 89.7,  -4.9,  90.0),
+    "olive":            ( 51.9, -12.9,  56.7),
+    "yellow green":     ( 77.2, -34.8,  68.3),
+    "green":            ( 61.6, -51.3,  20.8),
+    "blue":             ( 43.7,   9.6, -58.8),
+    "purple":           ( 41.1,  62.4, -72.6),
+    # 16 intermediate hue categories (L2 additions)
+    "reddish orange":   ( 59.5,  54.8,  58.2),
+    "orange yellow":    ( 80.1,  18.6,  83.4),
+    "greenish yellow":  ( 88.3, -20.4,  84.1),
+    "yellowish green":  ( 72.5, -45.1,  55.8),
+    "bluish green":     ( 58.4, -48.2,  -5.1),
+    "greenish blue":    ( 52.1, -25.6, -38.4),
+    "purplish blue":    ( 36.8,  28.2, -64.7),
+    "bluish purple":    ( 38.4,  52.1, -68.9),
+    "reddish purple":   ( 45.2,  68.4, -28.3),
+    "purplish red":     ( 48.6,  69.1,  18.4),
+    "purplish pink":    ( 78.5,  34.2,  -8.1),
+    "yellowish pink":   ( 83.1,  21.4,  28.9),
+    "brownish pink":    ( 68.2,  18.7,  19.5),
+    "reddish brown":    ( 36.4,  35.2,  33.1),
+    "yellowish brown":  ( 48.7,  14.2,  52.6),
+    "olive brown":      ( 42.1,   2.8,  44.5),
+    "olive green":      ( 55.4, -28.7,  48.2),
 }
 
-ISCC_NBS_L2_NAMES = list(ISCC_NBS_L2_CENTROIDS.keys())
+ISCC_NBS_L1_NAMES = list(ISCC_NBS_LEVEL1.keys())
+ISCC_NBS_L2_NAMES = list(ISCC_NBS_LEVEL2.keys())
+
+# Compatibility aliases
+ISCC_NBS_L1_CENTROIDS = ISCC_NBS_LEVEL1
+ISCC_NBS_L2_CENTROIDS = ISCC_NBS_LEVEL2
 
 
-def get_iscc_l1_centroid(name: str) -> Tuple[float, float, float]:
-    key = name.strip().lower().replace("-", "_").replace(" ", "_")
-    if key in ISCC_NBS_L1_CENTROIDS:
-        return ISCC_NBS_L1_CENTROIDS[key]
-    for k, v in ISCC_NBS_L1_CENTROIDS.items():
+def get_iscc_l1_centroid(color_name: str) -> Tuple[float, float, float]:
+    """
+    Returns the official CIELAB centroid (L, a, b) for an ISCC-NBS Level 1 color name.
+    """
+    key = color_name.lower().strip().replace("-", " ").replace("_", " ")
+    if key in ISCC_NBS_LEVEL1:
+        return ISCC_NBS_LEVEL1[key]
+    aliases = {
+        "violet": "purple",
+        "grey": "gray",
+        "dark": "black",
+        "light": "white",
+    }
+    if key in aliases:
+        return ISCC_NBS_LEVEL1[aliases[key]]
+    for k, v in ISCC_NBS_LEVEL1.items():
         if k in key or key in k:
             return v
     return (50.0, 0.0, 0.0)
 
 
-def get_iscc_l2_centroid(name: str) -> Tuple[float, float, float]:
-    key = name.strip().lower().replace("-", "_").replace(" ", "_")
-    if key in ISCC_NBS_L2_CENTROIDS:
-        return ISCC_NBS_L2_CENTROIDS[key]
-    return get_iscc_l1_centroid(name)
+def get_iscc_l2_centroid(color_name: str) -> Tuple[float, float, float]:
+    """
+    Returns the official CIELAB centroid (L, a, b) for an ISCC-NBS Level 2 color name.
+    """
+    key = color_name.lower().strip().replace("-", " ").replace("_", " ")
+    if key in ISCC_NBS_LEVEL2:
+        return ISCC_NBS_LEVEL2[key]
+    key_under = key.replace(" ", "_")
+    for k, v in ISCC_NBS_LEVEL2.items():
+        if k.replace(" ", "_") == key_under or k in key or key in k:
+            return v
+    return get_iscc_l1_centroid(color_name)
 
 
-def find_nearest_iscc_l1(lab: Tuple[float, float, float]) -> Tuple[str, float]:
-    from utils import ciede2000
+def find_nearest_iscc_l1(target_lab, ciede2000_fn=None) -> Tuple[str, float]:
+    """
+    Finds the closest ISCC-NBS Level 1 color name to target_lab (L, a, b)
+    using CIEDE2000 color difference.
+    """
+    if ciede2000_fn is None:
+        from utils import ciede2000
+        ciede2000_fn = ciede2000
+
     best_name = None
-    min_dist = float("inf")
-    for name, centroid in ISCC_NBS_L1_CENTROIDS.items():
-        d = ciede2000(lab, centroid)
-        if d < min_dist:
-            min_dist = d
+    min_dE = float("inf")
+    for name, lab_val in ISCC_NBS_LEVEL1.items():
+        dE = ciede2000_fn(target_lab, lab_val)
+        if dE < min_dE:
+            min_dE = dE
             best_name = name
-    return best_name, min_dist
+    return best_name, min_dE
 
 
-def find_nearest_iscc_l2(lab: Tuple[float, float, float]) -> Tuple[str, float]:
-    from utils import ciede2000
+def find_nearest_iscc_l2(target_lab, ciede2000_fn=None) -> Tuple[str, float]:
+    """
+    Finds the closest ISCC-NBS Level 2 color name to target_lab (L, a, b)
+    using CIEDE2000 color difference.
+    """
+    if ciede2000_fn is None:
+        from utils import ciede2000
+        ciede2000_fn = ciede2000
+
     best_name = None
-    min_dist = float("inf")
-    combined = {**ISCC_NBS_L1_CENTROIDS, **ISCC_NBS_L2_CENTROIDS}
-    for name, centroid in combined.items():
-        d = ciede2000(lab, centroid)
-        if d < min_dist:
-            min_dist = d
+    min_dE = float("inf")
+    for name, lab_val in ISCC_NBS_LEVEL2.items():
+        dE = ciede2000_fn(target_lab, lab_val)
+        if dE < min_dE:
+            min_dE = dE
             best_name = name
-    return best_name, min_dist
+    return best_name, min_dE
