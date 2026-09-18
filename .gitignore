@@ -16,9 +16,10 @@ slurm*
 _tmp_chunks*/
 _csv_parts/
 
-# Non-essential JSON results & metrics (keep only pca_axes*.json)
+# Non-essential JSON results & metrics (keep only pca_axes*.json and winning schedules)
 *results*.json
 *schedule*.json
+!fase_b_winning_schedule.json
 *summary*.json
 *metrics*.json
 *metadata*.json

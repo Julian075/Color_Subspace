@@ -1,0 +1,10 @@
+{
+  "gate_frac": 0.5,
+  "n_partes": 3,
+  "perfil_name": "triangular",
+  "avg_color_score": 28.59968709068549,
+  "avg_dE00": 36.43824741902817,
+  "avg_ssim_in": 0.6203180815403131,
+  "avg_ssim_out": 0.8485212610572865,
+  "avg_psnr_out": 14.462287876508118
+}

@@ -1,0 +1,8 @@
+{
+  "model": "stabilityai/stable-diffusion-xl-base-1.0",
+  "n_partes": 1,
+  "gate_frac": 0.4,
+  "perfil_name": "plano",
+  "transition_mode": "ramp_down",
+  "probe_magnitude": 0.5
+}
