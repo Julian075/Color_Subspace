@@ -35,9 +35,9 @@ python flux_multizone_color_transfer.py \
 Continuously modulates the saturation of generated images toward a narrower target gamut without causing complementary color cancellation.
 
 ### Algorithm Summary
-- **Pixel-Wise Chroma Scaling**: At gate step $s=14/28$, decodes $\hat{z}_0$ to compute the spatial CIELAB map $(L, a, b)$. For each spatial position $(y, x)$, scales chroma $C^* = \sqrt{a^{*2} + b^{*2}}$ toward neutral gray by a reduction ratio $r \in [0, 1]$:
+- **Pixel-Wise Chroma Scaling**: At gate step $s=14/28$, decodes $\hat{z}_0$ to compute the spatial CIELAB map $(L, a, b)$. For each spatial position $(y, x)$, scales chroma $C^\ast = \sqrt{(a^\ast)^2 + (b^\ast)^2}$ toward neutral gray by a reduction ratio $r \in [0, 1]$:
   $$a_{\text{target}}(y, x) = a(y, x) \cdot (1 - r), \quad b_{\text{target}}(y, x) = b(y, x) \cdot (1 - r)$$
-  while preserving lightness $L^*(y, x)$.
+  while preserving lightness $L^\ast(y, x)$.
 - **Vectorized Latent Modulation**: Evaluates the ResMLP over the $128 \times 128$ spatial latent grid and applies the perturbation along chromatic axes $(u_1, u_2)$ modulated by the temporal schedule envelope $w(t)$.
 
 ### CLI Usage
