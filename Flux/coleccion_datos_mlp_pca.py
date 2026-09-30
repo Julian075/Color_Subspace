@@ -46,9 +46,10 @@ STEPS = 28
 GUIDANCE = 3.5
 REF_MODE = "none"
 
-OUT_DIR = "/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/flux/pca_version/coleccion_datos_mlp_pca_out"
-PCA_AXES_PATH = "/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/flux/pca_version/fase_a_pca_out/pca_axes.json"
-WINNING_SCHEDULE_PATH = "/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/flux/pca_version/fase_b_pca_out/fase_b_winning_schedule.json"
+SCRIPT_DIR = Path(__file__).resolve().parent
+OUT_DIR = str(SCRIPT_DIR / "coleccion_datos_mlp_pca_out")
+PCA_AXES_PATH = str(SCRIPT_DIR / "fase_a_pca_out" / "pca_axes.json")
+WINNING_SCHEDULE_PATH = str(SCRIPT_DIR / "fase_b_pca_out" / "fase_b_winning_schedule.json")
 
 # Dataset scale configuration
 N_BASELINES_TOTAL = 3125      # 3125 baselines x 8 variants = 25,000 samples

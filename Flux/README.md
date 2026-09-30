@@ -27,16 +27,16 @@ flowchart LR
 
 ## 📁 Repository Structure
 
-- [`flux_core.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/flux_core.py): Low-level core engine for FLUX (model loader, 2x2 patch pack/unpacking, flow-matching scheduler hooks).
-- [`inference.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/inference.py): Standalone downstream targeted object color steering for arbitrary prompts.
-- [`utils.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/utils.py): SAM-3 instance segmentation, sRGB $\leftrightarrow$ CIELAB colorimetry, and exact CIEDE2000 metric.
-- [`iscc_nbs.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/iscc_nbs.py): ISCC-NBS Level 1 and Level 2 color dictionary.
-- [`model_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/model_pca.py): 15D continuous color featurizer and `MLPShiftPCA` inference wrapper.
-- [`fase_a_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/fase_a_pca.py): **Phase A**: Latent screening across 16 channels and PCA basis extraction.
-- [`fase_b_config_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/fase_b_config_pca.py): **Phase B**: Temporal schedule $w(t)$ optimization across `gate_frac`, `n_partes`, and profile envelopes.
-- [`coleccion_datos_mlp_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/coleccion_datos_mlp_pca.py): **Phase C Data Collection**: Multi-axial 3D spherical sampling in PCA space.
-- [`train_and_search_mlp_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/train_and_search_mlp_pca.py): MLP architecture search and training.
-- [`run_gencolorbench_pca.py`](file:///home/jsantamaria/projects/Color_Subspace/Flux/run_gencolorbench_pca.py): Automated GenColorBench evaluation harness.
+- [`flux_core.py`](flux_core.py): Low-level core engine for FLUX (model loader, 2x2 patch pack/unpacking, flow-matching scheduler hooks).
+- [`inference.py`](inference.py): Standalone downstream targeted object color steering for arbitrary prompts.
+- [`utils.py`](utils.py): SAM-3 instance segmentation, sRGB $\leftrightarrow$ CIELAB colorimetry, and exact CIEDE2000 metric.
+- [`iscc_nbs.py`](iscc_nbs.py): ISCC-NBS Level 1 and Level 2 color dictionary.
+- [`model_pca.py`](model_pca.py): 15D continuous color featurizer and `MLPShiftPCA` inference wrapper.
+- [`fase_a_pca.py`](fase_a_pca.py): **Phase A**: Latent screening across 16 channels and PCA basis extraction.
+- [`fase_b_config_pca.py`](fase_b_config_pca.py): **Phase B**: Temporal schedule $w(t)$ optimization across `gate_frac`, `n_partes`, and profile envelopes.
+- [`coleccion_datos_mlp_pca.py`](coleccion_datos_mlp_pca.py): **Phase C Data Collection**: Multi-axial 3D spherical sampling in PCA space.
+- [`train_and_search_mlp_pca.py`](train_and_search_mlp_pca.py): MLP architecture search and training.
+- [`run_gencolorbench_pca.py`](run_gencolorbench_pca.py): Automated GenColorBench evaluation harness.
 
 ---
 

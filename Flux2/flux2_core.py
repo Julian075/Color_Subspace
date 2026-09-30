@@ -237,11 +237,7 @@ def resolve_local_model_path(model_id):
     candidate_cache_dirs = []
     if "HF_HOME" in os.environ:
         candidate_cache_dirs.append(os.environ["HF_HOME"])
-    candidate_cache_dirs.extend([
-        os.path.expanduser("~/.cache/huggingface"),
-        "/data/storage/users/jsantamaria/.cache/huggingface",
-        "/leonardo_work/AIFAC_S07_004/jsantamaria/.cache/huggingface",
-    ])
+    candidate_cache_dirs.append(os.path.expanduser("~/.cache/huggingface"))
 
     for hf_home in candidate_cache_dirs:
         hub_dir = os.path.join(hf_home, "hub")

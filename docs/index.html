@@ -967,19 +967,19 @@
         <div class="app-card">
           <h3>ColorTuning: Numerical Color Precision</h3>
           <p>
-            Closed-loop trajectory steering during denoising. Converts numerical color codes into proxy color names for prompt text conditioning, and applies residual ResMLP displacements inside SAM3 object masks to achieve exact CIELAB targets on GenColorBench.
+            Exploits the discovered orthogonal directions to steer generation towards exact numerical colors (HEX, RGB, CIELAB). Replaces the numerical code with an ISCC-NBS Level 2 proxy color name to initiate diffusion in the target chromatic basin. At a calibrated gate step $s$, predicts clean latent $\hat{z}_0$, segments the object via SAM, and measures mean CIELAB color. A lightweight ResMLP predicts the displacement along the color basis $(u_1, u_2, u_3)$, injected inside the object mask with a linearly decaying schedule.
           </p>
         </div>
         <div class="app-card">
           <h3>Saturation Control</h3>
           <p>
-            By traversing the corresponding latent directions, our method continuously modulates the saturation of the generated image (from 100% to 50% at 10% intervals), facilitating synthesis within narrower color gamuts without post-processing.
+            Continuously modulates the chroma of the generated scene or specific objects without altering semantic structure or hue. Preserves lightness $L_i$ and hue angle while scaling chroma to $(L_i, (1-\alpha)a_i, (1-\alpha)b_i)$ for reduction factor $\alpha \in [0, 1]$. Evaluates dense spatial displacements across the grid, synthesizing images within narrower color gamuts directly at generation time without post-processing.
           </p>
         </div>
         <div class="app-card">
           <h3>Color Transfer</h3>
           <p>
-            Given a text prompt and a reference image or color palette, our method leverages the discovered latent directions to match the color distribution while simultaneously generating the content specified by the prompt.
+            Steers the scene's color distribution to match either a discrete color palette or an exemplar reference image. Extracts principal colors via CIELAB $k$-means clustering with CIEDE2000 distance constraints, and uses the most chromatic color as a prompt proxy. At the gate step, semantic regions are identified and steered toward target palette colors via the latent color basis, faithfully reproducing the reference palette while generating the prompt content.
           </p>
         </div>
       </div>

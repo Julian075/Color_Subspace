@@ -31,8 +31,9 @@ if torch.cuda.is_available():
     torch.cuda.manual_seed_all(SEED)
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-DATASET_PATH = "/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/flux/pca_version/coleccion_datos_mlp_pca_out/dataset_mlp_pca_25k.csv"
-OUT_DIR = "/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/flux/pca_version/mlp_training_out"
+SCRIPT_DIR = Path(__file__).resolve().parent
+DATASET_PATH = str(SCRIPT_DIR / "coleccion_datos_mlp_pca_out" / "dataset_mlp_pca_25k.csv")
+OUT_DIR = str(SCRIPT_DIR / "mlp_training_out")
 
 
 # =========================== FEATURE ENGINEERING ===========================

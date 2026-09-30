@@ -1,69 +1,50 @@
-# Color Subspace Control for Z-Image
+# Latent Color Subspace Control for Z-Image
 
-Latent Color Subspace methodology adapted for **Z-Image** (Tongyi-MAI/Z-Image), a 6B parameter single-stream Diffusion Transformer (S³-DiT).
+This directory contains the full implementation of the **training-free Latent Color Subspace Control** method adapted specifically for **Z-Image** (`Tongyi-MAI/Z-Image`), a 6B parameter single-stream Diffusion Transformer (S³-DiT).
 
-## Architecture Specifications
+---
 
-| Parameter | Value |
-|---|---|
-| Model ID | `Tongyi-MAI/Z-Image` |
-| Architecture | S³-DiT (Scalable Single-Stream Diffusion Transformer) |
-| Parameters | 6B |
-| Latent Channels | 16 |
-| Spatial Downsampling | 8× (1024×1024 → 128×128) |
-| Latent Format | 4D Tensor `(B, 16, H/8, W/8)` — no patch packing |
-| Scheduler | `FlowMatchEulerDiscreteScheduler` (flow matching / rectified flow) |
-| Text Encoder | Qwen series (bilingual EN/ZH) |
-| Precision | `torch.bfloat16` |
-| Default Steps | 30 |
-| Default Guidance | 4.0 |
-| Negative Prompt | Supported |
+## ⚙️ Baseline Hyperparameters & Configuration
 
-## Pipeline Execution Order
+| Parameter | Z-Image |
+| :--- | :--- |
+| **Model ID** | `Tongyi-MAI/Z-Image` |
+| **Architecture** | S³-DiT (Scalable Single-Stream Diffusion Transformer) |
+| **Parameters** | 6B |
+| **Inference Steps** | **30 steps** |
+| **Guidance Scale** | **4.0** |
+| **Latent Channels ($C$)** | 16 channels |
+| **VAE Compression** | $8\times$ spatial downsampling (1024×1024 → 128×128) |
+| **Latent Format** | 4D Latent Tensor $(B, 16, H_{\text{lat}}, W_{\text{lat}})$ |
+| **Scheduler** | FlowMatchEulerDiscreteScheduler (flow matching / rectified flow) |
+| **Precision** | `torch.bfloat16` |
 
-```
-1. Phase A: Sensitivity Screening      (fase_a_pca.py)           → pca_axes.json
-2. Phase B: Temporal Envelope Search    (fase_b_config_pca.py)    → fase_b_winning_schedule.json
-3. Dense Calibration                    (experiment_dense_magnitude_curve.py) → dense_calibration_summary.json
-4. Phase C: Dataset Collection          (coleccion_datos_mlp_pca.py)  → dataset_mlp_pca_25k.csv
-5. Phase D: MLP Training & Search       (train_and_search_mlp_pca.py) → mlp_shift_pca_best.pt
-6. Phase E: Validation                  (val_mlp_shift_pca.py)        → validation_results.csv
-7. GenColorBench Evaluation             (run_gencolorbench_pca.py)    → manifest.csv
-```
+---
 
-## Quick Start
+## 📁 Repository Structure
 
-```bash
-# Phase A: Characterize Z-Image's 16D latent color subspace
-python fase_a_pca.py --parallel
+- [`inference.py`](inference.py): Standalone downstream targeted object color steering for arbitrary prompts.
+- [`zimage_core.py`](zimage_core.py): Low-level core engine for Z-Image (pipeline wrappers, latent steering, and temporal envelope execution).
+- [`utils.py`](utils.py): SAM-3 instance segmentation, sRGB $\leftrightarrow$ CIELAB colorimetry, robust color extraction, and CIEDE2000 metrics.
+- [`iscc_nbs.py`](iscc_nbs.py): ISCC-NBS Level 1 & Level 2 color name matcher.
+- [`model_pca.py`](model_pca.py): 15D continuous color featurizer and `ResMLP_256` inference wrapper.
+- [`fase_a_pca.py`](fase_a_pca.py): **Phase A**: Latent sensitivity screening and SVD/PCA decomposition into color axes.
+- [`fase_b_config_pca.py`](fase_b_config_pca.py): **Phase B**: Calibrated temporal envelope schedule search.
+- [`coleccion_datos_mlp_pca.py`](coleccion_datos_mlp_pca.py): **Phase C Data Collection**: Multi-axial sampling in PCA space across diverse scenes.
+- [`train_and_search_mlp_pca.py`](train_and_search_mlp_pca.py): ResMLP architecture search and training on the collected dataset.
+- [`run_gencolorbench_pca.py`](run_gencolorbench_pca.py): GenColorBench automated evaluation benchmark harness.
 
-# Phase B: Optimize temporal envelope schedule
-python fase_b_config_pca.py --parallel
+---
 
-# Dense Calibration: Map linear vs saturation magnitude zones
-python experiment_dense_magnitude_curve.py --parallel
+## 🚀 Inference Quickstart
 
-# Phase C: Collect 25k training samples
-python coleccion_datos_mlp_pca.py --parallel
-
-# Phase D: Train ResMLP-256 shift predictor
-python train_and_search_mlp_pca.py
-
-# Phase E: Validate closed-loop color control
-python val_mlp_shift_pca.py
-
-# Run GenColorBench benchmark
-python run_gencolorbench_pca.py --auto-multi-gpu --task ncu
-
-# Or run the full pipeline queue:
-python run_zimage_pipeline_queue.py --gpu 0
-```
-
-## Dependencies
+Run closed-loop object color steering with an arbitrary prompt and target color:
 
 ```bash
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
-pip install git+https://github.com/huggingface/diffusers
-pip install transformers>=4.45.0 accelerate safetensors sentencepiece protobuf
-pip install numpy pandas matplotlib scikit-image pillow
+python inference.py \
+    --prompt "a photo of a sports car parked on a mountain road" \
+    --target-color "#E0115F" \
+    --object "car" \
+    --device "cuda:0"
 ```
+

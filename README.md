@@ -33,7 +33,13 @@
 
 ## 📖 Overview
 
-Variational autoencoders (VAEs) are a key part of modern text-to-image models, which generate images within their latent space. VAEs are known to disentangle the main factors of variation in the data, and color is known to be one of the most structured of these in natural images: decorrelating it yields one luminance axis and two opponent-color axes. Color should therefore be expected to emerge as a distinct factor in the VAE latent space. Yet how these latent spaces represent color remains largely unexplored. In this work, we show that the VAEs of text-to-image models share a color subspace aligned with brightness and opponent-colors. Through a linear approximation of the encoder and targeted latent steering, we find this subspace consistently across a broad range of VAEs, from SD1.5 to FLUX.2 and Z-Image. Building on this characterization, we propose three applications: *ColorTuning*, which achieves state-of-the-art in precise numerical color generation on the fine-grained CSS3/X11 system of GenColorBench, *saturation control*, to adjust the global chromatic intensity, and *color transfer*, to change the palette to match a reference.
+Variational autoencoders (VAEs) are a key component of modern text-to-image diffusion models, generating images directly within their latent space. While VAEs are known to disentangle major factors of variation in natural image statistics—yielding one luminance axis and two opponent-color axes—the exact representation and controllability of color in these latent spaces has remained largely unexplored.
+
+This work shows that across diverse modern text-to-image architectures (from SD1.5 and SDXL to FLUX.1/2, SD3/3.5, and Z-Image), VAEs share a low-dimensional **color subspace** aligned with perceptual brightness and opponent-colors. Through a linear approximation of the encoder and targeted latent sensitivity screening, we recover this orthogonal basis ($\mathbf{u}_1 \leftrightarrow L^*, \mathbf{u}_2 \leftrightarrow a^*, \mathbf{u}_3 \leftrightarrow b^*$). Leveraging this characterization, our training-free closed-loop steering framework enables three generation-time applications:
+
+1. **ColorTuning (Numerical Color Precision)**: Steers object generation to follow exact numerical color specifications (HEX, RGB, CIELAB). By substituting numerical codes with ISCC-NBS Level 2 proxy names for prompt conditioning, predicting clean latents $\hat{z}_0$ at a calibrated gate step, and mapping residual errors through a lightweight ResMLP, ColorTuning achieves state-of-the-art accuracy on GenColorBench (CSS3/X11 and ISCC-L3).
+2. **Saturation Control**: Continuously modulates the chroma of synthesized scenes or targeted objects without altering their semantic structure or hue. By scaling chroma $(1-\alpha)(a^*, b^*)$ while preserving lightness $L^*$, dense spatial latent displacements synthesize images within narrower color gamuts directly at generation time without post-processing.
+3. **Color Transfer**: Matches target color distributions specified by discrete color palettes or exemplar reference images. Principal colors are extracted via CIELAB $k$-means clustering, prompt conditioning is initialized with the most chromatic color proxy, and semantic regions identified at the gate step are steered toward target palette colors via the latent color basis.
 
 ---
 
@@ -77,9 +83,9 @@ Each model directory contains:
 
 ## 🚀 Inference Quickstart: Three Application Modes
 
-### Mode 1: Precise Numerical Color Generation
+### Mode 1: ColorTuning (Numerical Color Precision)
 
-Generate objects steered to exact Hex, RGB, or CIELAB color specifications. The parser automatically extracts the object and color target from the prompt, converts the prompt color to a natural language proxy for text conditioning, and applies closed-loop latent steering.
+Steers object generation towards exact numerical colors (HEX, RGB, CIELAB). The text prompt replaces numerical codes with an ISCC-NBS Level 2 color name proxy so the diffusion trajectory begins in the target color neighborhood. At the calibrated gate step, the clean latent $\hat{z}_0$ is predicted, segmented with SAM, and measured in CIELAB. A lightweight ResMLP predicts the displacement along the discovered color basis $(u_1, u_2, u_3)$, which is added inside the object mask with a linearly decaying schedule:
 
 ```bash
 # Example with FLUX.1-dev using Hex code
@@ -101,7 +107,7 @@ python SDXL/inference.py \
 
 ### Mode 2: Color Transfer (Palettes & Reference Images)
 
-Steers the scene's color distribution toward a design palette or photographic reference image. The script extracts dominant and focal color clusters, detects semantic regions via SAM, and applies independent latent shifts across zones:
+Steers the scene's color distribution toward a discrete color palette (e.g., HEX values) or an exemplar reference image. When using an image, principal colors are extracted via $k$-means clustering in CIELAB with CIEDE2000 distance constraints. An ISCC-NBS Level 2 proxy initializes the trajectory in the appropriate chromatic basin, and semantic regions identified at the gate step are steered toward target palette colors via the latent color basis:
 
 ```bash
 # Color transfer from a reference image or palette card
@@ -118,7 +124,7 @@ python color_transfer/flux_multizone_color_transfer.py \
 
 ### Mode 3: Saturation Control
 
-Modulates image saturation continuously directly during generation. Rather than a destructive uniform translation, this method contracts chroma ($a^*, b^*$) pixel-by-pixel toward neutral gray while preserving lightness $L^*$:
+Continuously modulates scene or object chroma without altering semantic structure or hue. Text prompts proceed unconstrained until the gate step. At step $s$, predicted clean latent $\hat{z}_0$ is decoded to CIELAB $(L_i, a_i, b_i)$. For chroma reduction factor $\alpha \in [0, 1]$, lightness and hue angle are preserved while scaling chroma to $(L_i, (1-\alpha)a_i, (1-\alpha)b_i)$. The pretrained ResMLP evaluates dense spatial displacements across the grid to synthesize images within narrower color gamuts directly during generation:
 
 ```bash
 # Continuously modulate scene saturation by 40%

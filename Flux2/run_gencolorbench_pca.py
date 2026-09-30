@@ -470,7 +470,7 @@ def launch_auto_multi_gpu(args: argparse.Namespace) -> None:
 # =============================================================================
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run GenColorBench Generation with FLUX PCA MLP")
-    parser.add_argument("--prompts-dir", type=str, default="/leonardo_work/AIFAC_S07_004/jsantamaria/projects/colorspace/gencolorbench/mini_bench_prompts")
+    parser.add_argument("--prompts-dir", type=str, default="./gencolorbench/mini_bench_prompts")
     parser.add_argument("--output-dir", type=str, default="./gencolorbench_flux_pca_out")
     parser.add_argument("--mlp-shift-ckpt", type=str, default=DEFAULT_CKPT_PATH)
     parser.add_argument("--pattern", type=str, default="ncu_*.csv", help="Glob pattern for benchmark tasks (e.g. 'ncu_*.csv' or '*.csv')")

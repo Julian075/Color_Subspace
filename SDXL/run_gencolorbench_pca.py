@@ -432,10 +432,10 @@ def run_benchmark_task(csv_path: str, out_dir: str, ckpt_path: str,
 
 def main():
     parser = argparse.ArgumentParser(description="GenColorBench Single-Forward In-Flight Evaluation for SDXL")
-    parser.add_argument("--prompt-dir", default="/data/140-1/users/jsantamaria/vae_exploration/gencolorbench/mini_bench_prompt")
+    parser.add_argument("--prompt-dir", default="./gencolorbench/mini_bench_prompts")
     parser.add_argument("--benchmark-csv", default=None)
     parser.add_argument("--task", default="ncu", choices=["ncu", "all", "cna", "coa", "ica", "moc", "iscc_l2"])
-    parser.add_argument("--out-dir", default="/data/140-1/users/jsantamaria/vae_exploration/results_paper/SDXL")
+    parser.add_argument("--out-dir", default="./gencolorbench_sdxl_out")
     parser.add_argument("--ckpt-path", default=DEFAULT_CKPT_PATH)
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--gpus", type=str, default=None, help="Comma-separated GPU IDs (e.g. '0,1,2,3,4,5')")

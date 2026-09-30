@@ -9,7 +9,7 @@ import torch
 from PIL import Image
 
 def _resolve_hf_snapshot(repo_id):
-    hf_home = os.environ.get("HF_HOME", "/leonardo_work/AIFAC_S07_004/jsantamaria/.cache/huggingface")
+    hf_home = os.environ.get("HF_HOME", os.path.expanduser("~/.cache/huggingface"))
     hub_dir = os.path.join(hf_home, "hub")
     repo_folder = f"models--{repo_id.replace('/', '--')}"
     repo_path = os.path.join(hub_dir, repo_folder)
