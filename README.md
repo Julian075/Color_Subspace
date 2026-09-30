@@ -2,7 +2,7 @@
 
 # ON COLOR ALIGNMENT IN VAE LATENT SPACES AND ITS APPLICATIONS
 
-[Julián Santamaria](https://julian075.github.io/)<sup>1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://www.jvazquez-corral.net/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>†1,2</sup>
+[Julián Santamaria](https://julian075.github.io/)<sup>†1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://www.jvazquez-corral.net/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>1,2</sup>
 
 <small>
 <sup>1</sup> Computer Vision Center (CVC), Barcelona, Spain &nbsp;|&nbsp;
@@ -33,13 +33,9 @@
 
 ## 📖 Overview
 
-Modern text-to-image diffusion models struggle to generate precise numerical colors (Hex, RGB, CIELAB) specified in textual prompts due to tokenizer limitations and chromatic entanglements. 
+Modern text-to-image diffusion models struggle with fine-grained numerical color specifications due to text tokenizer bottlenecks and chromatic entanglements. 
 
-**This repository introduces a training-free and model-agnostic framework that:**
-1. **Identifies the Color Subspace**: Uncovers 3 orthogonal principal axes ($u_1, u_2, u_3$) in the latent space of variational autoencoders (VAEs) that strongly align with perceptual CIELAB color dimensions ($b^*, a^*, L^*$).
-2. **Models Decoder Nonlinearity**: Trains a lightweight residual MLP (`MLPShiftPCA`) that maps source and target color coordinates $(C_i, C_t)$ into the exact latent displacement $(m_1, m_2, m_3)$ required to carry the target region to the target color.
-3. **Applies Closed-Loop In-Flight Steering**: At an early gate step $s$, predicts clean latent $\hat{z}_0$, segments the target object, measures its color in CIELAB, predicts the displacement, and smoothly injects the perturbation inside the object mask using a linearly decaying schedule.
-4. **Generalizes to Downstream Color Applications**: Extends seamlessly to multi-zone semantic color transfer (from color palettes or reference images) and spatially-adaptive gamut reduction / desaturation without retraining.
+This repository presents a training-free framework exploiting the natural organization of VAE latent spaces. By identifying an orthogonal color subspace aligned with perceptual CIELAB dimensions, latent trajectories are steered in-flight via lightweight residual mapping and calibrated temporal scheduling. This formulation naturally enables fine-grained numerical color steering, multi-zone semantic color transfer from palettes or reference images, and continuous spatially-adaptive gamut reduction without model retraining.
 
 ---
 
@@ -63,21 +59,21 @@ pip install -r requirements.txt
 
 ## 🏛️ Architecture Matrix & Pre-Calibrated Checkpoints
 
-All models share a standardized pipeline while honoring their specific latent dimensions and scheduling characteristics. Pre-calibrated checkpoints, PCA axes, and schedule configurations are provided in each architecture directory:
+All models share a standardized pipeline while honoring their specific latent dimensions and scheduling characteristics:
 
-| Architecture | Directory | Latent Channels ($C$) | VAE Compression & Scaling | Gate Fraction ($s/T$) | Optimal Schedule | Checkpoint Location |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **FLUX.1-dev** | [`Flux/`](Flux/) | 16 (2x2 packed $\to$ 64) | $8\times$, scale + shift | $0.50$ (step 14/28) | Ascending, ramp-down | `Flux/mlp_training_out/mlp_shift_pca_best.pt` |
-| **FLUX.2-dev** | [`Flux2/`](Flux2/) | 32 (2x2 packed $\to$ 128) | $8\times$, scale + shift | $0.65$ | Ascending, ramp-down | `Flux2/mlp_training_out/mlp_shift_pca_best.pt` |
-| **SD 3.0 Medium** | [`SD3/`](SD3/) | 16 | $8\times$, scale + shift | $0.75$ | Triangular ($n=3$) | `SD3/mlp_training_out/mlp_shift_pca_best.pt` |
-| **SD 3.5 Medium** | [`sd3.5_m/`](sd3.5_m/) | 16 | $8\times$, scale + shift | $0.60$ | Ascending, ramp-down | `sd3.5_m/mlp_training_out/mlp_shift_pca_best.pt` |
-| **SDXL 1.0** | [`SDXL/`](SDXL/) | 4 | $8\times$, `scale = 0.13025` | $0.40$ | Flat, single-step | `SDXL/mlp_training_out/mlp_shift_pca_best.pt` |
-| **Z-Image** | [`z-image/`](z-image/) | 16 | $8\times$, scale + shift | $0.60$ | Flat, single-step | `z-image/mlp_training_out/mlp_shift_pca_best.pt` |
+| Architecture | Directory | Latent Channels | Gate Fraction | Optimal Schedule |
+| :--- | :--- | :---: | :---: | :--- |
+| **FLUX.1-dev** | [`Flux/`](Flux/) | 16 | 0.50 | Ascending, ramp-down |
+| **FLUX.2-dev** | [`Flux2/`](Flux2/) | 32 | 0.65 | Ascending, ramp-down |
+| **SD 3.0 Medium** | [`SD3/`](SD3/) | 16 | 0.75 | Triangular ($n=3$) |
+| **SD 3.5 Medium** | [`sd3.5_m/`](sd3.5_m/) | 16 | 0.60 | Ascending, ramp-down |
+| **SDXL 1.0** | [`SDXL/`](SDXL/) | 4 | 0.40 | Flat, single-step |
+| **Z-Image** | [`z-image/`](z-image/) | 16 | 0.60 | Flat, single-step |
 
 Each model directory contains:
 * `fase_a_pca_out/pca_axes.json`: Discovered orthogonal color axes ($u_1, u_2, u_3$).
 * `fase_b_pca_out/fase_b_winning_schedule.json`: Calibrated temporal envelope parameters.
-* `mlp_training_out/mlp_shift_pca_best.pt`: Trained residual MLP mapping $(\Delta L^*, \Delta a^*, \Delta b^*)$ to latent displacements.
+* `mlp_training_out/mlp_shift_pca_best.pt`: Pre-trained residual MLP checkpoint.
 
 ---
 
