@@ -1,13 +1,4 @@
-"""
-UTILS.PY -- segmentacion (SAM3) + color (Lab, medicion robusta dentro de
-mascara) para el proyecto FLUX. Un solo archivo: las dos cosas se usan
-siempre juntas ac (segmentar el objeto, despues medir su color), no hay
-razon real para tenerlas separadas.
-
-Copiado (no importado) de las funciones equivalentes del proyecto SDXL --
-proyectos separados a proposito (ver discusion anterior): un cambio futuro
-en el pipeline de SDXL no rompe nada ac, y viceversa.
-"""
+"""UTILS: Instance segmentation (SAM3) and colorimetry utilities (CIELAB, CIEDE2000) for FLUX.2."""
 
 import math
 import os
@@ -31,11 +22,9 @@ def _resolve_hf_snapshot(repo_id):
     return repo_id
 
 
-# =========================== segmentacion: SAM3 ===========================
+# =========================== segmentation: SAM3 ===========================
 def setup_seg_models(device):
-    """SAM3: toma texto directo (ej. 'sphere'), no necesita que otro modelo
-    le pase una caja primero (~200 propuestas candidatas internas, tipo
-    DETR, filtradas por el propio texto)."""
+    """Initializes SAM3 instance segmentation processor and model."""
     from transformers import Sam3Processor, Sam3Model
     sam3_path = _resolve_hf_snapshot("facebook/sam3")
     try:
@@ -49,8 +38,7 @@ def setup_seg_models(device):
 
 @torch.no_grad()
 def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50):
-    """Segmenta todas las instancias del objeto que superen el umbral de confianza (min_score)
-    y combina sus mascaras en una mascara binaria unica (H, W)."""
+    """Segments all instances of the object meeting confidence threshold and returns union mask."""
     processor, model, device = seg_models["processor"], seg_models["model"], seg_models["device"]
 
     inputs = processor(images=img_pil, text=obj_word, return_tensors="pt").to(device)
@@ -59,20 +47,20 @@ def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50
         outputs, target_sizes=[(img_pil.size[1], img_pil.size[0])])[0]
 
     mask_np = None
-    # Intento 1: patron estandar de transformers (segmentation + segments_info)
+    # Strategy 1: standard transformers format (segmentation + segments_info)
     if isinstance(results, dict) and "segmentation" in results and results.get("segments_info"):
         seg = results["segmentation"]
         seg_np = seg.cpu().numpy() if hasattr(seg, "cpu") else np.array(seg)
-        # Seleccionar todas las instancias con score >= min_score
+        # Select all instances with score >= min_score
         valid_ids = [s["id"] for s in results["segments_info"] if s.get("score", 0.0) >= min_score]
         if valid_ids:
             mask_np = np.isin(seg_np, valid_ids)
         elif results["segments_info"]:
-            # Fallback al segmento con mayor score si ninguno supero min_score
+            # Fallback to segment with highest score
             best_seg = max(results["segments_info"], key=lambda s: s.get("score", 0.0))
             mask_np = (seg_np == best_seg["id"])
 
-    # Intento 2 (fallback para formato de tensores de mascaras directas)
+    # Strategy 2: fallback for direct mask tensor format
     if mask_np is None:
         if isinstance(results, dict) and "masks" in results:
             masks_tensor = results["masks"]
@@ -101,7 +89,7 @@ def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50
 
 @torch.no_grad()
 def get_individual_object_masks(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50):
-    """Devuelve una lista de mascaras individuales [mask_1, mask_2, ...] ordenadas por score."""
+    """Returns a list of individual instance masks sorted by confidence score."""
     processor, model, device = seg_models["processor"], seg_models["model"], seg_models["device"]
 
     inputs = processor(images=img_pil, text=obj_word, return_tensors="pt").to(device)
@@ -156,12 +144,10 @@ def rgb_to_lab_batch_np(rgb255):
     return np.stack([116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)], axis=1)
 
 
-# =========================== color: medicion robusta dentro de mascara ===========================
+# Color: robust measurement inside mask
 def measure_color_gt(img_uint8, mask_np, z_thresh=2.5):
-    """dominant_color completo -- PCA en el plano a*b* + recorte de
-    outliers por z-score sobre la proyeccion perpendicular al eje
-    principal. Devuelve (L,a,b) o None si la mascara viene vacia/
-    degenerada (ej. el objeto se rompio del todo con un shift extremo)."""
+    """Robust dominant color measurement via PCA in the a*b* plane with z-score outlier rejection.
+    Returns (L, a, b) or None if mask is degenerate."""
     pixels = img_uint8[mask_np.astype(bool)]
     if len(pixels) < 10:
         return None
@@ -192,7 +178,7 @@ def measure_color_gt(img_uint8, mask_np, z_thresh=2.5):
     return float(L_mean), float(a_mean), float(b_mean)
 
 
-# =========================== color: CIEDE2000 (deltaE perceptual real, para Fase C) ===========================
+# Color: CIEDE2000 perceptual difference
 def ciede2000(lab1, lab2):
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2
@@ -247,13 +233,13 @@ def ciede2000(lab1, lab2):
     return float(dE)
 
 
-# =========================== color: hex/rgb/lab -> Lab (parseo de targets) ===========================
+# =========================== Color: hex/rgb/lab -> CIELAB target parsing ===========================
 def rgb_to_lab_single_np(rgb255):
     return rgb_to_lab_batch_np(np.asarray(rgb255, dtype=np.float32).reshape(1, 3))[0]
 
 
 def lab_to_rgb_single_np(lab):
-    """Convierte un punto Lab (L, a, b) escalar a sRGB [0..255] uint8."""
+    """Converts a single (L*, a*, b*) CIELAB tuple to sRGB uint8 (r, g, b) in [0..255]."""
     L, a, b = float(lab[0]), float(lab[1]), float(lab[2])
     # Lab -> XYZ (D65, 2 deg)
     fy = (L + 16.0) / 116.0
@@ -287,53 +273,42 @@ def lab_to_rgb_single_np(lab):
 
 
 def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
-    """Parsea codigo hexadecimal a RGB (r, g, b).
-    Tolera 6 digitos (#RRGGBB o RRGGBB), 3 digitos (#RGB),
-    o errores comunes de tipeo (ej. 5 o 7 digitos completados o recortados a 6)."""
+    """Parses hexadecimal color string into RGB (r, g, b).
+    Supports 6-digit (#RRGGBB), 3-digit (#RGB), and common typing variations."""
     s = hex_code.strip().lstrip("#")
     if len(s) == 3:
         return (int(s[0] * 2, 16), int(s[1] * 2, 16), int(s[2] * 2, 16))
     if len(s) == 6:
         return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
     if len(s) == 5:
-        # Typo comun (ej #FFFF0 -> #FFFF00)
         s = s + "0"
         return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
     if len(s) > 6:
         return (int(s[0:2], 16), int(s[2:4], 16), int(s[4:6], 16))
-    raise ValueError(f"hex invalido: {hex_code!r}")
+    raise ValueError(f"Invalid hex code: {hex_code!r}")
 
 
 def parse_target_color(spec: Any) -> Tuple[float, float, float]:
-    """Acepta el color target en cualquier formato y devuelve SIEMPRE Lab (L, a, b):
-      - hex: '#0000FF', '0000FF', '#FFF', etc.
-      - rgb: (r, g, b) o [r, g, b] o 'rgb(0, 0, 255)' o '(0, 0, 255)' con valores 0..255
-      - lab: dict {'lab': (L, a, b)} o 'lab(53.2, 79.2, -107.9)'
-      - nombre comun de color: 'red', 'light blue', etc.
-    """
+    """Parses target color from multiple formats (hex, rgb, lab, named) and returns CIELAB tuple (L, a, b)."""
     if isinstance(spec, dict) and "lab" in spec:
         return tuple(float(x) for x in spec["lab"])
     if isinstance(spec, (tuple, list, np.ndarray)) and len(spec) == 3:
-        # Si los valores son float <= 1.0, verificar si es float rgb [0, 1]
         vals = [float(x) for x in spec]
         if all(0.0 <= v <= 1.0 for v in vals) and any(v > 0 and v < 1.0 for v in vals):
             vals = [v * 255.0 for v in vals]
         return tuple(rgb_to_lab_single_np(vals))
     if isinstance(spec, str):
         s = spec.strip()
-        # Formato lab(L, a, b)
         if s.lower().startswith("lab(") and s.endswith(")"):
             inner = s[4:-1]
             parts = [float(x.strip()) for x in inner.split(",") if x.strip()]
             if len(parts) == 3:
                 return (parts[0], parts[1], parts[2])
-        # Formato rgb(r, g, b)
         if s.lower().startswith("rgb(") and s.endswith(")"):
             inner = s[4:-1]
             parts = [float(x.strip()) for x in inner.split(",") if x.strip()]
             if len(parts) == 3:
                 return tuple(rgb_to_lab_single_np(parts))
-        # Formato "(r, g, b)" o "r, g, b"
         if (s.startswith("(") and s.endswith(")")) or (s.startswith("[") and s.endswith("]")):
             inner = s[1:-1]
             try:
@@ -342,11 +317,9 @@ def parse_target_color(spec: Any) -> Tuple[float, float, float]:
                     return tuple(rgb_to_lab_single_np(parts))
             except ValueError:
                 pass
-        # Formato hex (con o sin #)
         cleaned = s.lstrip("#")
         if re.fullmatch(r"[0-9a-fA-F]{3,8}", cleaned):
             return tuple(rgb_to_lab_single_np(hex_to_rgb(s)))
-        # Nombre de color conocido (CSS / PIL)
         try:
             from PIL import ImageColor
             rgb = ImageColor.getrgb(s)
@@ -354,12 +327,12 @@ def parse_target_color(spec: Any) -> Tuple[float, float, float]:
         except Exception:
             pass
 
-    raise ValueError(f"No se pudo interpretar el color target: {spec!r}")
+    raise ValueError(f"Unable to parse target color: {spec!r}")
 
 
-# =========================== Prompt & Object Extraction Agnosticos ===========================
+# =========================== Format-Agnostic Prompt & Object Extraction ===========================
 def extract_hex_from_text(text: str) -> Optional[str]:
-    """Busca codigos hexadecimales en el texto."""
+    """Finds hexadecimal color codes in text."""
     match = re.search(r"#[0-9a-fA-F]{3,8}\b", text)
     if match:
         return match.group(0)
@@ -370,16 +343,13 @@ def extract_hex_from_text(text: str) -> Optional[str]:
 
 
 def extract_color_spec_from_text(text: str) -> Optional[str]:
-    """Busca cualquier especificacion numerica de color en el texto (hex, rgb(...), lab(...))."""
-    # 1. Hex
+    """Finds numerical color specifications in text (hex, rgb, lab)."""
     hex_match = extract_hex_from_text(text)
     if hex_match:
         return hex_match
-    # 2. rgb(...)
     rgb_match = re.search(r"rgb\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", text, re.IGNORECASE)
     if rgb_match:
         return rgb_match.group(0)
-    # 3. lab(...)
     lab_match = re.search(r"lab\s*\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)", text, re.IGNORECASE)
     if lab_match:
         return lab_match.group(0)
@@ -387,16 +357,9 @@ def extract_color_spec_from_text(text: str) -> Optional[str]:
 
 
 def extract_object_from_text(text: str) -> str:
-    """Descubre dinamicamente el objeto objetivo a partir del prompt sin lista fija (hardcodeada).
-    Soporta los patrones de GenColorBench (NCU) y lenguaje natural abierto.
-    Ejemplos:
-      - 'A photo of a [obj] in the color #HEX' -> '[obj]'
-      - 'A [obj] colored with rgb(r, g, b)' -> '[obj]'
-      - 'a photo of a ceramic mug on a wooden desk' -> 'ceramic mug' / 'mug'
-    """
+    """Extracts target object from prompt text without fixed word lists."""
     clean_text = text.strip()
 
-    # Patron 1: GenColorBench NCU "A photo/rendering/etc of a/an <OBJ> in the color / with color / at color ..."
     match = re.search(
         r"(?:photo|rendering|picture|image|shot|drawing|illustration)?\s*(?:of)?\s*(?:a|an|the)\s+([a-zA-Z0-9_\-\s]+?)\s+(?:in\s+(?:the\s+)?color|with\s+(?:the\s+)?color|colored\s+(?:with|in|as)?|at\s+color|having\s+(?:the\s+)?color|painted\s+in)\b",
         clean_text,
@@ -408,7 +371,6 @@ def extract_object_from_text(text: str) -> str:
         if obj:
             return obj
 
-    # Patron 2: "A/An <OBJ> in/with/at <COLOR_SPEC>"
     match = re.search(
         r"(?:a|an|the)\s+([a-zA-Z0-9_\-\s]+?)\s+(?:in|with|at)\s+(?:#|rgb|lab)",
         clean_text,
@@ -419,7 +381,6 @@ def extract_object_from_text(text: str) -> str:
         if obj:
             return obj
 
-    # Patron 3: GenColorBench color al principio: "[Color] <OBJ> ..." o "A/An [Color] <OBJ> ..."
     match = re.search(
         r"(?:a|an|the)?\s*(?:#[0-9a-fA-F]{3,8}|rgb\([^\)]+\)|lab\([^\)]+\))\s+([a-zA-Z0-9_\-]+)",
         clean_text,
@@ -430,7 +391,6 @@ def extract_object_from_text(text: str) -> str:
         if obj:
             return obj
 
-    # Patron 4: "photo of a/an <OBJ> [context...]"
     match = re.search(
         r"(?:photo|rendering|picture|image|shot|drawing|illustration)\s+of\s+(?:a|an|the)\s+([a-zA-Z0-9_\-]+)",
         clean_text,
@@ -439,7 +399,6 @@ def extract_object_from_text(text: str) -> str:
     if match:
         return match.group(1).strip()
 
-    # Fallback: primera palabra sustantiva tras articulo
     match = re.search(r"\b(?:a|an|the)\s+([a-zA-Z0-9_\-]+)", clean_text, re.IGNORECASE)
     if match:
         candidate = match.group(1).strip().lower()
@@ -450,28 +409,24 @@ def extract_object_from_text(text: str) -> str:
 
 
 def clean_prompt_for_diffusion(prompt: str, color_name: str) -> str:
-    """Reemplaza codigos numericos de color en el prompt por un nombre semantico comprensible
-    por el text encoder del modelo de difusion."""
+    """Replaces numerical color codes in prompt with semantic color name for text encoder."""
     clean = prompt
-    # Reemplazar patrones de color numerico
+    # Replace numerical color patterns with color name
     clean = re.sub(r"#[0-9a-fA-F]{3,8}\b", color_name, clean)
     clean = re.sub(r"rgb\s*\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*\)", color_name, clean, flags=re.IGNORECASE)
     clean = re.sub(r"lab\s*\(\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*,\s*[-+]?\d*\.?\d+\s*\)", color_name, clean, flags=re.IGNORECASE)
 
-    # Suavizar frases sintacticas como "in the color blue" -> "colored blue" o "blue"
+    # Normalize phrasing such as "in the color blue" -> "colored blue"
     clean = re.sub(rf"\bin the color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
     clean = re.sub(rf"\bat color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
     clean = re.sub(rf"\bwith the color {re.escape(color_name)}\b", f"colored {color_name}", clean, flags=re.IGNORECASE)
     return clean
 
 
-# =========================== color: mapeo Lab -> nombre de color mas cercano ===========================
-# Mismo diseño que utils.py de SDXL: el modelo de texto a imagen no entiende
-# hex, asi que el color target preciso se traduce al NOMBRE CSS mas cercano
-# para armar el prompt, y la precision real la aporta despues el shift del
-# latente (que si usa el Lab exacto).
-CHROMA_THRESHOLD = 15.0   # por debajo se considera "casi sin tono" (achromatico)
-USE_FULL_COLOR_PALETTE = True   # True = todo ImageColor.colormap (~139 unicos tras dedup)
+# Color: CIELAB to nearest color name mapping
+# Maps numerical colors to nearest proxy name for text conditioning
+CHROMA_THRESHOLD = 15.0   # below this threshold considered achromatic
+USE_FULL_COLOR_PALETTE = True   # True = all ImageColor.colormap (~139 unique after dedup)
 
 CURATED_COLOR_NAMES = [
     "white", "maroon","beige","gray", "black", "red", "orange", "yellow", "purple", "blue",
@@ -480,8 +435,7 @@ CURATED_COLOR_NAMES = [
 
 
 def _build_color_names_table(use_full=USE_FULL_COLOR_PALETTE):
-    """Dedup por RGB (varios nombres CSS mapean al mismo color exacto, ej.
-    'cyan'/'aqua') -- se queda con el primero en el orden de la fuente."""
+    """Deduplicates CSS color names by RGB values."""
     from PIL import ImageColor
     names_source = ImageColor.colormap.keys() if use_full else CURATED_COLOR_NAMES
     seen_rgb = {}

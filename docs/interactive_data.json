@@ -1,0 +1,744 @@
+{
+  "colortuning": {
+    "banana": {
+      "name": "Ripe Banana",
+      "prompt": "A ripe banana on a kitchen countertop",
+      "type": "Distinct Hues",
+      "swatches": [
+        {
+          "hex": "#DC143C",
+          "rgb": [
+            220,
+            20,
+            60
+          ],
+          "img": "img/colortuning/banana/DC143C.webp",
+          "deltaE": 2.04,
+          "deltaC": 1.9,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#FF4500",
+          "rgb": [
+            255,
+            69,
+            0
+          ],
+          "img": "img/colortuning/banana/FF4500.webp",
+          "deltaE": 3.36,
+          "deltaC": 2.45,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#AB6B0E",
+          "rgb": [
+            171,
+            107,
+            14
+          ],
+          "img": "img/colortuning/banana/AB6B0E.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.68,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#64AB0E",
+          "rgb": [
+            100,
+            171,
+            14
+          ],
+          "img": "img/colortuning/banana/64AB0E.webp",
+          "deltaE": 1.32,
+          "deltaC": 0.91,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#DA70D6",
+          "rgb": [
+            218,
+            112,
+            214
+          ],
+          "img": "img/colortuning/banana/DA70D6.webp",
+          "deltaE": 1.8,
+          "deltaC": 2.23,
+          "deltaL": 0.82
+        },
+        {
+          "hex": "#1D49DB",
+          "rgb": [
+            29,
+            73,
+            219
+          ],
+          "img": "img/colortuning/banana/1D49DB.webp",
+          "deltaE": 2.28,
+          "deltaC": 2.34,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#AB0E48",
+          "rgb": [
+            171,
+            14,
+            72
+          ],
+          "img": "img/colortuning/banana/AB0E48.webp",
+          "deltaE": 3.6,
+          "deltaC": 1.68,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#0E89AB",
+          "rgb": [
+            14,
+            137,
+            171
+          ],
+          "img": "img/colortuning/banana/0E89AB.webp",
+          "deltaE": 3.36,
+          "deltaC": 2.01,
+          "deltaL": 0.74
+        }
+      ]
+    },
+    "dog": {
+      "name": "Golden Retriever Dog",
+      "prompt": "A dog sitting calmly in an indoor room",
+      "type": "Distinct Hues",
+      "swatches": [
+        {
+          "hex": "#0F52BA",
+          "rgb": [
+            15,
+            82,
+            186
+          ],
+          "img": "img/colortuning/dog/0F52BA.webp",
+          "deltaE": 3.0,
+          "deltaC": 2.01,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#800020",
+          "rgb": [
+            128,
+            0,
+            32
+          ],
+          "img": "img/colortuning/dog/800020.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.57,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#C46C08",
+          "rgb": [
+            196,
+            108,
+            8
+          ],
+          "img": "img/colortuning/dog/C46C08.webp",
+          "deltaE": 1.56,
+          "deltaC": 1.13,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#315BDB",
+          "rgb": [
+            49,
+            91,
+            219
+          ],
+          "img": "img/colortuning/dog/315BDB.webp",
+          "deltaE": 2.76,
+          "deltaC": 1.9,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#B8860B",
+          "rgb": [
+            184,
+            134,
+            11
+          ],
+          "img": "img/colortuning/dog/B8860B.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.79,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#008F86",
+          "rgb": [
+            0,
+            143,
+            134
+          ],
+          "img": "img/colortuning/dog/008F86.webp",
+          "deltaE": 2.52,
+          "deltaC": 2.45,
+          "deltaL": 0.82
+        },
+        {
+          "hex": "#72AD55",
+          "rgb": [
+            114,
+            173,
+            85
+          ],
+          "img": "img/colortuning/dog/72AD55.webp",
+          "deltaE": 3.6,
+          "deltaC": 1.68,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#EDA6A6",
+          "rgb": [
+            237,
+            166,
+            166
+          ],
+          "img": "img/colortuning/dog/EDA6A6.webp",
+          "deltaE": 2.88,
+          "deltaC": 2.34,
+          "deltaL": 0.9
+        }
+      ]
+    },
+    "flower": {
+      "name": "Cosmos Flower",
+      "prompt": "A blooming flower in a lush garden",
+      "type": "Monochromatic Variations",
+      "swatches": [
+        {
+          "hex": "#821E5F",
+          "rgb": [
+            130,
+            30,
+            95
+          ],
+          "img": "img/colortuning/flower/821E5F.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.68,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#AA277C",
+          "rgb": [
+            170,
+            39,
+            124
+          ],
+          "img": "img/colortuning/flower/AA277C.webp",
+          "deltaE": 1.2,
+          "deltaC": 2.34,
+          "deltaL": 1.3
+        },
+        {
+          "hex": "#376C37",
+          "rgb": [
+            55,
+            108,
+            55
+          ],
+          "img": "img/colortuning/flower/376C37.webp",
+          "deltaE": 1.2,
+          "deltaC": 1.9,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#45B045",
+          "rgb": [
+            69,
+            176,
+            69
+          ],
+          "img": "img/colortuning/flower/45B045.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.13,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#DE219C",
+          "rgb": [
+            222,
+            33,
+            156
+          ],
+          "img": "img/colortuning/flower/DE219C.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.35,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#EF3EB1",
+          "rgb": [
+            239,
+            62,
+            177
+          ],
+          "img": "img/colortuning/flower/EF3EB1.webp",
+          "deltaE": 2.04,
+          "deltaC": 2.01,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#60B560",
+          "rgb": [
+            96,
+            181,
+            96
+          ],
+          "img": "img/colortuning/flower/60B560.webp",
+          "deltaE": 2.16,
+          "deltaC": 0.91,
+          "deltaL": 1.38
+        },
+        {
+          "hex": "#99E099",
+          "rgb": [
+            153,
+            224,
+            153
+          ],
+          "img": "img/colortuning/flower/99E099.webp",
+          "deltaE": 3.24,
+          "deltaC": 1.68,
+          "deltaL": 0.66
+        }
+      ]
+    },
+    "vase": {
+      "name": "Artisan Ceramic Vase",
+      "prompt": "A decorative ceramic vase placed on a display shelf",
+      "type": "Monochromatic Variations",
+      "swatches": [
+        {
+          "hex": "#544F4F",
+          "rgb": [
+            84,
+            79,
+            79
+          ],
+          "img": "img/colortuning/vase/544F4F.webp",
+          "deltaE": 2.88,
+          "deltaC": 2.23,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#706161",
+          "rgb": [
+            112,
+            97,
+            97
+          ],
+          "img": "img/colortuning/vase/706161.webp",
+          "deltaE": 3.12,
+          "deltaC": 1.9,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#B21F1F",
+          "rgb": [
+            178,
+            31,
+            31
+          ],
+          "img": "img/colortuning/vase/B21F1F.webp",
+          "deltaE": 1.32,
+          "deltaC": 1.13,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#B51919",
+          "rgb": [
+            181,
+            25,
+            25
+          ],
+          "img": "img/colortuning/vase/B51919.webp",
+          "deltaE": 1.68,
+          "deltaC": 2.45,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#887777",
+          "rgb": [
+            136,
+            119,
+            119
+          ],
+          "img": "img/colortuning/vase/887777.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.68,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#9E8F8F",
+          "rgb": [
+            158,
+            143,
+            143
+          ],
+          "img": "img/colortuning/vase/9E8F8F.webp",
+          "deltaE": 3.12,
+          "deltaC": 2.56,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#CF2525",
+          "rgb": [
+            207,
+            37,
+            37
+          ],
+          "img": "img/colortuning/vase/CF2525.webp",
+          "deltaE": 2.4,
+          "deltaC": 2.78,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#E64747",
+          "rgb": [
+            230,
+            71,
+            71
+          ],
+          "img": "img/colortuning/vase/E64747.webp",
+          "deltaE": 2.16,
+          "deltaC": 2.67,
+          "deltaL": 1.22
+        }
+      ]
+    },
+    "bedsheet": {
+      "name": "Bedroom Bedsheet",
+      "prompt": "A neatly made bed with smooth bedsheet and pillows",
+      "type": "Pastel Tones",
+      "swatches": [
+        {
+          "hex": "#DFE7FD",
+          "rgb": [
+            223,
+            231,
+            253
+          ],
+          "img": "img/colortuning/bedsheet/DFE7FD.webp",
+          "deltaE": 2.28,
+          "deltaC": 1.68,
+          "deltaL": 1.38
+        },
+        {
+          "hex": "#E2ECE9",
+          "rgb": [
+            226,
+            236,
+            233
+          ],
+          "img": "img/colortuning/bedsheet/E2ECE9.webp",
+          "deltaE": 2.16,
+          "deltaC": 1.9,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#FFF5BA",
+          "rgb": [
+            255,
+            245,
+            186
+          ],
+          "img": "img/colortuning/bedsheet/FFF5BA.webp",
+          "deltaE": 3.48,
+          "deltaC": 2.78,
+          "deltaL": 1.3
+        },
+        {
+          "hex": "#E9F59D",
+          "rgb": [
+            233,
+            245,
+            157
+          ],
+          "img": "img/colortuning/bedsheet/E9F59D.webp",
+          "deltaE": 3.84,
+          "deltaC": 2.12,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#FFF1E6",
+          "rgb": [
+            255,
+            241,
+            230
+          ],
+          "img": "img/colortuning/bedsheet/FFF1E6.webp",
+          "deltaE": 1.8,
+          "deltaC": 1.57,
+          "deltaL": 0.9
+        },
+        {
+          "hex": "#E2F0CB",
+          "rgb": [
+            226,
+            240,
+            203
+          ],
+          "img": "img/colortuning/bedsheet/E2F0CB.webp",
+          "deltaE": 2.76,
+          "deltaC": 2.56,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#FFB7B2",
+          "rgb": [
+            255,
+            183,
+            178
+          ],
+          "img": "img/colortuning/bedsheet/FFB7B2.webp",
+          "deltaE": 2.28,
+          "deltaC": 1.13,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#AEC6CF",
+          "rgb": [
+            174,
+            198,
+            207
+          ],
+          "img": "img/colortuning/bedsheet/AEC6CF.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.79,
+          "deltaL": 0.66
+        }
+      ]
+    },
+    "mug": {
+      "name": "Ceramic Coffee Mug",
+      "prompt": "A ceramic mug on a minimalist wooden table",
+      "type": "Pastel Tones",
+      "swatches": [
+        {
+          "hex": "#D19D7D",
+          "rgb": [
+            209,
+            157,
+            125
+          ],
+          "img": "img/colortuning/mug/D19D7D.webp",
+          "deltaE": 3.12,
+          "deltaC": 2.78,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#CCA981",
+          "rgb": [
+            204,
+            169,
+            129
+          ],
+          "img": "img/colortuning/mug/CCA981.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.9,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#F4C2C2",
+          "rgb": [
+            244,
+            194,
+            194
+          ],
+          "img": "img/colortuning/mug/F4C2C2.webp",
+          "deltaE": 1.8,
+          "deltaC": 1.46,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#C1E1C1",
+          "rgb": [
+            193,
+            225,
+            193
+          ],
+          "img": "img/colortuning/mug/C1E1C1.webp",
+          "deltaE": 1.92,
+          "deltaC": 1.9,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#8197CC",
+          "rgb": [
+            129,
+            151,
+            204
+          ],
+          "img": "img/colortuning/mug/8197CC.webp",
+          "deltaE": 1.32,
+          "deltaC": 1.24,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#81CCCC",
+          "rgb": [
+            129,
+            204,
+            204
+          ],
+          "img": "img/colortuning/mug/81CCCC.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.46,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#E6E6FA",
+          "rgb": [
+            230,
+            230,
+            250
+          ],
+          "img": "img/colortuning/mug/E6E6FA.webp",
+          "deltaE": 3.6,
+          "deltaC": 2.12,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#C3B1E1",
+          "rgb": [
+            195,
+            177,
+            225
+          ],
+          "img": "img/colortuning/mug/C3B1E1.webp",
+          "deltaE": 1.68,
+          "deltaC": 0.8,
+          "deltaL": 1.38
+        }
+      ]
+    }
+  },
+  "transfer": [
+    {
+      "id": "car_cyberpunk",
+      "prompt": "Vintage coupe car beside architectural pavilion",
+      "palette": "Cyberpunk Neon Palette",
+      "main_obj": "car",
+      "sec_obj": "pavilion",
+      "img": "img/color_transfer/car_cyberpunk.webp"
+    },
+    {
+      "id": "sailboat_sunset",
+      "prompt": "A sailboat gliding across calm ocean water at dusk",
+      "palette": "Sunset Gradient Palette",
+      "main_obj": "sailboat",
+      "sec_obj": "ocean water",
+      "img": "img/color_transfer/sailboat_sunset.webp"
+    },
+    {
+      "id": "jeep_forest",
+      "prompt": "An off-road jeep on a mountain trail surrounded by dense pines",
+      "palette": "Forest Botanical Palette",
+      "main_obj": "jeep",
+      "sec_obj": "pine trees",
+      "img": "img/color_transfer/jeep_forest.webp"
+    },
+    {
+      "id": "mug_terracotta",
+      "prompt": "A ceramic coffee mug on a table in front of a window",
+      "palette": "Terracotta Warm Palette",
+      "main_obj": "mug",
+      "sec_obj": "tabletop",
+      "img": "img/color_transfer/mug_terracotta.webp"
+    },
+    {
+      "id": "vase_nordic",
+      "prompt": "An artistic ceramic vase with dried floral stems in a bright studio",
+      "palette": "Nordic Pastel Palette",
+      "main_obj": "vase",
+      "sec_obj": "flowers",
+      "img": "img/color_transfer/vase_nordic.webp"
+    },
+    {
+      "id": "dog_ocean",
+      "prompt": "A playful golden retriever sitting in a modern living space",
+      "palette": "Ocean Abyss Palette",
+      "main_obj": "dog",
+      "sec_obj": "interior",
+      "img": "img/color_transfer/dog_ocean.webp"
+    }
+  ],
+  "gamut": {
+    "parrot": {
+      "prompt": "A colorful scarlet macaw parrot perched on a branch, vibrant plumage, jungle background",
+      "panels": [
+        {
+          "reduction": 0,
+          "label": "0% (Baseline)",
+          "img": "img/gamut/parrot_red0.webp"
+        },
+        {
+          "reduction": 10,
+          "label": "10%",
+          "img": "img/gamut/parrot_red10.webp"
+        },
+        {
+          "reduction": 20,
+          "label": "20%",
+          "img": "img/gamut/parrot_red20.webp"
+        },
+        {
+          "reduction": 30,
+          "label": "30%",
+          "img": "img/gamut/parrot_red30.webp"
+        },
+        {
+          "reduction": 40,
+          "label": "40%",
+          "img": "img/gamut/parrot_red40.webp"
+        },
+        {
+          "reduction": 50,
+          "label": "50%",
+          "img": "img/gamut/parrot_red50.webp"
+        }
+      ]
+    },
+    "vangogh": {
+      "prompt": "A landscape painting of swirling starry night sky in the style of Van Gogh",
+      "panels": [
+        {
+          "reduction": 0,
+          "label": "0% (Baseline)",
+          "img": "img/gamut/vangogh_red0.webp"
+        },
+        {
+          "reduction": 10,
+          "label": "10%",
+          "img": "img/gamut/vangogh_red10.webp"
+        },
+        {
+          "reduction": 20,
+          "label": "20%",
+          "img": "img/gamut/vangogh_red20.webp"
+        },
+        {
+          "reduction": 30,
+          "label": "30%",
+          "img": "img/gamut/vangogh_red30.webp"
+        },
+        {
+          "reduction": 40,
+          "label": "40%",
+          "img": "img/gamut/vangogh_red40.webp"
+        },
+        {
+          "reduction": 50,
+          "label": "50%",
+          "img": "img/gamut/vangogh_red50.webp"
+        }
+      ]
+    }
+  }
+}

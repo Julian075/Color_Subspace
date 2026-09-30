@@ -226,7 +226,8 @@ def run_color_steering_inference(
 
             state["mask_pixel"] = mask_pixel
             state["init_lab"] = init_lab
-            state["mask_latent"] = build_mask_latent(mask_pixel, latent_h, latent_w, device)
+            cur_lh, cur_lw = lat.shape[-2], lat.shape[-1]
+            state["mask_latent"] = build_mask_latent(mask_pixel, cur_lh, cur_lw, device)
 
             m_pred = mlp_shift(init_lab, target_lab)
             state["m_pred"] = m_pred

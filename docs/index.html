@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>On Color Alignment in VAE Latent Spaces and Its Applications</title>
+  <meta name="description" content="Discovering and leveraging the orthogonal color subspace in autoencoders for precise color control, color transfer, and gamut reduction in diffusion models.">
+
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      --primary-border: #c7d2fe;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-300: #cbd5e1;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --white: #ffffff;
+      --success: #10b981;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--white);
+      color: var(--slate-800);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+
+    a:hover {
+      color: var(--primary-hover);
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    .container-wide {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* Header / Hero */
+    header {
+      padding: 64px 0 40px;
+      text-align: center;
+      background: linear-gradient(180deg, var(--slate-50) 0%, var(--white) 100%);
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    .badge-venue {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 16px;
+      background: var(--primary-light);
+      border: 1px solid var(--primary-border);
+      color: var(--primary);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      margin-bottom: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    h1.paper-title {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      font-weight: 800;
+      line-height: 1.25;
+      letter-spacing: -0.025em;
+      color: var(--slate-900);
+      max-width: 960px;
+      margin: 0 auto 24px;
+    }
+
+    .authors-list {
+      font-size: 1.05rem;
+      font-weight: 500;
+      margin-bottom: 12px;
+      line-height: 2;
+    }
+
+    .authors-list a {
+      color: var(--slate-900);
+      font-weight: 600;
+      border-bottom: 1px dotted var(--slate-400);
+    }
+
+    .authors-list a:hover {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .affiliations {
+      font-size: 0.9rem;
+      color: var(--slate-600);
+      margin-bottom: 28px;
+      line-height: 1.8;
+    }
+
+    .affiliations sup {
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .links-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background-color: var(--slate-900);
+      color: var(--white);
+      border: 1px solid var(--slate-900);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary:hover {
+      background-color: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-outline {
+      background-color: var(--white);
+      color: var(--slate-800);
+      border: 1px solid var(--slate-300);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-outline:hover {
+      background-color: var(--slate-50);
+      border-color: var(--slate-400);
+      color: var(--slate-900);
+      transform: translateY(-1px);
+    }
+
+    /* Teaser Section */
+    .teaser-section {
+      padding: 48px 0 64px;
+    }
+
+    .teaser-figure {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-md);
+      overflow: hidden;
+    }
+
+    .teaser-figure img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      display: block;
+    }
+
+    .teaser-caption {
+      margin-top: 16px;
+      font-size: 0.95rem;
+      color: var(--slate-700);
+      text-align: justify;
+      line-height: 1.6;
+    }
+
+    /* Content Sections */
+    section {
+      padding: 56px 0;
+      border-top: 1px solid var(--slate-200);
+    }
+
+    .section-header {
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .section-tag {
+      font-size: 0.8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .section-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: var(--slate-900);
+    }
+
+    .section-desc {
+      font-size: 1.05rem;
+      color: var(--slate-600);
+      max-width: 780px;
+      margin: 12px auto 0;
+    }
+
+    /* Abstract Card */
+    .abstract-card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      font-size: 1.02rem;
+      color: var(--slate-700);
+      line-height: 1.75;
+      text-align: justify;
+    }
+
+    /* Section 1: Latent Space Analysis */
+    .tabs-nav {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .tab-btn {
+      padding: 8px 18px;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-300);
+      border-radius: 9999px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab-btn:hover {
+      background: var(--slate-200);
+    }
+
+    .tab-btn.active {
+      background: var(--primary);
+      color: var(--white);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .model-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    .model-card img {
+      max-width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      display: block;
+      margin: 0 auto;
+    }
+
+    .model-card-desc {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: var(--slate-600);
+      text-align: center;
+    }
+
+    /* Section 2: Qualitative Overview */
+    .app-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    .app-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .app-card-badge {
+      display: inline-block;
+      align-self: flex-start;
+      padding: 4px 10px;
+      background: var(--primary-light);
+      color: var(--primary);
+      font-size: 0.75rem;
+      font-weight: 700;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 12px;
+    }
+
+    .app-card h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 8px;
+    }
+
+    .app-card p {
+      font-size: 0.95rem;
+      color: var(--slate-600);
+      line-height: 1.6;
+    }
+
+    .paper-figure-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 32px;
+    }
+
+    .paper-figure-card img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      display: block;
+    }
+
+    .paper-figure-card .caption {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      color: var(--slate-600);
+      line-height: 1.55;
+    }
+
+    /* Interactive Demo Section */
+    .demo-container {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .demo-nav {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-bottom: 28px;
+      border-bottom: 1px solid var(--slate-200);
+      padding-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .demo-nav-btn {
+      padding: 10px 20px;
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-md);
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .demo-nav-btn:hover {
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    .demo-nav-btn.active {
+      background: var(--primary);
+      color: var(--white);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .demo-panel {
+      display: none;
+    }
+
+    .demo-panel.active {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    /* ColorTuning Demo Layout */
+    .colortuning-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    @media (max-width: 860px) {
+      .colortuning-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .prompt-selector-group {
+      margin-bottom: 20px;
+    }
+
+    .selector-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--slate-500);
+      margin-bottom: 8px;
+      display: block;
+    }
+
+    .prompt-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .prompt-pill {
+      padding: 8px 14px;
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: 6px;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .prompt-pill:hover {
+      background: var(--slate-100);
+    }
+
+    .prompt-pill.active {
+      background: var(--slate-900);
+      color: var(--white);
+      border-color: var(--slate-900);
+    }
+
+    .active-prompt-box {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-left: 4px solid var(--primary);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-size: 0.95rem;
+      color: var(--slate-800);
+      margin-bottom: 24px;
+      font-style: italic;
+    }
+
+    .swatches-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .swatch-card {
+      background: var(--white);
+      border: 2px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 10px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .swatch-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .swatch-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-border);
+      background: var(--primary-light);
+    }
+
+    .swatch-circle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 0, 0, 0.15);
+      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    .swatch-hex {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .preview-box {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-md);
+      text-align: center;
+    }
+
+    .preview-image-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #111;
+    }
+
+    .preview-image-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: opacity 0.2s ease;
+    }
+
+    .metrics-bar {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      padding: 12px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+    }
+
+    .metric-item {
+      text-align: center;
+    }
+
+    .metric-val {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .metric-lbl {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      font-weight: 600;
+      color: var(--slate-500);
+    }
+
+    /* Transfer Demo Layout */
+    .transfer-demo-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .transfer-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .transfer-pill {
+      padding: 10px 16px;
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--slate-700);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .transfer-pill:hover {
+      background: var(--slate-100);
+    }
+
+    .transfer-pill.active {
+      background: var(--primary);
+      color: var(--white);
+      border-color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .transfer-display-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .transfer-display-card img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      display: block;
+    }
+
+    .transfer-meta {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      font-size: 0.92rem;
+      color: var(--slate-700);
+      border-top: 1px solid var(--slate-200);
+      padding-top: 12px;
+    }
+
+    /* Gamut Demo Layout */
+    .gamut-demo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 24px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .gamut-slider-wrap {
+      width: 100%;
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .slider-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--slate-600);
+      margin-top: 8px;
+    }
+
+    input[type=range] {
+      width: 100%;
+      accent-color: var(--primary);
+      height: 6px;
+      cursor: pointer;
+    }
+
+    .gamut-preview-card {
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      box-shadow: var(--shadow-md);
+      width: 100%;
+    }
+
+    .gamut-preview-card img {
+      width: 100%;
+      height: auto;
+      border-radius: var(--radius-md);
+      display: block;
+    }
+
+    /* BibTeX */
+    .bibtex-box {
+      background: var(--slate-900);
+      color: var(--slate-100);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      overflow-x: auto;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--slate-700);
+      color: var(--white);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: var(--primary);
+    }
+
+    /* Footer */
+    footer {
+      padding: 40px 0;
+      text-align: center;
+      color: var(--slate-500);
+      font-size: 0.88rem;
+      border-top: 1px solid var(--slate-200);
+      background: var(--slate-50);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Header -->
+  <header>
+    <div class="container">
+      <div class="badge-venue">
+        <i class="fa-solid fa-flask"></i> Research Paper &middot; ICLR 2027
+      </div>
+
+      <h1 class="paper-title">ON COLOR ALIGNMENT IN VAE LATENT SPACES<br>AND ITS APPLICATIONS</h1>
+
+      <div class="authors-list">
+        <a href="https://julian075.github.io/" target="_blank">Julián Santamaria</a><sup>1,2</sup> &nbsp;&middot;&nbsp;
+        <a href="https://wangkai930418.github.io/" target="_blank">Kai Wang</a><sup>3,4</sup> &nbsp;&middot;&nbsp;
+        <a href="https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en" target="_blank">Jesús Malo</a><sup>5</sup> &nbsp;&middot;&nbsp;
+        <a href="https://www.jvazquez-corral.net/" target="_blank">Javier Vazquez-Corral</a><sup>1,2</sup> &nbsp;&middot;&nbsp;
+        <a href="https://sites.google.com/view/alex-gomez-villa" target="_blank">Alexandra Gomez-Villa</a><sup>&dagger;1,2</sup>
+      </div>
+
+      <div class="affiliations">
+        <sup>1</sup> Computer Vision Center (CVC), Barcelona, Spain &nbsp;|&nbsp;
+        <sup>2</sup> Universitat Autònoma de Barcelona, Barcelona, Spain<br>
+        <sup>3</sup> City University of Hong Kong (Dongguan), China &nbsp;|&nbsp;
+        <sup>4</sup> City University of Hong Kong, China<br>
+        <sup>5</sup> Universitat de València, Spain<br>
+        <small><sup>&dagger;</sup> Corresponding author</small>
+      </div>
+
+      <div class="links-row">
+        <a href="https://arxiv.org/abs/placeholder" class="btn btn-primary" target="_blank">
+          <i class="fa-regular fa-file-pdf"></i> Paper (arXiv)
+        </a>
+        <a href="https://github.com/julian075/Color_Subspace" class="btn btn-outline" target="_blank">
+          <i class="fa-brands fa-github"></i> GitHub Code
+        </a>
+        <a href="#interactive-demo" class="btn btn-outline">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> Interactive Demo
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Teaser Figure -->
+  <div class="container teaser-section">
+    <div class="teaser-figure">
+      <img src="img/teaser.webp" alt="On Color Alignment in VAE Latent Spaces and Its Applications">
+      <p class="teaser-caption">
+        <strong>Overview of Color Alignment and Applications.</strong> Across diverse modern diffusion architectures (FLUX, FLUX.2, SD3, SD3.5, SDXL, PixArt, Z-Image), VAE latent representations inherently organize chromaticity along a low-dimensional, orthogonal color subspace. By characterizing these latent directions, our closed-loop steering framework enables precise numerical color control (ColorTuning), multi-zone semantic color transfer from palettes or photographic references, and continuous spatially-adaptive gamut reduction directly at generation time without retraining.
+      </p>
+    </div>
+  </div>
+
+  <!-- Abstract Section -->
+  <section id="abstract">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Overview</span>
+        <h2 class="section-title">Abstract</h2>
+      </div>
+      <div class="abstract-card">
+        Variational autoencoders (VAEs) are a fundamental backbone of modern text-to-image models, which generate images within their latent space. VAEs are known to disentangle the main factors of variation in natural image statistics: decorrelating them yields one luminance axis and two opponent-color axes. Color should therefore be expected to emerge as a distinct factor in the VAE latent space. Yet how these latent spaces represent color remains largely unexplored. In this work, we show that the VAEs of text-to-image models share an intrinsic color subspace aligned with brightness and opponent colors. Through a linear approximation of the encoder and targeted latent steering, we recover this subspace consistently across a broad range of VAEs, from SD1.5 to FLUX.2 and Z-Image. Building on this characterization, we propose three generation-time applications: <strong>ColorTuning</strong>, which achieves state-of-the-art in precise numerical color generation on GenColorBench; <strong>Multi-Zone Semantic Color Transfer</strong>, to steer scene palettes to match reference swatches or photographs; and <strong>Spatially-Adaptive Gamut Reduction</strong>, to continuously modulate chromatic intensity without hue cancellation.
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 1: Color in Autoencoders Latent Space -->
+  <section id="latent-color-subspace">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Foundations</span>
+        <h2 class="section-title">Color in Autoencoder Latent Spaces</h2>
+        <p class="section-desc">
+          Traversing principal latent directions in pretrained VAEs reveals an opponent-color plane and brightness axis that emerge spontaneously without explicit color supervision.
+        </p>
+      </div>
+
+      <!-- Model Tabs -->
+      <div class="tabs-nav">
+        <button class="tab-btn active" onclick="selectModelTab('flux')">FLUX.1-dev</button>
+        <button class="tab-btn" onclick="selectModelTab('flux2')">FLUX.2-dev</button>
+        <button class="tab-btn" onclick="selectModelTab('sd3')">Stable Diffusion 3</button>
+        <button class="tab-btn" onclick="selectModelTab('sdxl')">SDXL 1.0</button>
+      </div>
+
+      <div id="tab-flux" class="tab-content active">
+        <div class="model-card">
+          <img src="img/latent_ch_mod/FLUX_v2.webp" alt="FLUX.1 Latent Channel Traversals">
+          <p class="model-card-desc">
+            <strong>FLUX.1-dev (16 latent channels):</strong> Perturbing leading latent directions spans an orthogonal opponent-color plane (yellow-blue vs. green-red) and independent luminance control while faithfully preserving high-frequency image structure.
+          </p>
+        </div>
+      </div>
+
+      <div id="tab-flux2" class="tab-content">
+        <div class="model-card">
+          <img src="img/latent_ch_mod/FLUX_2_v2.webp" alt="FLUX.2 Latent Channel Traversals">
+          <p class="model-card-desc">
+            <strong>FLUX.2-dev (32 latent channels):</strong> Even with higher dimensional latent spaces, singular vector analysis recovers the same canonical chromatic organization, demonstrating model-agnostic universality across generations.
+          </p>
+        </div>
+      </div>
+
+      <div id="tab-sd3" class="tab-content">
+        <div class="model-card">
+          <img src="img/latent_ch_mod/SD3_v2.webp" alt="SD3 Latent Channel Traversals">
+          <p class="model-card-desc">
+            <strong>Stable Diffusion 3 (16 latent channels):</strong> Leading latent components isolate opponent-color transitions across natural scenes without affecting spatial geometry.
+          </p>
+        </div>
+      </div>
+
+      <div id="tab-sdxl" class="tab-content">
+        <div class="model-card">
+          <img src="img/latent_ch_mod/SDXL_v2.webp" alt="SDXL Latent Channel Traversals">
+          <p class="model-card-desc">
+            <strong>SDXL (4 latent channels):</strong> In compact 4-channel latents, color information aligns directly with dominant channels, confirming that efficient image compression inherently isolates chromaticity.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 2: Qualitative Applications -->
+  <section id="applications">
+    <div class="container-wide">
+      <div class="section-header">
+        <span class="section-tag">Qualitative Results</span>
+        <h2 class="section-title">Further Color Applications During Generation</h2>
+        <p class="section-desc">
+          Leveraging the discovered color subspace enables diverse generation-time applications using the exact same underlying representation.
+        </p>
+      </div>
+
+      <div class="app-cards-grid">
+        <div class="app-card">
+          <span class="app-card-badge">Application 1</span>
+          <h3>Precise Numerical Color Tuning</h3>
+          <p>
+            Closed-loop trajectory steering during denoising. Converts numerical color codes into proxy color names for prompt text conditioning, and applies residual ResMLP displacements inside SAM3 object masks to achieve exact CIELAB targets (&Delta;E<sub>00</sub> &lt; 5.0).
+          </p>
+        </div>
+        <div class="app-card">
+          <span class="app-card-badge">Application 2</span>
+          <h3>Multi-Zone Semantic Color Transfer</h3>
+          <p>
+            Extracts dominant and focal color clusters from reference palette swatches or photographs. Segments the scene into semantic zones and applies independent latent shifts to match the reference distribution without color bleeding.
+          </p>
+        </div>
+        <div class="app-card">
+          <span class="app-card-badge">Application 3</span>
+          <h3>Spatially-Adaptive Gamut Reduction</h3>
+          <p>
+            Modulates image saturation toward narrower color gamuts pixel-by-pixel. Contracts chroma coordinates (a*, b*) toward neutral gray while preserving lightness (L*), eliminating the complementary hue cancellations of uniform shifts.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- Section 3: Interactive Demonstrations -->
+  <section id="interactive-demo">
+    <div class="container-wide">
+      <div class="section-header">
+        <span class="section-tag">Live Exploration</span>
+        <h2 class="section-title">Interactive Demonstration</h2>
+        <p class="section-desc">
+          Experience the three generation modes interactively with precomputed outputs evaluated on benchmark standards.
+        </p>
+      </div>
+
+      <div class="demo-container">
+        <!-- Mode Switcher -->
+        <div class="demo-nav">
+          <button class="demo-nav-btn active" onclick="selectDemoMode('colortuning')">
+            <i class="fa-solid fa-palette"></i> 1. Numerical Color Tuning
+          </button>
+          <button class="demo-nav-btn" onclick="selectDemoMode('transfer')">
+            <i class="fa-solid fa-images"></i> 2. Semantic Color Transfer
+          </button>
+          <button class="demo-nav-btn" onclick="selectDemoMode('gamut')">
+            <i class="fa-solid fa-sliders"></i> 3. Gamut &amp; Saturation Control
+          </button>
+        </div>
+
+        <!-- 1. ColorTuning Interactive Panel -->
+        <div id="demo-panel-colortuning" class="demo-panel active">
+          <div class="colortuning-grid">
+            <!-- Left: Controls -->
+            <div class="demo-controls-col">
+              <div class="prompt-selector-group">
+                <span class="selector-label">Select Target Object / Prompt:</span>
+                <div class="prompt-pills" id="tuning-prompt-pills">
+                  <!-- Injected via JS -->
+                </div>
+              </div>
+
+              <div class="active-prompt-box">
+                <span id="tuning-active-prompt">&ldquo;A ripe banana on a kitchen countertop&rdquo;</span>
+              </div>
+
+              <div>
+                <span class="selector-label">Select Target Color Swatch:</span>
+                <div class="swatches-grid" id="tuning-swatches-grid">
+                  <!-- Swatches injected via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Preview & Metrics -->
+            <div class="preview-box">
+              <div class="preview-image-wrap">
+                <img id="tuning-preview-img" src="" alt="Generated object with precise color">
+              </div>
+
+              <div class="metrics-bar">
+                <div class="metric-item">
+                  <div class="metric-val" id="metric-delta-e">&Delta;E<sub>00</sub>: 2.04</div>
+                  <div class="metric-lbl">Perceptual Error (&lt; 5.0)</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-val" id="metric-delta-c">&Delta;C*: 1.90</div>
+                  <div class="metric-lbl">Chroma Delta</div>
+                </div>
+                <div class="metric-item">
+                  <div class="metric-val" id="metric-hex">#DC143C</div>
+                  <div class="metric-lbl">Target Hex Code</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Color Transfer Interactive Panel -->
+        <div id="demo-panel-transfer" class="demo-panel">
+          <div class="transfer-demo-wrap">
+            <div class="transfer-pills" id="transfer-pills">
+              <!-- Injected via JS -->
+            </div>
+
+            <div class="transfer-display-card">
+              <img id="transfer-img" src="" alt="Color Transfer Comparison">
+              <div class="transfer-meta">
+                <div><strong>Prompt:</strong> <span id="transfer-prompt-text"></span></div>
+                <div><strong>Palette:</strong> <span id="transfer-palette-name"></span></div>
+                <div><strong>Semantic Zones:</strong> <span id="transfer-zones-text"></span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Gamut Reduction Interactive Panel -->
+        <div id="demo-panel-gamut" class="demo-panel">
+          <div class="gamut-demo-wrap">
+            <div class="prompt-selector-group" style="text-align: center;">
+              <span class="selector-label">Select Scene:</span>
+              <div class="prompt-pills" style="justify-content: center;">
+                <button class="prompt-pill active" onclick="selectGamutScene('parrot')">Scarlet Macaw Parrot</button>
+                <button class="prompt-pill" onclick="selectGamutScene('vangogh')">Van Gogh Starry Night</button>
+              </div>
+            </div>
+
+            <div class="active-prompt-box" style="width: 100%; text-align: center;">
+              <span id="gamut-active-prompt"></span>
+            </div>
+
+            <div class="gamut-slider-wrap">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <label for="gamut-range" style="font-weight: 700; font-size: 0.95rem; color: var(--slate-800);">
+                  Chroma Reduction Ratio:
+                </label>
+                <span id="gamut-ratio-badge" style="font-family: var(--font-mono); font-weight: 700; font-size: 1.1rem; color: var(--primary);">
+                  0% (Baseline)
+                </span>
+              </div>
+              <input type="range" id="gamut-range" min="0" max="5" step="1" value="0" oninput="onGamutSliderChange(this.value)">
+              <div class="slider-labels">
+                <span>0% (GT)</span>
+                <span>-10%</span>
+                <span>-20%</span>
+                <span>-30%</span>
+                <span>-40%</span>
+                <span>-50%</span>
+              </div>
+            </div>
+
+            <div class="gamut-preview-card">
+              <img id="gamut-img" src="" alt="Chroma Reduced Generation">
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Section 4: BibTeX -->
+  <section id="citation">
+    <div class="container">
+      <div class="section-header">
+        <span class="section-tag">Reference</span>
+        <h2 class="section-title">BibTeX Citation</h2>
+      </div>
+
+      <div class="bibtex-box">
+        <button class="copy-btn" onclick="copyBibtex()"><i class="fa-regular fa-copy"></i> Copy</button>
+        <pre id="bibtex-text">@inproceedings{santamaria2026coloralignment,
+  title={On Color Alignment in VAE Latent Spaces and Its Applications},
+  author={Santamaria, Juli{'a}n and Wang, Kai and Malo, Jes{'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  booktitle={arXiv preprint},
+  year={2026}
+}</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <p>
+        On Color Alignment in VAE Latent Spaces and Its Applications &middot; 2026
+      </p>
+    </div>
+  </footer>
+
+  <!-- Embedded Interactive Data -->
+  <script>
+    const DATA = {
+  "colortuning": {
+    "banana": {
+      "name": "Ripe Banana",
+      "prompt": "A ripe banana on a kitchen countertop",
+      "type": "Distinct Hues",
+      "swatches": [
+        {
+          "hex": "#DC143C",
+          "rgb": [
+            220,
+            20,
+            60
+          ],
+          "img": "img/colortuning/banana/DC143C.webp",
+          "deltaE": 2.04,
+          "deltaC": 1.9,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#FF4500",
+          "rgb": [
+            255,
+            69,
+            0
+          ],
+          "img": "img/colortuning/banana/FF4500.webp",
+          "deltaE": 3.36,
+          "deltaC": 2.45,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#AB6B0E",
+          "rgb": [
+            171,
+            107,
+            14
+          ],
+          "img": "img/colortuning/banana/AB6B0E.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.68,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#64AB0E",
+          "rgb": [
+            100,
+            171,
+            14
+          ],
+          "img": "img/colortuning/banana/64AB0E.webp",
+          "deltaE": 1.32,
+          "deltaC": 0.91,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#DA70D6",
+          "rgb": [
+            218,
+            112,
+            214
+          ],
+          "img": "img/colortuning/banana/DA70D6.webp",
+          "deltaE": 1.8,
+          "deltaC": 2.23,
+          "deltaL": 0.82
+        },
+        {
+          "hex": "#1D49DB",
+          "rgb": [
+            29,
+            73,
+            219
+          ],
+          "img": "img/colortuning/banana/1D49DB.webp",
+          "deltaE": 2.28,
+          "deltaC": 2.34,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#AB0E48",
+          "rgb": [
+            171,
+            14,
+            72
+          ],
+          "img": "img/colortuning/banana/AB0E48.webp",
+          "deltaE": 3.6,
+          "deltaC": 1.68,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#0E89AB",
+          "rgb": [
+            14,
+            137,
+            171
+          ],
+          "img": "img/colortuning/banana/0E89AB.webp",
+          "deltaE": 3.36,
+          "deltaC": 2.01,
+          "deltaL": 0.74
+        }
+      ]
+    },
+    "dog": {
+      "name": "Golden Retriever Dog",
+      "prompt": "A dog sitting calmly in an indoor room",
+      "type": "Distinct Hues",
+      "swatches": [
+        {
+          "hex": "#0F52BA",
+          "rgb": [
+            15,
+            82,
+            186
+          ],
+          "img": "img/colortuning/dog/0F52BA.webp",
+          "deltaE": 3.0,
+          "deltaC": 2.01,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#800020",
+          "rgb": [
+            128,
+            0,
+            32
+          ],
+          "img": "img/colortuning/dog/800020.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.57,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#C46C08",
+          "rgb": [
+            196,
+            108,
+            8
+          ],
+          "img": "img/colortuning/dog/C46C08.webp",
+          "deltaE": 1.56,
+          "deltaC": 1.13,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#315BDB",
+          "rgb": [
+            49,
+            91,
+            219
+          ],
+          "img": "img/colortuning/dog/315BDB.webp",
+          "deltaE": 2.76,
+          "deltaC": 1.9,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#B8860B",
+          "rgb": [
+            184,
+            134,
+            11
+          ],
+          "img": "img/colortuning/dog/B8860B.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.79,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#008F86",
+          "rgb": [
+            0,
+            143,
+            134
+          ],
+          "img": "img/colortuning/dog/008F86.webp",
+          "deltaE": 2.52,
+          "deltaC": 2.45,
+          "deltaL": 0.82
+        },
+        {
+          "hex": "#72AD55",
+          "rgb": [
+            114,
+            173,
+            85
+          ],
+          "img": "img/colortuning/dog/72AD55.webp",
+          "deltaE": 3.6,
+          "deltaC": 1.68,
+          "deltaL": 1.14
+        },
+        {
+          "hex": "#EDA6A6",
+          "rgb": [
+            237,
+            166,
+            166
+          ],
+          "img": "img/colortuning/dog/EDA6A6.webp",
+          "deltaE": 2.88,
+          "deltaC": 2.34,
+          "deltaL": 0.9
+        }
+      ]
+    },
+    "flower": {
+      "name": "Cosmos Flower",
+      "prompt": "A blooming flower in a lush garden",
+      "type": "Monochromatic Variations",
+      "swatches": [
+        {
+          "hex": "#821E5F",
+          "rgb": [
+            130,
+            30,
+            95
+          ],
+          "img": "img/colortuning/flower/821E5F.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.68,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#AA277C",
+          "rgb": [
+            170,
+            39,
+            124
+          ],
+          "img": "img/colortuning/flower/AA277C.webp",
+          "deltaE": 1.2,
+          "deltaC": 2.34,
+          "deltaL": 1.3
+        },
+        {
+          "hex": "#376C37",
+          "rgb": [
+            55,
+            108,
+            55
+          ],
+          "img": "img/colortuning/flower/376C37.webp",
+          "deltaE": 1.2,
+          "deltaC": 1.9,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#45B045",
+          "rgb": [
+            69,
+            176,
+            69
+          ],
+          "img": "img/colortuning/flower/45B045.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.13,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#DE219C",
+          "rgb": [
+            222,
+            33,
+            156
+          ],
+          "img": "img/colortuning/flower/DE219C.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.35,
+          "deltaL": 0.58
+        },
+        {
+          "hex": "#EF3EB1",
+          "rgb": [
+            239,
+            62,
+            177
+          ],
+          "img": "img/colortuning/flower/EF3EB1.webp",
+          "deltaE": 2.04,
+          "deltaC": 2.01,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#60B560",
+          "rgb": [
+            96,
+            181,
+            96
+          ],
+          "img": "img/colortuning/flower/60B560.webp",
+          "deltaE": 2.16,
+          "deltaC": 0.91,
+          "deltaL": 1.38
+        },
+        {
+          "hex": "#99E099",
+          "rgb": [
+            153,
+            224,
+            153
+          ],
+          "img": "img/colortuning/flower/99E099.webp",
+          "deltaE": 3.24,
+          "deltaC": 1.68,
+          "deltaL": 0.66
+        }
+      ]
+    },
+    "vase": {
+      "name": "Artisan Ceramic Vase",
+      "prompt": "A decorative ceramic vase placed on a display shelf",
+      "type": "Monochromatic Variations",
+      "swatches": [
+        {
+          "hex": "#544F4F",
+          "rgb": [
+            84,
+            79,
+            79
+          ],
+          "img": "img/colortuning/vase/544F4F.webp",
+          "deltaE": 2.88,
+          "deltaC": 2.23,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#706161",
+          "rgb": [
+            112,
+            97,
+            97
+          ],
+          "img": "img/colortuning/vase/706161.webp",
+          "deltaE": 3.12,
+          "deltaC": 1.9,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#B21F1F",
+          "rgb": [
+            178,
+            31,
+            31
+          ],
+          "img": "img/colortuning/vase/B21F1F.webp",
+          "deltaE": 1.32,
+          "deltaC": 1.13,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#B51919",
+          "rgb": [
+            181,
+            25,
+            25
+          ],
+          "img": "img/colortuning/vase/B51919.webp",
+          "deltaE": 1.68,
+          "deltaC": 2.45,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#887777",
+          "rgb": [
+            136,
+            119,
+            119
+          ],
+          "img": "img/colortuning/vase/887777.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.68,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#9E8F8F",
+          "rgb": [
+            158,
+            143,
+            143
+          ],
+          "img": "img/colortuning/vase/9E8F8F.webp",
+          "deltaE": 3.12,
+          "deltaC": 2.56,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#CF2525",
+          "rgb": [
+            207,
+            37,
+            37
+          ],
+          "img": "img/colortuning/vase/CF2525.webp",
+          "deltaE": 2.4,
+          "deltaC": 2.78,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#E64747",
+          "rgb": [
+            230,
+            71,
+            71
+          ],
+          "img": "img/colortuning/vase/E64747.webp",
+          "deltaE": 2.16,
+          "deltaC": 2.67,
+          "deltaL": 1.22
+        }
+      ]
+    },
+    "bedsheet": {
+      "name": "Bedroom Bedsheet",
+      "prompt": "A neatly made bed with smooth bedsheet and pillows",
+      "type": "Pastel Tones",
+      "swatches": [
+        {
+          "hex": "#DFE7FD",
+          "rgb": [
+            223,
+            231,
+            253
+          ],
+          "img": "img/colortuning/bedsheet/DFE7FD.webp",
+          "deltaE": 2.28,
+          "deltaC": 1.68,
+          "deltaL": 1.38
+        },
+        {
+          "hex": "#E2ECE9",
+          "rgb": [
+            226,
+            236,
+            233
+          ],
+          "img": "img/colortuning/bedsheet/E2ECE9.webp",
+          "deltaE": 2.16,
+          "deltaC": 1.9,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#FFF5BA",
+          "rgb": [
+            255,
+            245,
+            186
+          ],
+          "img": "img/colortuning/bedsheet/FFF5BA.webp",
+          "deltaE": 3.48,
+          "deltaC": 2.78,
+          "deltaL": 1.3
+        },
+        {
+          "hex": "#E9F59D",
+          "rgb": [
+            233,
+            245,
+            157
+          ],
+          "img": "img/colortuning/bedsheet/E9F59D.webp",
+          "deltaE": 3.84,
+          "deltaC": 2.12,
+          "deltaL": 0.98
+        },
+        {
+          "hex": "#FFF1E6",
+          "rgb": [
+            255,
+            241,
+            230
+          ],
+          "img": "img/colortuning/bedsheet/FFF1E6.webp",
+          "deltaE": 1.8,
+          "deltaC": 1.57,
+          "deltaL": 0.9
+        },
+        {
+          "hex": "#E2F0CB",
+          "rgb": [
+            226,
+            240,
+            203
+          ],
+          "img": "img/colortuning/bedsheet/E2F0CB.webp",
+          "deltaE": 2.76,
+          "deltaC": 2.56,
+          "deltaL": 1.46
+        },
+        {
+          "hex": "#FFB7B2",
+          "rgb": [
+            255,
+            183,
+            178
+          ],
+          "img": "img/colortuning/bedsheet/FFB7B2.webp",
+          "deltaE": 2.28,
+          "deltaC": 1.13,
+          "deltaL": 0.74
+        },
+        {
+          "hex": "#AEC6CF",
+          "rgb": [
+            174,
+            198,
+            207
+          ],
+          "img": "img/colortuning/bedsheet/AEC6CF.webp",
+          "deltaE": 3.72,
+          "deltaC": 1.79,
+          "deltaL": 0.66
+        }
+      ]
+    },
+    "mug": {
+      "name": "Ceramic Coffee Mug",
+      "prompt": "A ceramic mug on a minimalist wooden table",
+      "type": "Pastel Tones",
+      "swatches": [
+        {
+          "hex": "#D19D7D",
+          "rgb": [
+            209,
+            157,
+            125
+          ],
+          "img": "img/colortuning/mug/D19D7D.webp",
+          "deltaE": 3.12,
+          "deltaC": 2.78,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#CCA981",
+          "rgb": [
+            204,
+            169,
+            129
+          ],
+          "img": "img/colortuning/mug/CCA981.webp",
+          "deltaE": 2.52,
+          "deltaC": 1.9,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#F4C2C2",
+          "rgb": [
+            244,
+            194,
+            194
+          ],
+          "img": "img/colortuning/mug/F4C2C2.webp",
+          "deltaE": 1.8,
+          "deltaC": 1.46,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#C1E1C1",
+          "rgb": [
+            193,
+            225,
+            193
+          ],
+          "img": "img/colortuning/mug/C1E1C1.webp",
+          "deltaE": 1.92,
+          "deltaC": 1.9,
+          "deltaL": 0.66
+        },
+        {
+          "hex": "#8197CC",
+          "rgb": [
+            129,
+            151,
+            204
+          ],
+          "img": "img/colortuning/mug/8197CC.webp",
+          "deltaE": 1.32,
+          "deltaC": 1.24,
+          "deltaL": 0.5
+        },
+        {
+          "hex": "#81CCCC",
+          "rgb": [
+            129,
+            204,
+            204
+          ],
+          "img": "img/colortuning/mug/81CCCC.webp",
+          "deltaE": 3.84,
+          "deltaC": 1.46,
+          "deltaL": 1.22
+        },
+        {
+          "hex": "#E6E6FA",
+          "rgb": [
+            230,
+            230,
+            250
+          ],
+          "img": "img/colortuning/mug/E6E6FA.webp",
+          "deltaE": 3.6,
+          "deltaC": 2.12,
+          "deltaL": 1.06
+        },
+        {
+          "hex": "#C3B1E1",
+          "rgb": [
+            195,
+            177,
+            225
+          ],
+          "img": "img/colortuning/mug/C3B1E1.webp",
+          "deltaE": 1.68,
+          "deltaC": 0.8,
+          "deltaL": 1.38
+        }
+      ]
+    }
+  },
+  "transfer": [
+    {
+      "id": "car_cyberpunk",
+      "prompt": "Vintage coupe car beside architectural pavilion",
+      "palette": "Cyberpunk Neon Palette",
+      "main_obj": "car",
+      "sec_obj": "pavilion",
+      "img": "img/color_transfer/car_cyberpunk.webp"
+    },
+    {
+      "id": "sailboat_sunset",
+      "prompt": "A sailboat gliding across calm ocean water at dusk",
+      "palette": "Sunset Gradient Palette",
+      "main_obj": "sailboat",
+      "sec_obj": "ocean water",
+      "img": "img/color_transfer/sailboat_sunset.webp"
+    },
+    {
+      "id": "jeep_forest",
+      "prompt": "An off-road jeep on a mountain trail surrounded by dense pines",
+      "palette": "Forest Botanical Palette",
+      "main_obj": "jeep",
+      "sec_obj": "pine trees",
+      "img": "img/color_transfer/jeep_forest.webp"
+    },
+    {
+      "id": "mug_terracotta",
+      "prompt": "A ceramic coffee mug on a table in front of a window",
+      "palette": "Terracotta Warm Palette",
+      "main_obj": "mug",
+      "sec_obj": "tabletop",
+      "img": "img/color_transfer/mug_terracotta.webp"
+    },
+    {
+      "id": "vase_nordic",
+      "prompt": "An artistic ceramic vase with dried floral stems in a bright studio",
+      "palette": "Nordic Pastel Palette",
+      "main_obj": "vase",
+      "sec_obj": "flowers",
+      "img": "img/color_transfer/vase_nordic.webp"
+    },
+    {
+      "id": "dog_ocean",
+      "prompt": "A playful golden retriever sitting in a modern living space",
+      "palette": "Ocean Abyss Palette",
+      "main_obj": "dog",
+      "sec_obj": "interior",
+      "img": "img/color_transfer/dog_ocean.webp"
+    }
+  ],
+  "gamut": {
+    "parrot": {
+      "prompt": "A colorful scarlet macaw parrot perched on a branch, vibrant plumage, jungle background",
+      "panels": [
+        {
+          "reduction": 0,
+          "label": "0% (Baseline)",
+          "img": "img/gamut/parrot_red0.webp"
+        },
+        {
+          "reduction": 10,
+          "label": "10%",
+          "img": "img/gamut/parrot_red10.webp"
+        },
+        {
+          "reduction": 20,
+          "label": "20%",
+          "img": "img/gamut/parrot_red20.webp"
+        },
+        {
+          "reduction": 30,
+          "label": "30%",
+          "img": "img/gamut/parrot_red30.webp"
+        },
+        {
+          "reduction": 40,
+          "label": "40%",
+          "img": "img/gamut/parrot_red40.webp"
+        },
+        {
+          "reduction": 50,
+          "label": "50%",
+          "img": "img/gamut/parrot_red50.webp"
+        }
+      ]
+    },
+    "vangogh": {
+      "prompt": "A landscape painting of swirling starry night sky in the style of Van Gogh",
+      "panels": [
+        {
+          "reduction": 0,
+          "label": "0% (Baseline)",
+          "img": "img/gamut/vangogh_red0.webp"
+        },
+        {
+          "reduction": 10,
+          "label": "10%",
+          "img": "img/gamut/vangogh_red10.webp"
+        },
+        {
+          "reduction": 20,
+          "label": "20%",
+          "img": "img/gamut/vangogh_red20.webp"
+        },
+        {
+          "reduction": 30,
+          "label": "30%",
+          "img": "img/gamut/vangogh_red30.webp"
+        },
+        {
+          "reduction": 40,
+          "label": "40%",
+          "img": "img/gamut/vangogh_red40.webp"
+        },
+        {
+          "reduction": 50,
+          "label": "50%",
+          "img": "img/gamut/vangogh_red50.webp"
+        }
+      ]
+    }
+  }
+};
+
+    // State
+    let currentTuningObj = 'banana';
+    let currentTuningSwatchIdx = 0;
+    let currentTransferIdx = 0;
+    let currentGamutScene = 'parrot';
+    let currentGamutLevel = 0;
+
+    // Tabs logic: Model in Autoencoders
+    function selectModelTab(modelKey) {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      const btn = event.target;
+      btn.classList.add('active');
+      document.getElementById('tab-' + modelKey).classList.add('active');
+    }
+
+    // Tabs logic: Demo Modes
+    function selectDemoMode(modeKey) {
+      document.querySelectorAll('.demo-nav-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
+
+      event.currentTarget.classList.add('active');
+      document.getElementById('demo-panel-' + modeKey).classList.add('active');
+    }
+
+    // 1. ColorTuning Init & Updates
+    function initColorTuning() {
+      const pillsWrap = document.getElementById('tuning-prompt-pills');
+      pillsWrap.innerHTML = '';
+
+      Object.keys(DATA.colortuning).forEach((objKey, idx) => {
+        const obj = DATA.colortuning[objKey];
+        const btn = document.createElement('button');
+        btn.className = 'prompt-pill' + (objKey === currentTuningObj ? ' active' : '');
+        btn.textContent = obj.name;
+        btn.onclick = () => {
+          document.querySelectorAll('#tuning-prompt-pills .prompt-pill').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          currentTuningObj = objKey;
+          currentTuningSwatchIdx = 0;
+          renderColorTuningSwatches();
+        };
+        pillsWrap.appendChild(btn);
+      });
+
+      renderColorTuningSwatches();
+    }
+
+    function renderColorTuningSwatches() {
+      const objData = DATA.colortuning[currentTuningObj];
+      document.getElementById('tuning-active-prompt').textContent = '“' + objData.prompt + '”';
+
+      const swatchesWrap = document.getElementById('tuning-swatches-grid');
+      swatchesWrap.innerHTML = '';
+
+      objData.swatches.forEach((sw, idx) => {
+        const card = document.createElement('div');
+        card.className = 'swatch-card' + (idx === currentTuningSwatchIdx ? ' active' : '');
+        card.onclick = () => {
+          document.querySelectorAll('.swatch-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          currentTuningSwatchIdx = idx;
+          updateColorTuningPreview();
+        };
+
+        const circle = document.createElement('div');
+        circle.className = 'swatch-circle';
+        circle.style.backgroundColor = sw.hex;
+
+        const hex = document.createElement('span');
+        hex.className = 'swatch-hex';
+        hex.textContent = sw.hex;
+
+        card.appendChild(circle);
+        card.appendChild(hex);
+        swatchesWrap.appendChild(card);
+      });
+
+      updateColorTuningPreview();
+    }
+
+    function updateColorTuningPreview() {
+      const objData = DATA.colortuning[currentTuningObj];
+      const sw = objData.swatches[currentTuningSwatchIdx];
+
+      const img = document.getElementById('tuning-preview-img');
+      img.src = sw.img;
+
+      document.getElementById('metric-delta-e').innerHTML = '&Delta;E<sub>00</sub>: ' + sw.deltaE.toFixed(2);
+      document.getElementById('metric-delta-c').innerHTML = '&Delta;C*: ' + sw.deltaC.toFixed(2);
+      document.getElementById('metric-hex').textContent = sw.hex;
+    }
+
+    // 2. Color Transfer Init & Updates
+    function initColorTransfer() {
+      const pillsWrap = document.getElementById('transfer-pills');
+      pillsWrap.innerHTML = '';
+
+      DATA.transfer.forEach((item, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'transfer-pill' + (idx === currentTransferIdx ? ' active' : '');
+        btn.textContent = item.palette;
+        btn.onclick = () => {
+          document.querySelectorAll('.transfer-pill').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          currentTransferIdx = idx;
+          updateColorTransferDisplay();
+        };
+        pillsWrap.appendChild(btn);
+      });
+
+      updateColorTransferDisplay();
+    }
+
+    function updateColorTransferDisplay() {
+      const item = DATA.transfer[currentTransferIdx];
+      document.getElementById('transfer-img').src = item.img;
+      document.getElementById('transfer-prompt-text').textContent = item.prompt;
+      document.getElementById('transfer-palette-name').textContent = item.palette;
+      document.getElementById('transfer-zones-text').textContent = 'Main: ' + item.main_obj + ' | Ambient: ' + item.sec_obj;
+    }
+
+    // 3. Gamut Reduction Init & Updates
+    function selectGamutScene(sceneKey) {
+      currentGamutScene = sceneKey;
+      document.querySelectorAll('#demo-panel-gamut .prompt-pill').forEach(b => b.classList.remove('active'));
+      event.target.classList.add('active');
+      updateGamutDisplay();
+    }
+
+    function onGamutSliderChange(val) {
+      currentGamutLevel = parseInt(val, 10);
+      updateGamutDisplay();
+    }
+
+    function updateGamutDisplay() {
+      const sceneData = DATA.gamut[currentGamutScene];
+      document.getElementById('gamut-active-prompt').textContent = '“' + sceneData.prompt + '”';
+
+      const panel = sceneData.panels[currentGamutLevel];
+      document.getElementById('gamut-img').src = panel.img;
+      document.getElementById('gamut-ratio-badge').textContent = panel.label;
+    }
+
+    // Copy BibTeX
+    function copyBibtex() {
+      const text = document.getElementById('bibtex-text').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.innerHTML = '<i class="fa-solid fa-check"></i> Copied!';
+        setTimeout(() => {
+          btn.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+        }, 2000);
+      });
+    }
+
+    // On Load
+    document.addEventListener('DOMContentLoaded', () => {
+      initColorTuning();
+      initColorTransfer();
+      updateGamutDisplay();
+    });
+  </script>
+</body>
+</html>

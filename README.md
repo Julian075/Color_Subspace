@@ -1,137 +1,185 @@
-# Latent Color Subspace: Multi-Model Object Color Steering in Diffusion Latent Spaces
+<div align="center">
 
-This repository contains the official codebase and pre-calibrated checkpoints for **Latent Color Subspace Control**, a training-free and model-agnostic framework that discovers interpretable orthogonal color coordinate systems within diffusion latent representations.
+# ON COLOR ALIGNMENT IN VAE LATENT SPACES AND ITS APPLICATIONS
 
-By combining the discovered principal latent color axes with lightweight regression MLPs (`MLPShiftPCA`) and temporally calibrated injection schedules, the framework enables closed-loop, single-forward-pass color steering of targeted objects directly during denoising.
+[Julián Santamaria](https://julian075.github.io/)<sup>1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://www.jvazquez-corral.net/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>†1,2</sup>
+
+<small>
+<sup>1</sup> Computer Vision Center (CVC), Barcelona, Spain &nbsp;|&nbsp;
+<sup>2</sup> Universitat Autònoma de Barcelona, Barcelona, Spain<br>
+<sup>3</sup> City University of Hong Kong (Dongguan), China &nbsp;|&nbsp;
+<sup>4</sup> City University of Hong Kong, China<br>
+<sup>5</sup> Universitat de València, Spain &nbsp;|&nbsp;
+<sup>†</sup> Corresponding author
+</small>
+
+<br>
+
+[![Project Page](https://img.shields.io/badge/Project-Page-green)](https://julian075.github.io/Color_Subspace/)
+[![arXiv](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/placeholder)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+<br>
+
+<img src="assets/teaser.png" width="950" alt="Color Alignment in VAE Latent Spaces and Applications">
+
+<p align="justify">
+<em><b>Overview of Color Alignment and Applications.</b> Across diverse modern diffusion architectures (FLUX, FLUX.2, SD3, SD3.5, SDXL, PixArt, Z-Image), VAE latent representations inherently organize chromaticity along a low-dimensional, orthogonal color subspace. By characterizing these latent directions, our closed-loop steering framework enables precise numerical color control, multi-zone semantic color transfer from palettes or photographic references, and continuous spatially-adaptive gamut reduction directly at generation time.</em>
+</p>
+
+</div>
 
 ---
 
-## 🔬 Unified Pipeline Methodology
+## 📖 Overview
 
-Every supported architecture follows the same 5-stage pipeline:
+Modern text-to-image diffusion models struggle to generate precise numerical colors (Hex, RGB, CIELAB) specified in textual prompts due to tokenizer limitations and chromatic entanglements. 
 
-```mermaid
-flowchart LR
-    A["Phase A<br/>Latent Sensitivity Analysis<br/>& PCA Decomposition<br/>(fase_a_pca.py)"] -->|pca_axes.json| B["Phase B<br/>Temporal Schedule<br/>Calibration<br/>(fase_b_config_pca.py)"]
-    B --> C["Phase C<br/>3D Latent Dataset<br/>Collection<br/>(coleccion_datos_mlp_pca.py)"]
-    C --> D["Architecture Search<br/>& ResMLP Training<br/>(train_and_search_mlp_pca.py)"]
-    D -->|mlp_shift_pca_best.pt| E["Downstream Object<br/>Color Steering<br/>(inference.py)"]
+**This repository introduces a training-free and model-agnostic framework that:**
+1. **Identifies the Color Subspace**: Uncovers 3 orthogonal principal axes ($u_1, u_2, u_3$) in the latent space of variational autoencoders (VAEs) that strongly align with perceptual CIELAB color dimensions ($b^*, a^*, L^*$).
+2. **Models Decoder Nonlinearity**: Trains a lightweight residual MLP (`MLPShiftPCA`) that maps source and target color coordinates $(C_i, C_t)$ into the exact latent displacement $(m_1, m_2, m_3)$ required to carry the target region to the target color.
+3. **Applies Closed-Loop In-Flight Steering**: At an early gate step $s$, predicts clean latent $\hat{z}_0$, segments the target object, measures its color in CIELAB, predicts the displacement, and smoothly injects the perturbation inside the object mask using a linearly decaying schedule.
+4. **Generalizes to Downstream Color Applications**: Extends seamlessly to multi-zone semantic color transfer (from color palettes or reference images) and spatially-adaptive gamut reduction / desaturation without retraining.
+
+---
+
+## 🛠️ Environment Setup
+
+Create and activate a conda environment named `colortuning` with Python 3.10 and PyTorch 2.4+ (CUDA 12.4+ / 12.8):
+
+```bash
+# 1. Create and activate conda environment
+conda create -n colortuning python=3.10 -y
+conda activate colortuning
+
+# 2. Install PyTorch with CUDA support (CUDA 12.4+ / 12.8)
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+
+# 3. Install required dependencies
+pip install -r requirements.txt
 ```
 
-### Pipeline Phases Explained:
-1. **Phase A: Latent Sensitivity Analysis & PCA Decomposition (`fase_a_pca.py`)**:
-   Screening latent channels across color shifts, followed by SVD/PCA decomposition to identify the 3 orthogonal principal components $\mathbf{U}_1, \mathbf{U}_2, \mathbf{U}_3$ that maximally correlate with perceptual color dimensions ($L^*, a^*, b^*$). Saved in `fase_a_pca_out/pca_axes.json`.
-2. **Phase B: Temporal Schedule Calibration (`fase_b_config_pca.py`)**:
-   Grid search over gating fraction (`gate_frac`), envelope profile shape (`perfil_name`: plano, ascendente, triangular), and sub-step discretization (`n_partes`) to determine the optimal injection window where latents accept color manipulation without degrading spatial structure.
-3. **Phase C: 3D Latent Dataset Collection (`coleccion_datos_mlp_pca.py`)**:
-   Automated generation of paired training data: initial object color $(L^*_0, a^*_0, b^*_0)$ and target color $(L^*_t, a^*_t, b^*_t)$ mapped to shift magnitude vectors $(m_1, m_2, m_3)$ in PCA space.
-4. **Phase D: Architecture Search & MLP Training (`train_and_search_mlp_pca.py`)**:
-   Trains the lightweight `MLPShiftPCA` regression model to map colorimetry differences $(\Delta L^*, \Delta a^*, \Delta b^*)$ into optimal latent shift vectors. Saved in `mlp_training_out/mlp_shift_pca_best.pt`.
-5. **Phase E: Downstream Single-Pass Inference (`inference.py`)**:
-   In-flight closed-loop generation. At the gate step during denoising, the predicted clean image $\hat{x}_0$ is segmented once using SAM-3, its initial color is measured, the MLP predicts $(m_1, m_2, m_3)$, and the spatial perturbation is applied smoothly across the remaining denoising steps.
+---
+
+## 🏛️ Architecture Matrix & Pre-Calibrated Checkpoints
+
+All models share a standardized pipeline while honoring their specific latent dimensions and scheduling characteristics. Pre-calibrated checkpoints, PCA axes, and schedule configurations are provided in each architecture directory:
+
+| Architecture | Directory | Latent Channels ($C$) | VAE Compression & Scaling | Gate Fraction ($s/T$) | Optimal Schedule | Checkpoint Location |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **FLUX.1-dev** | [`Flux/`](Flux/) | 16 (2x2 packed $\to$ 64) | $8\times$, scale + shift | $0.50$ (step 14/28) | Ascending, ramp-down | `Flux/mlp_training_out/mlp_shift_pca_best.pt` |
+| **FLUX.2-dev** | [`Flux2/`](Flux2/) | 32 (2x2 packed $\to$ 128) | $8\times$, scale + shift | $0.65$ | Ascending, ramp-down | `Flux2/mlp_training_out/mlp_shift_pca_best.pt` |
+| **SD 3.0 Medium** | [`SD3/`](SD3/) | 16 | $8\times$, scale + shift | $0.75$ | Triangular ($n=3$) | `SD3/mlp_training_out/mlp_shift_pca_best.pt` |
+| **SD 3.5 Medium** | [`sd3.5_m/`](sd3.5_m/) | 16 | $8\times$, scale + shift | $0.60$ | Ascending, ramp-down | `sd3.5_m/mlp_training_out/mlp_shift_pca_best.pt` |
+| **SDXL 1.0** | [`SDXL/`](SDXL/) | 4 | $8\times$, `scale = 0.13025` | $0.40$ | Flat, single-step | `SDXL/mlp_training_out/mlp_shift_pca_best.pt` |
+| **Z-Image** | [`z-image/`](z-image/) | 16 | $8\times$, scale + shift | $0.60$ | Flat, single-step | `z-image/mlp_training_out/mlp_shift_pca_best.pt` |
+
+Each model directory contains:
+* `fase_a_pca_out/pca_axes.json`: Discovered orthogonal color axes ($u_1, u_2, u_3$).
+* `fase_b_pca_out/fase_b_winning_schedule.json`: Calibrated temporal envelope parameters.
+* `mlp_training_out/mlp_shift_pca_best.pt`: Trained residual MLP mapping $(\Delta L^*, \Delta a^*, \Delta b^*)$ to latent displacements.
 
 ---
 
-## 🏛️ Architectural Comparison Matrix
+## 🚀 Inference Quickstart: Three Application Modes
 
-| Model Directory | Base Model ID | Latent Channels ($C$) | VAE Compression & Scaling | Scheduler | Optimal Schedule (`gate_frac`, profile) |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **[`Flux/`](file:///home/jsantamaria/projects/Color_Subspace/Flux)** | `black-forest-labs/FLUX.1-dev` | 16 (2x2 packed $\to$ 64) | $8\times$, scale + shift | Flow Matching (Euler) | $0.50$, ascendente ($n=1$) |
-| **[`Flux2/`](file:///home/jsantamaria/projects/Color_Subspace/Flux2)** | `black-forest-labs/FLUX.2-dev` | 32 (2x2 packed $\to$ 128) | $8\times$, scale + shift | Flow Matching (Euler) | $0.65$, ascendente ($n=1$) |
-| **[`PixArt/`](file:///home/jsantamaria/projects/Color_Subspace/PixArt)** | `PixArt-alpha` & `PixArt-Sigma` | 4 | $8\times$, `scale = 0.18215` | DPM-Solver / Flow | $0.50$ (Alpha) / $0.75$ (Sigma), triangular ($n=3$) |
-| **[`SD3/`](file:///home/jsantamaria/projects/Color_Subspace/SD3)** | `stabilityai/stable-diffusion-3-medium` | 16 | $8\times$, scale + shift | FlowMatchEuler ($v$-pred) | $0.75$, triangular ($n=3$) |
-| **[`SDXL/`](file:///home/jsantamaria/projects/Color_Subspace/SDXL)** | `stabilityai/stable-diffusion-xl-base-1.0` | 4 | $8\times$, `scale = 0.13025` | EulerDiscrete ($\epsilon$-pred) | $0.40$, plano ($n=1$) |
-| **[`sd3.5_m/`](file:///home/jsantamaria/projects/Color_Subspace/sd3.5_m)** | `stabilityai/stable-diffusion-3.5-medium` | 16 | $8\times$, `scale = 1.5305, shift = 0.0609` | FlowMatchEuler ($v$-pred) | $0.60$, ascendente ($n=1$) |
-| **[`z-image/`](file:///home/jsantamaria/projects/Color_Subspace/z-image)** | `Tongyi-MAI/Z-Image` | 16 | $8\times$, scale + shift | Flow Matching (Euler) | $0.60$, plano ($n=1$) |
+### Mode 1: Precise Numerical Color Generation
+
+Generate objects steered to exact Hex, RGB, or CIELAB color specifications. The parser automatically extracts the object and color target from the prompt, converts the prompt color to a natural language proxy for text conditioning, and applies closed-loop latent steering.
+
+```bash
+# Example with FLUX.1-dev using Hex code
+python Flux/inference.py \
+    --prompt "a photo of a ceramic mug on a table" \
+    --target-color "#7B3F00" \
+    --object "mug" \
+    --device "cuda:0"
+
+# Example with SDXL using RGB specification
+python SDXL/inference.py \
+    --prompt "a photo of an electric sports car parked in an urban street" \
+    --target-color "rgb(180, 20, 45)" \
+    --object "car" \
+    --device "cuda:0"
+```
 
 ---
 
-## 📁 Repository Structure
+### Mode 2: Multi-Zone Semantic Color Transfer
 
-Each model subfolder adheres to a uniform structure containing only essential modules and pre-calibrated weights:
+Steers the scene's color distribution toward a design palette or photographic reference image. The script extracts dominant and focal color clusters, detects semantic regions (subject vs. secondary elements vs. background) via SAM, and applies independent latent shifts across zones:
+
+```bash
+# Color transfer from a reference image or palette card
+python color_transfer/flux_multizone_color_transfer.py \
+    --prompt "a photo of an elegant vintage coupe car parked beside an architectural glass pavilion at dusk" \
+    --ref-img "assets/reference_palette.png" \
+    --main-obj "car" \
+    --secondary-objs "pavilion" \
+    --device "cuda:0" \
+    --out-dir "outputs/color_transfer"
+```
+
+---
+
+### Mode 3: Spatially Adaptive Gamut Reduction / Saturation Control
+
+Modulates image saturation continuously toward narrower gamuts directly during generation. Rather than a destructive uniform translation, this method contracts chroma ($a^*, b^*$) pixel-by-pixel toward neutral gray while preserving lightness $L^*$:
+
+```bash
+# Continuously desaturate scene chroma by 40%
+python color_transfer/flux_spatial_gamut_reduction.py \
+    --prompt "A colorful scarlet macaw parrot perched on a branch, vibrant plumage, jungle background" \
+    --reduction 0.40 \
+    --device "cuda:0" \
+    --out-dir "outputs/gamut_reduction" \
+    --prefix "macaw_red40"
+```
+
+---
+
+## 📂 Repository Organization
 
 ```
 Color_Subspace/
-├── .gitignore
-├── README.md
-├── Flux/
-├── Flux2/
-├── PixArt/
-├── SD3/
-├── SDXL/
-├── sd3.5_m/
-└── z-image/
-```
-
-Inside each architecture directory:
-*   `<model>_core.py`: Core pipeline setup, latent packing/unpacking, and scheduler step hooks.
-*   `inference.py`: Standalone single-prompt object color steering application.
-*   `model_pca.py`: PyTorch module definition for `MLPShiftPCA` and checkpoint loader.
-*   `utils.py`: Colorimetry (Hex $\leftrightarrow$ RGB $\leftrightarrow$ CIELAB $\leftrightarrow$ CIEDE2000) and SAM-3 segmentation hooks.
-*   `iscc_nbs.py`: Standardized color taxonomy dictionary.
-*   `fase_a_pca.py`: Phase A PCA axes extractor.
-*   `fase_b_config_pca.py`: Phase B temporal schedule search.
-*   `coleccion_datos_mlp_pca.py`: Phase C dataset collection harness.
-*   `train_and_search_mlp_pca.py`: Phase D MLP architecture search and training.
-*   `run_gencolorbench_pca.py`: GenColorBench standardized benchmark runner.
-*   `fase_a_pca_out/pca_axes.json`: Computed principal color axes in latent space.
-*   `mlp_training_out/mlp_shift_pca_best.pt`: Pre-trained MLP checkpoint (~0.1MB - 1.2MB).
-
----
-
-## 🚀 Standalone Inference Quickstart
-
-Every model includes a self-contained `inference.py` script that performs in-flight closed-loop object color steering. The inference engine is **format-agnostic** and **automatically infers** both the target object and target color directly from the prompt text, with optional CLI flag overrides.
-
-### 🌟 Key Inference Capabilities:
-- **Prompt-Only Execution (Zero-Config)**: Simply pass `--prompt`. The target object and color specification are dynamically extracted from the prompt text (supporting GenColorBench NCU formats and open natural language).
-- **Format-Agnostic Color Parsing**: Accepts:
-  - **Hex**: `#800000`, `800000`, `#FFF`, or typo-tolerant inputs like `#FFFF0`.
-  - **RGB**: Strings (`"rgb(255, 0, 255)"`), tuples `(255, 0, 255)`, lists `[255, 0, 255]`, or normalized floats `[1.0, 0.0, 0.0]`.
-  - **CIELAB**: Strings (`"lab(53.2, 79.2, -107.9)"`), dicts `{"lab": (53.2, 79.2, -107.9)}`, or raw tuples.
-  - **Named colors**: CSS/X11 and ISCC names (`maroon`, `darkorange`, `cyan`, etc.).
-- **Dynamic Object Extraction**: Open parser identifies target objects (`cat`, `parrot`, `suit`, `towel`, `wallet`, `ceramic mug`, etc.) directly from prompt phrasing without hardcoded word whitelists.
-- **Semantic Text Prompt Adaptation**: Numerical color tokens are converted to natural color names for the diffusion text encoder (`"in the color #800000"` $\to$ `"colored maroon"`), while exact CIELAB numerical coordinates guide the latent steering.
-- **Optional Overrides**: Passing `--target-color` or `--object` explicitly overrides automatic discovery.
-
----
-
-### Usage Examples
-
-#### 1. Auto-Discovery from Prompt (Single Argument)
-```bash
-# Hex color
-python SDXL/inference.py --prompt "A photo of a cat in the color #800000"
-
-# RGB color
-python Flux/inference.py --prompt "A photo of a backpack in the color rgb(120, 200, 50)"
-
-# Typo-tolerant hex
-python sd3.5_m/inference.py --prompt "A photo of a suit in the color #FFFF0"
-```
-
-#### 2. Explicit Overrides
-```bash
-python SD3/inference.py \
-    --prompt "a photo of a ceramic mug on a wooden desk" \
-    --target-color "#FF8C00" \
-    --object "mug" \
-    --seed 42 \
-    --out-dir ./inference_outputs
+├── assets/                          # Teaser and documentation figures
+│   └── teaser.png
+├── img/                             # High-resolution paper figures & qualitative results
+│   ├── latent_ch_mod/               # Latent channel perturbations (Fig. 2)
+│   └── qualitative_results/         # Numerical color, transfer, and saturation figures
+├── color_transfer/                  # Application engines
+│   ├── flux_multizone_color_transfer.py
+│   ├── flux_spatial_gamut_reduction.py
+│   └── README.md
+├── Flux/                            # FLUX.1-dev implementation & checkpoints
+│   ├── flux_core.py                 # Pipeline wrappers & packing/unpacking
+│   ├── inference.py                 # Numerical color generation inference
+│   ├── model_pca.py                 # ResMLP architecture & loader
+│   ├── utils.py                     # Colorimetry & SAM segmentation
+│   ├── iscc_nbs.py                  # Color name dictionary
+│   ├── fase_a_pca_out/              # Discovered PCA axes
+│   ├── fase_b_pca_out/              # Winning schedule configuration
+│   └── mlp_training_out/            # Best MLP checkpoint
+├── Flux2/                           # FLUX.2-dev implementation & checkpoints
+├── SD3/                             # Stable Diffusion 3 Medium implementation & checkpoints
+├── sd3.5_m/                         # Stable Diffusion 3.5 Medium implementation & checkpoints
+├── SDXL/                            # Stable Diffusion XL implementation & checkpoints
+├── z-image/                         # Z-Image implementation & checkpoints
+├── docs/                            # Project webpage
+└── README.md
 ```
 
 ---
 
-### CLI Arguments:
-*   `--prompt`: Input text prompt (e.g., `"A photo of a parrot in the color #FF8C00"`).
-*   `--target-color` / `--hex`: *(Optional)* Target color specification (Hex, RGB, CIELAB, or name). Auto-detected from prompt if omitted.
-*   `--object`: *(Optional)* Target object to segment with SAM-3. Auto-detected from prompt if omitted.
-*   `--seed`: Random seed for reproducibility (default: `42`).
-*   `--device`: PyTorch device (default: `"cuda:0"` if available, else `"cpu"`).
-*   `--steps`: Number of diffusion steps (model-specific default).
-*   `--guidance`: Classifier-free guidance scale.
-*   `--resolution`: Image resolution (default: `1024`).
-*   `--out-dir`: Destination folder for generated images (default: `./inference_outputs`).
-*   `--metrics`: Measure and print color accuracy metrics in the terminal ($\Delta E^*_{00}$, $\Delta E^*_{76}$, $\Delta C^*$, $|\Delta C^*|$, $\Delta h^\circ$, $|\Delta h^\circ|$, and $\Delta H^*_{ab}$) between the segmented object in the generated image and the target color.
+## 📜 Citation
 
+If you find this work or codebase helpful in your research, please cite:
 
+```bibtex
+@inproceedings{santamaria2026coloralignment,
+  title={On Color Alignment in VAE Latent Spaces and Its Applications},
+  author={Santamaria, Juli{\'a}n and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  booktitle={arXiv preprint},
+  year={2026}
+}
+```

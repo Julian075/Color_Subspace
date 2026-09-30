@@ -1,13 +1,4 @@
-"""
-UTILS.PY -- segmentacion (SAM3) + color (Lab, medicion robusta dentro de
-mascara) para el proyecto FLUX. Un solo archivo: las dos cosas se usan
-siempre juntas ac (segmentar el objeto, despues medir su color), no hay
-razon real para tenerlas separadas.
-
-Copiado (no importado) de las funciones equivalentes del proyecto SDXL --
-proyectos separados a proposito (ver discusion anterior): un cambio futuro
-en el pipeline de SDXL no rompe nada ac, y viceversa.
-"""
+"""UTILS: Instance segmentation (SAM3) and colorimetry utilities (CIELAB, CIEDE2000) for FLUX."""
 
 import math
 import re
@@ -31,11 +22,9 @@ def _resolve_hf_snapshot(repo_id):
     return repo_id
 
 
-# =========================== segmentacion: SAM3 ===========================
+# =========================== segmentation: SAM3 ===========================
 def setup_seg_models(device):
-    """SAM3: toma texto directo (ej. 'sphere'), no necesita que otro modelo
-    le pase una caja primero (~200 propuestas candidatas internas, tipo
-    DETR, filtradas por el propio texto)."""
+    """Initializes SAM3 instance segmentation processor and model."""
     from transformers import Sam3Processor, Sam3Model
     sam3_path = _resolve_hf_snapshot("facebook/sam3")
     try:
@@ -49,8 +38,7 @@ def setup_seg_models(device):
 
 @torch.no_grad()
 def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50):
-    """Segmenta todas las instancias del objeto que superen el umbral de confianza (min_score)
-    y combina sus mascaras en una mascara binaria unica (H, W)."""
+    """Segments all instances of the object meeting confidence threshold and returns union mask."""
     processor, model, device = seg_models["processor"], seg_models["model"], seg_models["device"]
 
     inputs = processor(images=img_pil, text=obj_word, return_tensors="pt").to(device)
@@ -59,20 +47,20 @@ def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50
         outputs, target_sizes=[(img_pil.size[1], img_pil.size[0])])[0]
 
     mask_np = None
-    # Intento 1: patron estandar de transformers (segmentation + segments_info)
+    # Strategy 1: standard transformers format (segmentation + segments_info)
     if isinstance(results, dict) and "segmentation" in results and results.get("segments_info"):
         seg = results["segmentation"]
         seg_np = seg.cpu().numpy() if hasattr(seg, "cpu") else np.array(seg)
-        # Seleccionar todas las instancias con score >= min_score
+        # Select all instances with score >= min_score
         valid_ids = [s["id"] for s in results["segments_info"] if s.get("score", 0.0) >= min_score]
         if valid_ids:
             mask_np = np.isin(seg_np, valid_ids)
         elif results["segments_info"]:
-            # Fallback al segmento con mayor score si ninguno supero min_score
+            # Fallback to segment with highest score
             best_seg = max(results["segments_info"], key=lambda s: s.get("score", 0.0))
             mask_np = (seg_np == best_seg["id"])
 
-    # Intento 2 (fallback para formato de tensores de mascaras directas)
+    # Strategy 2: fallback for direct mask tensor format
     if mask_np is None:
         if isinstance(results, dict) and "masks" in results:
             masks_tensor = results["masks"]
@@ -101,7 +89,7 @@ def get_object_mask(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50
 
 @torch.no_grad()
 def get_individual_object_masks(img_pil, obj_word, seg_models, min_score=0.35, min_pixels=50):
-    """Devuelve una lista de mascaras individuales [mask_1, mask_2, ...] ordenadas por score."""
+    """Returns a list of individual instance masks sorted by confidence score."""
     processor, model, device = seg_models["processor"], seg_models["model"], seg_models["device"]
 
     inputs = processor(images=img_pil, text=obj_word, return_tensors="pt").to(device)
@@ -156,12 +144,10 @@ def rgb_to_lab_batch_np(rgb255):
     return np.stack([116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz)], axis=1)
 
 
-# =========================== color: medicion robusta dentro de mascara ===========================
+# Color: robust measurement inside mask
 def measure_color_gt(img_uint8, mask_np, z_thresh=2.5):
-    """dominant_color completo -- PCA en el plano a*b* + recorte de
-    outliers por z-score sobre la proyeccion perpendicular al eje
-    principal. Devuelve (L,a,b) o None si la mascara viene vacia/
-    degenerada (ej. el objeto se rompio del todo con un shift extremo)."""
+    """Robust dominant color measurement via PCA in the a*b* plane with z-score outlier rejection.
+    Returns (L, a, b) or None if mask is degenerate."""
     pixels = img_uint8[mask_np.astype(bool)]
     if len(pixels) < 10:
         return None
@@ -192,7 +178,7 @@ def measure_color_gt(img_uint8, mask_np, z_thresh=2.5):
     return float(L_mean), float(a_mean), float(b_mean)
 
 
-# =========================== color: CIEDE2000 (deltaE perceptual real, para Fase C) ===========================
+# Color: CIEDE2000 perceptual difference
 def ciede2000(lab1, lab2):
     L1, a1, b1 = lab1
     L2, a2, b2 = lab2
@@ -247,7 +233,7 @@ def ciede2000(lab1, lab2):
     return float(dE)
 
 
-# =========================== color: hex/rgb/lab -> Lab (parseo de targets) ===========================
+# =========================== Color: hex/rgb/lab -> CIELAB target parsing ===========================
 def rgb_to_lab_single_np(rgb255):
     return rgb_to_lab_batch_np(np.asarray(rgb255).reshape(1, 3))[0]
 
@@ -259,7 +245,7 @@ def hex_to_rgb(hex_code: str) -> Tuple[int, int, int]:
     elif len(hex_clean) == 5:
         hex_clean = hex_clean.ljust(6, "0")
     elif len(hex_clean) != 6:
-        raise ValueError(f"hex invalido: {hex_code!r} (esperado 6 digitos, ej. '0000FF')")
+        raise ValueError(f"Invalid hex code: {hex_code!r} (expected 6 digits, e.g. '0000FF')")
     return tuple(int(hex_clean[i:i + 2], 16) for i in (0, 2, 4))
 
 
@@ -332,7 +318,7 @@ def parse_target_color(spec: Any) -> Tuple[float, float, float]:
             return get_iscc_l2_centroid(s)
         except Exception:
             pass
-    raise ValueError(f"no se pudo interpretar el color target: {spec!r}")
+    raise ValueError(f"Could not parse target color specification: {spec!r}")
 
 
 def extract_hex_from_text(text: str) -> Optional[str]:
@@ -437,13 +423,10 @@ def clean_prompt_for_diffusion(prompt: str, color_name: str) -> str:
     return p.strip()
 
 
-# =========================== color: mapeo Lab -> nombre de color mas cercano ===========================
-# Mismo diseño que utils.py de SDXL: el modelo de texto a imagen no entiende
-# hex, asi que el color target preciso se traduce al NOMBRE CSS mas cercano
-# para armar el prompt, y la precision real la aporta despues el shift del
-# latente (que si usa el Lab exacto).
-CHROMA_THRESHOLD = 15.0   # por debajo se considera "casi sin tono" (achromatico)
-USE_FULL_COLOR_PALETTE = True   # True = todo ImageColor.colormap (~139 unicos tras dedup)
+# Color: CIELAB to nearest color name mapping
+# Maps numerical colors to nearest proxy name for text conditioning
+CHROMA_THRESHOLD = 15.0   # below this threshold considered achromatic
+USE_FULL_COLOR_PALETTE = True   # True = all ImageColor.colormap (~139 unique after dedup)
 
 CURATED_COLOR_NAMES = [
     "white", "maroon","beige","gray", "black", "red", "orange", "yellow", "purple", "blue",
@@ -452,8 +435,7 @@ CURATED_COLOR_NAMES = [
 
 
 def _build_color_names_table(use_full=USE_FULL_COLOR_PALETTE):
-    """Dedup por RGB (varios nombres CSS mapean al mismo color exacto, ej.
-    'cyan'/'aqua') -- se queda con el primero en el orden de la fuente."""
+    """Deduplicates CSS color names by RGB values."""
     from PIL import ImageColor
     names_source = ImageColor.colormap.keys() if use_full else CURATED_COLOR_NAMES
     seen_rgb = {}

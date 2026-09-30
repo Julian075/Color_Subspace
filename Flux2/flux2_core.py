@@ -4,6 +4,7 @@ latent pack/unpacking, and schedule envelope generators for FLUX.2.
 """
 
 import os
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
 import json
 import subprocess
 import numpy as np
@@ -231,16 +232,31 @@ def run_generation(pipe, prompt, seed, height, width, device, steps, guidance,
 def resolve_local_model_path(model_id):
     if os.path.exists(model_id):
         return model_id
-    hf_home = os.environ.get("HF_HOME", "/leonardo_work/AIFAC_S07_004/jsantamaria/.cache/huggingface")
-    hub_dir = os.path.join(hf_home, "hub")
+
     repo_folder = f"models--{model_id.replace('/', '--')}"
-    repo_path = os.path.join(hub_dir, repo_folder)
-    if os.path.exists(repo_path):
-        snapshots_dir = os.path.join(repo_path, "snapshots")
-        if os.path.exists(snapshots_dir):
-            snaps = [os.path.join(snapshots_dir, s) for s in os.listdir(snapshots_dir) if not s.startswith(".")]
-            if snaps:
-                return snaps[0]
+    candidate_cache_dirs = []
+    if "HF_HOME" in os.environ:
+        candidate_cache_dirs.append(os.environ["HF_HOME"])
+    candidate_cache_dirs.extend([
+        os.path.expanduser("~/.cache/huggingface"),
+        "/data/storage/users/jsantamaria/.cache/huggingface",
+        "/leonardo_work/AIFAC_S07_004/jsantamaria/.cache/huggingface",
+    ])
+
+    for hf_home in candidate_cache_dirs:
+        hub_dir = os.path.join(hf_home, "hub")
+        repo_path = os.path.join(hub_dir, repo_folder)
+        if os.path.exists(repo_path):
+            snapshots_dir = os.path.join(repo_path, "snapshots")
+            if os.path.exists(snapshots_dir):
+                snaps = [
+                    os.path.join(snapshots_dir, s)
+                    for s in os.listdir(snapshots_dir)
+                    if not s.startswith(".") and os.path.isfile(os.path.join(snapshots_dir, s, "model_index.json"))
+                ]
+                if snaps:
+                    snaps.sort(key=lambda p: os.path.getmtime(p), reverse=True)
+                    return snaps[0]
     return model_id
 
 
@@ -255,26 +271,50 @@ def setup_flux(model_id=None, device="cuda", dtype=torch.bfloat16, num_latent_ch
     print(f"Loading Pipeline from: {resolved_path} on {device} [{dtype}]...")
 
     pipe = None
-    try:
-        from diffusers import Flux2Pipeline
-        pipe = Flux2Pipeline.from_pretrained(resolved_path, torch_dtype=dtype, local_files_only=True)
-    except Exception as e1:
-        try:
-            from diffusers import FluxPipeline
-            pipe = FluxPipeline.from_pretrained(resolved_path, torch_dtype=dtype, local_files_only=True)
-        except Exception as e2:
-            try:
-                from diffusers import AutoPipelineForText2Image
-                pipe = AutoPipelineForText2Image.from_pretrained(resolved_path, torch_dtype=dtype, local_files_only=True)
-            except Exception as e3:
-                # If local_files_only fails, try standard load
-                pipe = FluxPipeline.from_pretrained(model_id, torch_dtype=dtype)
+    from diffusers import Flux2Pipeline
 
-    try:
-        pipe.enable_model_cpu_offload()
-        print("Enabled full-speed model CPU offload (32B transformer in VRAM during denoising).")
-    except Exception as e_offload:
-        print(f"Model CPU offload notice: {e_offload}. Moving to {device} directly...")
+    # 1. Try local snapshot path first if it exists
+    if os.path.exists(resolved_path):
+        try:
+            pipe = Flux2Pipeline.from_pretrained(resolved_path, torch_dtype=dtype, local_files_only=True)
+        except Exception as e_local:
+            print(f"Notice: Loading Flux2Pipeline with local_files_only from {resolved_path} failed: {e_local}")
+
+    # 2. Fall back to loading via model_id / hub (uses HF cache or downloads missing shards)
+    if pipe is None:
+        try:
+            pipe = Flux2Pipeline.from_pretrained(model_id, torch_dtype=dtype)
+        except Exception as e_hub:
+            print(f"Flux2Pipeline.from_pretrained({model_id}) failed: {e_hub}. Trying AutoPipelineForText2Image...")
+            from diffusers import AutoPipelineForText2Image
+            pipe = AutoPipelineForText2Image.from_pretrained(
+                resolved_path if os.path.exists(resolved_path) else model_id,
+                torch_dtype=dtype
+            )
+
+    # Offload configuration
+    device_obj = torch.device(device)
+    if device_obj.type == "cuda" and torch.cuda.is_available():
+        dev_idx = device_obj.index if device_obj.index is not None else torch.cuda.current_device()
+        try:
+            free_bytes, total_bytes = torch.cuda.mem_get_info(dev_idx)
+        except Exception:
+            free_bytes = 0
+
+        # FLUX.2 transformer alone is ~61GB in bfloat16. If free VRAM < 65GB, model_cpu_offload will OOM.
+        if free_bytes < 65 * (1024**3):
+            free_gb = free_bytes / (1024**3)
+            print(f"Notice: Free VRAM on cuda:{dev_idx} is {free_gb:.1f} GB (< 65 GB required for full-model residency).")
+            print("Enabling sequential CPU offload (layer-by-layer offload to prevent CUDA OOM)...")
+            pipe.enable_sequential_cpu_offload(device=device)
+        else:
+            try:
+                pipe.enable_model_cpu_offload(device=device)
+                print("Enabled full-speed model CPU offload (32B transformer in VRAM during denoising).")
+            except Exception as e_offload:
+                print(f"Model CPU offload notice: {e_offload}. Enabling sequential CPU offload...")
+                pipe.enable_sequential_cpu_offload(device=device)
+    else:
         pipe = pipe.to(device)
 
     vae = pipe.vae

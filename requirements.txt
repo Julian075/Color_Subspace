@@ -1,0 +1,19 @@
+# Core Deep Learning & Diffusion
+torch>=2.4.0
+torchvision>=0.19.0
+diffusers>=0.30.0
+transformers>=4.49.0
+accelerate>=0.34.0
+safetensors>=0.4.5
+huggingface-hub>=0.25.0
+
+# Scientific computing, colorimetry & image processing
+numpy>=1.24.0
+scipy>=1.10.0
+scikit-learn>=1.3.0
+scikit-image>=0.21.0
+pillow>=10.0.0
+
+# Text processing & tokenizers
+sentencepiece>=0.1.99
+protobuf>=3.20.0
