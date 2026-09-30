@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>On Color Alignment in VAE Latent Spaces and Its Applications</title>
-  <meta name="description" content="Discovering and leveraging the orthogonal color subspace in autoencoders for precise color control, color transfer, and gamut reduction in diffusion models.">
+  <meta name="description" content="Discovering and leveraging the orthogonal color subspace in autoencoders for precise color control, saturation control, and color transfer in diffusion models.">
 
   <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,17 +16,17 @@
     :root {
       --primary: #4f46e5;
       --primary-hover: #4338ca;
-      --primary-light: #eef2ff;
-      --primary-border: #c7d2fe;
-      --slate-900: #0f172a;
-      --slate-800: #1e293b;
-      --slate-700: #334155;
-      --slate-600: #475569;
-      --slate-500: #64748b;
-      --slate-300: #cbd5e1;
-      --slate-200: #e2e8f0;
-      --slate-100: #f1f5f9;
+      --primary-light: #e0e7ff;
       --slate-50: #f8fafc;
+      --slate-100: #f1f5f9;
+      --slate-200: #e2e8f0;
+      --slate-300: #cbd5e1;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+      --slate-700: #334155;
+      --slate-800: #1e293b;
+      --slate-900: #0f172a;
       --white: #ffffff;
       --success: #10b981;
       --radius-sm: 6px;
@@ -39,7 +39,7 @@
       --font-mono: 'JetBrains Mono', monospace;
     }
 
-    *, *::before, *::after {
+    * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
@@ -47,16 +47,16 @@
 
     body {
       font-family: var(--font-sans);
-      background-color: var(--white);
+      background-color: var(--slate-50);
       color: var(--slate-800);
-      line-height: 1.65;
+      line-height: 1.6;
       -webkit-font-smoothing: antialiased;
     }
 
     a {
       color: var(--primary);
       text-decoration: none;
-      transition: color 0.15s ease;
+      transition: color 0.2s ease;
     }
 
     a:hover {
@@ -64,7 +64,7 @@
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1080px;
       margin: 0 auto;
       padding: 0 24px;
     }
@@ -75,75 +75,64 @@
       padding: 0 24px;
     }
 
-    /* Header / Hero */
+    /* Header */
     header {
-      padding: 64px 0 40px;
-      text-align: center;
-      background: linear-gradient(180deg, var(--slate-50) 0%, var(--white) 100%);
+      background: var(--white);
       border-bottom: 1px solid var(--slate-200);
+      padding: 60px 0 40px;
+      text-align: center;
     }
 
-    .badge-venue {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 6px 16px;
+    .venue-badge {
+      display: inline-block;
+      padding: 4px 14px;
       background: var(--primary-light);
-      border: 1px solid var(--primary-border);
       color: var(--primary);
-      font-size: 0.85rem;
-      font-weight: 600;
       border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       margin-bottom: 20px;
-      letter-spacing: 0.02em;
     }
 
-    h1.paper-title {
-      font-size: clamp(2rem, 4vw, 2.75rem);
+    .paper-title {
+      font-size: 2.35rem;
       font-weight: 800;
-      line-height: 1.25;
       letter-spacing: -0.025em;
       color: var(--slate-900);
-      max-width: 960px;
-      margin: 0 auto 24px;
+      line-height: 1.25;
+      margin-bottom: 24px;
     }
 
     .authors-list {
-      font-size: 1.05rem;
+      font-size: 1.15rem;
       font-weight: 500;
-      margin-bottom: 12px;
-      line-height: 2;
+      color: var(--slate-700);
+      margin-bottom: 14px;
     }
 
     .authors-list a {
-      color: var(--slate-900);
+      color: var(--slate-800);
       font-weight: 600;
-      border-bottom: 1px dotted var(--slate-400);
     }
 
     .authors-list a:hover {
       color: var(--primary);
-      border-bottom-color: var(--primary);
     }
 
     .affiliations {
-      font-size: 0.9rem;
-      color: var(--slate-600);
+      font-size: 0.88rem;
+      color: var(--slate-500);
+      line-height: 1.6;
       margin-bottom: 28px;
-      line-height: 1.8;
-    }
-
-    .affiliations sup {
-      font-weight: 600;
-      color: var(--slate-700);
     }
 
     .links-row {
       display: flex;
-      flex-wrap: wrap;
       justify-content: center;
       gap: 12px;
-      margin-top: 10px;
+      flex-wrap: wrap;
     }
 
     .btn {
@@ -151,55 +140,48 @@
       align-items: center;
       gap: 8px;
       padding: 10px 20px;
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
+      border-radius: 9999px;
+      font-size: 0.92rem;
       font-weight: 600;
       transition: all 0.2s ease;
       cursor: pointer;
-      text-decoration: none;
     }
 
     .btn-primary {
-      background-color: var(--slate-900);
+      background: var(--slate-900);
       color: var(--white);
-      border: 1px solid var(--slate-900);
-      box-shadow: var(--shadow-sm);
     }
 
     .btn-primary:hover {
-      background-color: var(--primary);
-      border-color: var(--primary);
+      background: var(--slate-800);
       color: var(--white);
       transform: translateY(-1px);
-      box-shadow: var(--shadow-md);
     }
 
     .btn-outline {
-      background-color: var(--white);
-      color: var(--slate-800);
+      background: var(--white);
+      color: var(--slate-700);
       border: 1px solid var(--slate-300);
-      box-shadow: var(--shadow-sm);
     }
 
     .btn-outline:hover {
-      background-color: var(--slate-50);
-      border-color: var(--slate-400);
+      background: var(--slate-100);
       color: var(--slate-900);
+      border-color: var(--slate-400);
       transform: translateY(-1px);
     }
 
-    /* Teaser Section */
+    /* Teaser */
     .teaser-section {
-      padding: 48px 0 64px;
+      margin: 40px auto 0;
     }
 
     .teaser-figure {
       background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
-      padding: 16px;
-      box-shadow: var(--shadow-md);
-      overflow: hidden;
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
     }
 
     .teaser-figure img {
@@ -210,61 +192,62 @@
     }
 
     .teaser-caption {
-      margin-top: 16px;
+      margin-top: 14px;
       font-size: 0.95rem;
-      color: var(--slate-700);
-      text-align: justify;
+      color: var(--slate-600);
       line-height: 1.6;
+      text-align: justify;
     }
 
-    /* Content Sections */
+    /* Sections */
     section {
-      padding: 56px 0;
-      border-top: 1px solid var(--slate-200);
+      padding: 60px 0;
     }
 
     .section-header {
-      margin-bottom: 32px;
       text-align: center;
+      max-width: 820px;
+      margin: 0 auto 36px;
     }
 
     .section-tag {
+      display: inline-block;
       font-size: 0.8rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: var(--primary);
       margin-bottom: 8px;
-      display: block;
     }
 
     .section-title {
-      font-size: 1.85rem;
+      font-size: 1.95rem;
       font-weight: 800;
       letter-spacing: -0.02em;
       color: var(--slate-900);
+      margin-bottom: 12px;
     }
 
     .section-desc {
       font-size: 1.05rem;
       color: var(--slate-600);
-      max-width: 780px;
-      margin: 12px auto 0;
+      line-height: 1.6;
     }
 
     /* Abstract Card */
     .abstract-card {
-      background: var(--slate-50);
+      background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
-      padding: 32px;
-      font-size: 1.02rem;
-      color: var(--slate-700);
+      padding: 32px 36px;
+      box-shadow: var(--shadow-sm);
+      font-size: 1.08rem;
       line-height: 1.75;
+      color: var(--slate-700);
       text-align: justify;
     }
 
-    /* Section 1: Latent Space Analysis */
+    /* Tabs & Model Cards */
     .tabs-nav {
       display: flex;
       justify-content: center;
@@ -274,19 +257,20 @@
     }
 
     .tab-btn {
-      padding: 8px 18px;
-      background: var(--slate-100);
+      padding: 10px 22px;
+      background: var(--white);
       border: 1px solid var(--slate-300);
       border-radius: 9999px;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       font-weight: 600;
-      color: var(--slate-700);
+      color: var(--slate-600);
       cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .tab-btn:hover {
-      background: var(--slate-200);
+      background: var(--slate-100);
+      color: var(--slate-900);
     }
 
     .tab-btn.active {
@@ -306,7 +290,7 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(6px); }
+      from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
@@ -315,31 +299,35 @@
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
       padding: 20px;
-      box-shadow: var(--shadow-md);
-      text-align: center;
+      box-shadow: var(--shadow-sm);
     }
 
     .model-card img {
-      max-width: 100%;
+      width: 100%;
       height: auto;
       border-radius: var(--radius-md);
       display: block;
-      margin: 0 auto;
     }
 
     .model-card-desc {
       margin-top: 14px;
-      font-size: 0.9rem;
+      font-size: 0.92rem;
       color: var(--slate-600);
-      text-align: center;
+      line-height: 1.55;
     }
 
-    /* Section 2: Qualitative Overview */
+    /* Qualitative Cards Grid */
     .app-cards-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 24px;
-      margin-bottom: 32px;
+      margin-bottom: 36px;
+    }
+
+    @media (max-width: 900px) {
+      .app-cards-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     .app-card {
@@ -354,57 +342,52 @@
 
     .app-card-badge {
       display: inline-block;
-      align-self: flex-start;
-      padding: 4px 10px;
-      background: var(--primary-light);
-      color: var(--primary);
       font-size: 0.75rem;
       font-weight: 700;
-      border-radius: 4px;
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 12px;
+      color: var(--primary);
+      margin-bottom: 8px;
     }
 
     .app-card h3 {
       font-size: 1.25rem;
       font-weight: 700;
       color: var(--slate-900);
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
 
     .app-card p {
-      font-size: 0.95rem;
+      font-size: 0.93rem;
       color: var(--slate-600);
       line-height: 1.6;
     }
 
-    .paper-figure-card {
+    .figure-card {
       background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
       padding: 20px;
-      box-shadow: var(--shadow-md);
-      margin-bottom: 32px;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 30px;
     }
 
-    .paper-figure-card img {
+    .figure-card img {
       width: 100%;
       height: auto;
       border-radius: var(--radius-md);
       display: block;
     }
 
-    .paper-figure-card .caption {
-      margin-top: 14px;
-      font-size: 0.9rem;
+    .figure-caption {
+      margin-top: 12px;
+      font-size: 0.92rem;
       color: var(--slate-600);
       line-height: 1.55;
     }
 
     /* Interactive Demo Section */
     .demo-container {
-      background: var(--slate-50);
+      background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
       padding: 32px;
@@ -413,39 +396,37 @@
 
     .demo-nav {
       display: flex;
-      gap: 12px;
       justify-content: center;
-      margin-bottom: 28px;
-      border-bottom: 1px solid var(--slate-200);
-      padding-bottom: 16px;
+      gap: 12px;
+      margin-bottom: 32px;
       flex-wrap: wrap;
     }
 
     .demo-nav-btn {
-      padding: 10px 20px;
-      background: var(--white);
-      border: 1px solid var(--slate-300);
-      border-radius: var(--radius-md);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--slate-700);
-      cursor: pointer;
-      display: flex;
+      display: inline-flex;
       align-items: center;
       gap: 8px;
+      padding: 12px 24px;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-300);
+      border-radius: 9999px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--slate-700);
+      cursor: pointer;
       transition: all 0.2s ease;
     }
 
     .demo-nav-btn:hover {
-      border-color: var(--primary);
-      color: var(--primary);
+      background: var(--slate-200);
+      color: var(--slate-900);
     }
 
     .demo-nav-btn.active {
       background: var(--primary);
       color: var(--white);
       border-color: var(--primary);
-      box-shadow: var(--shadow-sm);
+      box-shadow: var(--shadow-md);
     }
 
     .demo-panel {
@@ -457,32 +438,34 @@
       animation: fadeIn 0.3s ease;
     }
 
-    /* ColorTuning Demo Layout */
+    /* 1. ColorTuning Grid Layout */
     .colortuning-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 32px;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 36px;
       align-items: start;
     }
 
-    @media (max-width: 860px) {
+    @media (max-width: 900px) {
       .colortuning-grid {
         grid-template-columns: 1fr;
       }
     }
 
-    .prompt-selector-group {
-      margin-bottom: 20px;
+    .demo-controls-col {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
     }
 
     .selector-label {
+      display: block;
       font-size: 0.85rem;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       color: var(--slate-500);
       margin-bottom: 8px;
-      display: block;
     }
 
     .prompt-pills {
@@ -492,12 +475,12 @@
     }
 
     .prompt-pill {
-      padding: 8px 14px;
+      padding: 8px 16px;
       background: var(--white);
       border: 1px solid var(--slate-300);
-      border-radius: 6px;
-      font-size: 0.88rem;
-      font-weight: 500;
+      border-radius: var(--radius-md);
+      font-size: 0.9rem;
+      font-weight: 600;
       color: var(--slate-700);
       cursor: pointer;
       transition: all 0.15s ease;
@@ -505,6 +488,7 @@
 
     .prompt-pill:hover {
       background: var(--slate-100);
+      color: var(--slate-900);
     }
 
     .prompt-pill.active {
@@ -514,80 +498,81 @@
     }
 
     .active-prompt-box {
-      background: var(--white);
-      border: 1px solid var(--slate-200);
+      background: var(--slate-100);
       border-left: 4px solid var(--primary);
+      padding: 14px 18px;
       border-radius: var(--radius-sm);
-      padding: 12px 16px;
-      font-size: 0.95rem;
+      font-family: var(--font-sans);
+      font-size: 0.96rem;
       color: var(--slate-800);
-      margin-bottom: 24px;
       font-style: italic;
     }
 
     .swatches-grid {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 24px;
+      gap: 10px;
     }
 
     .swatch-card {
-      background: var(--white);
-      border: 2px solid var(--slate-200);
-      border-radius: var(--radius-md);
-      padding: 10px;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s ease;
       display: flex;
-      flex-direction: column;
       align-items: center;
       gap: 8px;
+      padding: 8px 10px;
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
     }
 
     .swatch-card:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow-sm);
+      border-color: var(--slate-400);
+      transform: translateY(-1px);
     }
 
     .swatch-card.active {
       border-color: var(--primary);
-      box-shadow: 0 0 0 2px var(--primary-border);
       background: var(--primary-light);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
     }
 
     .swatch-circle {
-      width: 38px;
-      height: 38px;
+      width: 22px;
+      height: 22px;
       border-radius: 50%;
       border: 1px solid rgba(0, 0, 0, 0.15);
-      box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+      flex-shrink: 0;
     }
 
     .swatch-hex {
       font-family: var(--font-mono);
       font-size: 0.8rem;
       font-weight: 600;
-      color: var(--slate-700);
+      color: var(--slate-800);
     }
 
+    /* Compact Preview Image Box */
     .preview-box {
-      background: var(--white);
+      background: var(--slate-50);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
-      padding: 16px;
-      box-shadow: var(--shadow-md);
-      text-align: center;
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     .preview-image-wrap {
       position: relative;
       width: 100%;
+      max-width: 440px;
       aspect-ratio: 1 / 1;
       border-radius: var(--radius-md);
       overflow: hidden;
       background: #111;
+      box-shadow: var(--shadow-md);
     }
 
     .preview-image-wrap img {
@@ -598,51 +583,39 @@
       transition: opacity 0.2s ease;
     }
 
-    .metrics-bar {
-      margin-top: 16px;
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      padding: 12px;
-      background: var(--slate-50);
-      border: 1px solid var(--slate-200);
-      border-radius: var(--radius-md);
-    }
-
-    .metric-item {
-      text-align: center;
-    }
-
-    .metric-val {
+    .tuning-hex-badge {
+      margin-top: 14px;
+      padding: 6px 18px;
+      background: var(--white);
+      border: 1px solid var(--slate-300);
+      border-radius: 9999px;
       font-family: var(--font-mono);
-      font-size: 1.15rem;
+      font-size: 0.95rem;
       font-weight: 700;
-      color: var(--success);
-    }
-
-    .metric-lbl {
-      font-size: 0.75rem;
-      text-transform: uppercase;
-      font-weight: 600;
-      color: var(--slate-500);
-    }
-
-    /* Transfer Demo Layout */
-    .transfer-demo-wrap {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-
-    .transfer-pills {
-      display: flex;
-      flex-wrap: wrap;
+      color: var(--slate-800);
+      display: inline-flex;
+      align-items: center;
       gap: 10px;
-      justify-content: center;
+      box-shadow: var(--shadow-sm);
     }
 
-    .transfer-pill {
-      padding: 10px 16px;
+    .tuning-hex-indicator {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.2);
+    }
+
+    /* 2. Color Transfer Layout */
+    .transfer-subnav {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .transfer-subnav-btn {
+      padding: 8px 18px;
       background: var(--white);
       border: 1px solid var(--slate-300);
       border-radius: var(--radius-md);
@@ -653,55 +626,133 @@
       transition: all 0.2s ease;
     }
 
-    .transfer-pill:hover {
-      background: var(--slate-100);
-    }
-
-    .transfer-pill.active {
-      background: var(--primary);
+    .transfer-subnav-btn.active {
+      background: var(--slate-900);
       color: var(--white);
-      border-color: var(--primary);
-      box-shadow: var(--shadow-sm);
+      border-color: var(--slate-900);
     }
 
-    .transfer-display-card {
-      background: var(--white);
-      border: 1px solid var(--slate-200);
-      border-radius: var(--radius-lg);
-      padding: 20px;
-      box-shadow: var(--shadow-md);
-    }
-
-    .transfer-display-card img {
-      width: 100%;
-      height: auto;
-      border-radius: var(--radius-md);
-      display: block;
-    }
-
-    .transfer-meta {
-      margin-top: 16px;
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
+    .transfer-selector-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
       gap: 12px;
-      font-size: 0.92rem;
-      color: var(--slate-700);
-      border-top: 1px solid var(--slate-200);
-      padding-top: 12px;
+      margin-bottom: 24px;
     }
 
-    /* Gamut Demo Layout */
-    .gamut-demo-wrap {
+    @media (max-width: 800px) {
+      .transfer-selector-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .transfer-card-btn {
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 24px;
-      max-width: 800px;
+      gap: 8px;
+      padding: 10px;
+      background: var(--white);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s ease;
+    }
+
+    .transfer-card-btn:hover {
+      border-color: var(--slate-400);
+      transform: translateY(-1px);
+    }
+
+    .transfer-card-btn.active {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+      background: var(--primary-light);
+    }
+
+    .palette-chips-strip {
+      display: flex;
+      height: 14px;
+      width: 100%;
+      border-radius: 4px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+
+    .palette-chip {
+      flex: 1;
+      height: 100%;
+    }
+
+    .transfer-btn-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--slate-800);
+    }
+
+    .transfer-side-by-side {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      max-width: 920px;
       margin: 0 auto;
     }
 
-    .gamut-slider-wrap {
+    @media (max-width: 768px) {
+      .transfer-side-by-side {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .transfer-box {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .transfer-box-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--slate-600);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .transfer-media-wrap {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      background: #111;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .transfer-media-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    /* 3. Saturation Control Layout */
+    .saturation-demo-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 22px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    .saturation-slider-wrap {
       width: 100%;
       background: var(--white);
       border: 1px solid var(--slate-200);
@@ -716,7 +767,7 @@
       font-size: 0.85rem;
       font-weight: 600;
       color: var(--slate-600);
-      margin-top: 8px;
+      margin-top: 10px;
     }
 
     input[type=range] {
@@ -726,16 +777,17 @@
       cursor: pointer;
     }
 
-    .gamut-preview-card {
+    .saturation-preview-card {
       background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
       padding: 16px;
       box-shadow: var(--shadow-md);
       width: 100%;
+      max-width: 500px;
     }
 
-    .gamut-preview-card img {
+    .saturation-preview-card img {
       width: 100%;
       height: auto;
       border-radius: var(--radius-md);
@@ -748,56 +800,58 @@
       color: var(--slate-100);
       border-radius: var(--radius-md);
       padding: 20px;
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      overflow-x: auto;
-      line-height: 1.6;
       position: relative;
+      overflow-x: auto;
+    }
+
+    .bibtex-box pre {
+      font-family: var(--font-mono);
+      font-size: 0.88rem;
+      line-height: 1.5;
     }
 
     .copy-btn {
       position: absolute;
-      top: 12px;
-      right: 12px;
-      background: var(--slate-700);
+      top: 14px;
+      right: 14px;
+      background: rgba(255, 255, 255, 0.15);
       color: var(--white);
       border: none;
       padding: 6px 12px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-      font-weight: 600;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
       cursor: pointer;
       transition: background 0.2s ease;
     }
 
     .copy-btn:hover {
-      background: var(--primary);
+      background: rgba(255, 255, 255, 0.3);
     }
 
     /* Footer */
     footer {
-      padding: 40px 0;
-      text-align: center;
-      color: var(--slate-500);
-      font-size: 0.88rem;
+      background: var(--white);
       border-top: 1px solid var(--slate-200);
-      background: var(--slate-50);
+      padding: 30px 0;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--slate-500);
     }
   </style>
 </head>
 <body>
 
-  <!-- Hero Header -->
+  <!-- Header -->
   <header>
     <div class="container">
-      <div class="badge-venue">
-        <i class="fa-solid fa-flask"></i> Research Paper &middot; ICLR 2027
+      <div class="venue-badge">
+        <i class="fa-solid fa-gem"></i> ICLR 2027 Preprint
       </div>
 
       <h1 class="paper-title">ON COLOR ALIGNMENT IN VAE LATENT SPACES<br>AND ITS APPLICATIONS</h1>
 
       <div class="authors-list">
-        <a href="https://julian075.github.io/" target="_blank">Julián Santamaria</a><sup>&dagger;1,2</sup> &nbsp;&middot;&nbsp;
+        <a href="https://julian075.github.io/" target="_blank">Julian Santamaria</a><sup>&dagger;1,2</sup> &nbsp;&middot;&nbsp;
         <a href="https://wangkai930418.github.io/" target="_blank">Kai Wang</a><sup>3,4</sup> &nbsp;&middot;&nbsp;
         <a href="https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en" target="_blank">Jesús Malo</a><sup>5</sup> &nbsp;&middot;&nbsp;
         <a href="https://www.jvazquez-corral.net/" target="_blank">Javier Vazquez-Corral</a><sup>1,2</sup> &nbsp;&middot;&nbsp;
@@ -832,7 +886,7 @@
     <div class="teaser-figure">
       <img src="img/teaser.webp" alt="On Color Alignment in VAE Latent Spaces and Its Applications">
       <p class="teaser-caption">
-        <strong>Overview of Color Alignment and Applications.</strong> Across diverse modern diffusion architectures (FLUX, FLUX.2, SD3, SD3.5, SDXL, PixArt, Z-Image), VAE latent representations inherently organize chromaticity along a low-dimensional, orthogonal color subspace. By characterizing these latent directions, our closed-loop steering framework enables precise numerical color control (ColorTuning), multi-zone semantic color transfer from palettes or photographic references, and continuous spatially-adaptive gamut reduction directly at generation time without retraining.
+        <strong>Figure 1: Overview of Color Alignment and Applications.</strong> Across diverse modern diffusion architectures (FLUX, FLUX.2, SD3, SD3.5, SDXL, PixArt, Z-Image), VAE latent representations inherently organize chromaticity along a low-dimensional, orthogonal color subspace. By characterizing these latent directions, our closed-loop steering framework enables precise numerical color control (ColorTuning), saturation control, and color transfer directly at generation time without retraining.
       </p>
     </div>
   </div>
@@ -845,19 +899,19 @@
         <h2 class="section-title">Abstract</h2>
       </div>
       <div class="abstract-card">
-        Variational autoencoders (VAEs) are a fundamental backbone of modern text-to-image models, which generate images within their latent space. VAEs are known to disentangle the main factors of variation in natural image statistics: decorrelating them yields one luminance axis and two opponent-color axes. Color should therefore be expected to emerge as a distinct factor in the VAE latent space. Yet how these latent spaces represent color remains largely unexplored. In this work, we show that the VAEs of text-to-image models share an intrinsic color subspace aligned with brightness and opponent colors. Through a linear approximation of the encoder and targeted latent steering, we recover this subspace consistently across a broad range of VAEs, from SD1.5 to FLUX.2 and Z-Image. Building on this characterization, we propose three generation-time applications: <strong>ColorTuning</strong>, which achieves state-of-the-art in precise numerical color generation on GenColorBench; <strong>Multi-Zone Semantic Color Transfer</strong>, to steer scene palettes to match reference swatches or photographs; and <strong>Spatially-Adaptive Gamut Reduction</strong>, to continuously modulate chromatic intensity without hue cancellation.
+        Variational autoencoders (VAEs) are a key part of modern text-to-image models, which generate images within their latent space. VAEs are known to disentangle the main factors of variation in the data, and color is known to be one of the most structured of these in natural images: decorrelating it yields one luminance axis and two opponent-color axes. Color should therefore be expected to emerge as a distinct factor in the VAE latent space. Yet how these latent spaces represent color remains largely unexplored. In this work, we show that the VAEs of text-to-image models share a color subspace aligned with brightness and opponent-colors. Through a linear approximation of the encoder and targeted latent steering, we find this subspace consistently across a broad range of VAEs, from SD1.5 to FLUX.2 and Z-Image. Building on this characterization, we propose three applications: <strong>ColorTuning</strong>, which achieves state-of-the-art in precise numerical color generation on the fine-grained CSS3/X11 system of GenColorBench, <em>saturation control</em>, to adjust the global chromatic intensity, and <em>color transfer</em>, to change the palette to match a reference.
       </div>
     </div>
   </section>
 
-  <!-- Section 1: Color in Autoencoders Latent Space -->
+  <!-- Section 3: Color in Autoencoder Latent Space -->
   <section id="latent-color-subspace">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Foundations</span>
-        <h2 class="section-title">Color in Autoencoder Latent Spaces</h2>
+        <span class="section-tag">Section 3</span>
+        <h2 class="section-title">Color in Autoencoder Latent Space</h2>
         <p class="section-desc">
-          Traversing principal latent directions in pretrained VAEs reveals an opponent-color plane and brightness axis that emerge spontaneously without explicit color supervision.
+          Traversing principal latent directions in pretrained VAEs reveals an opponent-color plane and brightness axis that emerge spontaneously from natural image statistics.
         </p>
       </div>
 
@@ -873,7 +927,7 @@
         <div class="model-card">
           <img src="img/latent_ch_mod/FLUX_v2.webp" alt="FLUX.1 Latent Channel Traversals">
           <p class="model-card-desc">
-            <strong>FLUX.1-dev (16 latent channels):</strong> Perturbing leading latent directions spans an orthogonal opponent-color plane (yellow-blue vs. green-red) and independent luminance control while faithfully preserving high-frequency image structure.
+            <strong>FLUX.1-dev (16 latent channels):</strong> Sweeping principal directions spans an orthogonal opponent-color plane (ch2 across columns, ch3 across rows) and independent brightness control while preserving image structure.
           </p>
         </div>
       </div>
@@ -882,7 +936,7 @@
         <div class="model-card">
           <img src="img/latent_ch_mod/FLUX_2_v2.webp" alt="FLUX.2 Latent Channel Traversals">
           <p class="model-card-desc">
-            <strong>FLUX.2-dev (32 latent channels):</strong> Even with higher dimensional latent spaces, singular vector analysis recovers the same canonical chromatic organization, demonstrating model-agnostic universality across generations.
+            <strong>FLUX.2-dev (32 latent channels):</strong> Higher dimensional latent spaces preserve the identical canonical chromatic organization, demonstrating model-agnostic universality across architectures.
           </p>
         </div>
       </div>
@@ -907,52 +961,74 @@
     </div>
   </section>
 
-  <!-- Section 2: Qualitative Applications -->
+  <!-- Section 4: Applications -->
   <section id="applications">
     <div class="container-wide">
       <div class="section-header">
-        <span class="section-tag">Qualitative Results</span>
-        <h2 class="section-title">Further Color Applications During Generation</h2>
+        <span class="section-tag">Section 4</span>
+        <h2 class="section-title">Applications</h2>
         <p class="section-desc">
-          Leveraging the discovered color subspace enables diverse generation-time applications using the exact same underlying representation.
+          Building on the characterization of the color basis, we propose three generation-time applications in text-to-image diffusion models.
         </p>
       </div>
 
       <div class="app-cards-grid">
         <div class="app-card">
-          <span class="app-card-badge">Application 1</span>
-          <h3>Precise Numerical Color Tuning</h3>
+          <span class="app-card-badge">Section 4.2</span>
+          <h3>ColorTuning: Numerical Color Precision</h3>
           <p>
-            Closed-loop trajectory steering during denoising. Converts numerical color codes into proxy color names for prompt text conditioning, and applies residual ResMLP displacements inside SAM3 object masks to achieve exact CIELAB targets (&Delta;E<sub>00</sub> &lt; 5.0).
+            Closed-loop trajectory steering during denoising. Converts numerical color codes into proxy color names for prompt text conditioning, and applies residual ResMLP displacements inside SAM3 object masks to achieve exact CIELAB targets on GenColorBench.
           </p>
         </div>
         <div class="app-card">
-          <span class="app-card-badge">Application 2</span>
-          <h3>Multi-Zone Semantic Color Transfer</h3>
+          <span class="app-card-badge">Section 4.3</span>
+          <h3>Saturation Control</h3>
           <p>
-            Extracts dominant and focal color clusters from reference palette swatches or photographs. Segments the scene into semantic zones and applies independent latent shifts to match the reference distribution without color bleeding.
+            By traversing the corresponding latent directions, our method continuously modulates the saturation of the generated image (from 100% to 50% at 10% intervals), facilitating synthesis within narrower color gamuts without post-processing.
           </p>
         </div>
         <div class="app-card">
-          <span class="app-card-badge">Application 3</span>
-          <h3>Spatially-Adaptive Gamut Reduction</h3>
+          <span class="app-card-badge">Section 4.3</span>
+          <h3>Color Transfer</h3>
           <p>
-            Modulates image saturation toward narrower color gamuts pixel-by-pixel. Contracts chroma coordinates (a*, b*) toward neutral gray while preserving lightness (L*), eliminating the complementary hue cancellations of uniform shifts.
+            Given a text prompt and a reference image or color palette, our method leverages the discovered latent directions to match the color distribution while simultaneously generating the content specified by the prompt.
           </p>
         </div>
+      </div>
+
+      <!-- Qualitative Results Figures from Paper -->
+      <div class="figure-card">
+        <img src="img/qualitative_results/qualitative_results_v2.webp" alt="ColorTuning Qualitative Comparisons on GenColorBench">
+        <p class="figure-caption">
+          <strong>ColorTuning benchmark results on GenColorBench.</strong> Faithful reproduction of requested numerical colors across challenging tones, subtle color gradations, and pastel ranges.
+        </p>
+      </div>
+
+      <div class="figure-card">
+        <img src="img/qualitative_results/sat_v3.webp" alt="Saturation Control Latent Interventions">
+        <p class="figure-caption">
+          <strong>Saturation control during generation.</strong> From left to right, latent interventions continuously reduce the chromatic intensity of the generated scene from 100% down to 50% in 10% steps.
+        </p>
+      </div>
+
+      <div class="figure-card">
+        <img src="img/qualitative_results/color_apli_v2.webp" alt="Color Transfer Examples">
+        <p class="figure-caption">
+          <strong>Color transfer during generation.</strong> In each pair, the left image provides the reference color distribution and the right image is the generated result steered to match it.
+        </p>
       </div>
 
     </div>
   </section>
 
-  <!-- Section 3: Interactive Demonstrations -->
+  <!-- Section 5: Interactive Demonstrations -->
   <section id="interactive-demo">
     <div class="container-wide">
       <div class="section-header">
-        <span class="section-tag">Live Exploration</span>
+        <span class="section-tag">Demonstration</span>
         <h2 class="section-title">Interactive Demonstration</h2>
         <p class="section-desc">
-          Experience the three generation modes interactively with precomputed outputs evaluated on benchmark standards.
+          Explore the three generation-time modes interactively with precomputed outputs.
         </p>
       </div>
 
@@ -960,13 +1036,13 @@
         <!-- Mode Switcher -->
         <div class="demo-nav">
           <button class="demo-nav-btn active" onclick="selectDemoMode('colortuning')">
-            <i class="fa-solid fa-palette"></i> 1. Numerical Color Tuning
+            <i class="fa-solid fa-palette"></i> 1. ColorTuning
           </button>
           <button class="demo-nav-btn" onclick="selectDemoMode('transfer')">
-            <i class="fa-solid fa-images"></i> 2. Semantic Color Transfer
+            <i class="fa-solid fa-images"></i> 2. Color Transfer
           </button>
-          <button class="demo-nav-btn" onclick="selectDemoMode('gamut')">
-            <i class="fa-solid fa-sliders"></i> 3. Gamut &amp; Saturation Control
+          <button class="demo-nav-btn" onclick="selectDemoMode('saturation')">
+            <i class="fa-solid fa-sliders"></i> 3. Saturation Control
           </button>
         </div>
 
@@ -976,14 +1052,14 @@
             <!-- Left: Controls -->
             <div class="demo-controls-col">
               <div class="prompt-selector-group">
-                <span class="selector-label">Select Target Object / Prompt:</span>
+                <span class="selector-label">Select Object:</span>
                 <div class="prompt-pills" id="tuning-prompt-pills">
                   <!-- Injected via JS -->
                 </div>
               </div>
 
               <div class="active-prompt-box">
-                <span id="tuning-active-prompt">&ldquo;A ripe banana on a kitchen countertop&rdquo;</span>
+                <span id="tuning-active-prompt">&ldquo;A banana on a kitchen countertop&rdquo;</span>
               </div>
 
               <div>
@@ -994,25 +1070,14 @@
               </div>
             </div>
 
-            <!-- Right: Preview & Metrics -->
+            <!-- Right: Preview -->
             <div class="preview-box">
               <div class="preview-image-wrap">
-                <img id="tuning-preview-img" src="" alt="Generated object with precise color">
+                <img id="tuning-preview-img" src="" alt="Generated object with steered color">
               </div>
-
-              <div class="metrics-bar">
-                <div class="metric-item">
-                  <div class="metric-val" id="metric-delta-e">&Delta;E<sub>00</sub>: 2.04</div>
-                  <div class="metric-lbl">Perceptual Error (&lt; 5.0)</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-val" id="metric-delta-c">&Delta;C*: 1.90</div>
-                  <div class="metric-lbl">Chroma Delta</div>
-                </div>
-                <div class="metric-item">
-                  <div class="metric-val" id="metric-hex">#DC143C</div>
-                  <div class="metric-lbl">Target Hex Code</div>
-                </div>
+              <div class="tuning-hex-badge">
+                <div class="tuning-hex-indicator" id="tuning-indicator"></div>
+                Target Color: <span id="tuning-hex-text">#DC143C</span>
               </div>
             </div>
           </div>
@@ -1020,59 +1085,90 @@
 
         <!-- 2. Color Transfer Interactive Panel -->
         <div id="demo-panel-transfer" class="demo-panel">
-          <div class="transfer-demo-wrap">
-            <div class="transfer-pills" id="transfer-pills">
-              <!-- Injected via JS -->
+          <!-- Submode Toggle: Palette vs Reference Image -->
+          <div class="transfer-subnav">
+            <button class="transfer-subnav-btn active" id="btn-transfer-palettes" onclick="selectTransferSubmode('palettes')">
+              <i class="fa-solid fa-swatchbook"></i> Palette Transfer
+            </button>
+            <button class="transfer-subnav-btn" id="btn-transfer-references" onclick="selectTransferSubmode('references')">
+              <i class="fa-solid fa-image"></i> Reference Image Transfer
+            </button>
+          </div>
+
+          <!-- Selector Grid -->
+          <div class="transfer-selector-grid" id="transfer-selector-grid">
+            <!-- Injected via JS -->
+          </div>
+
+          <!-- Prompt Box -->
+          <div class="active-prompt-box" style="margin-bottom: 24px; text-align: center;">
+            <span id="transfer-active-prompt"></span>
+          </div>
+
+          <!-- Side-by-Side Comparison -->
+          <div class="transfer-side-by-side">
+            <!-- Left: Source Palette / Reference Image -->
+            <div class="transfer-box">
+              <div class="transfer-box-title" id="transfer-left-title">
+                <i class="fa-solid fa-palette"></i> Selected Color Palette
+              </div>
+              <div class="transfer-media-wrap">
+                <img id="transfer-left-img" src="" alt="Selected Color Palette or Reference">
+              </div>
             </div>
 
-            <div class="transfer-display-card">
-              <img id="transfer-img" src="" alt="Color Transfer Comparison">
-              <div class="transfer-meta">
-                <div><strong>Prompt:</strong> <span id="transfer-prompt-text"></span></div>
-                <div><strong>Palette:</strong> <span id="transfer-palette-name"></span></div>
-                <div><strong>Semantic Zones:</strong> <span id="transfer-zones-text"></span></div>
+            <!-- Right: Generated Steered Result -->
+            <div class="transfer-box">
+              <div class="transfer-box-title">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Generated Output
+              </div>
+              <div class="transfer-media-wrap">
+                <img id="transfer-right-img" src="" alt="Generated image with transferred color">
               </div>
             </div>
           </div>
         </div>
 
-        <!-- 3. Gamut Reduction Interactive Panel -->
-        <div id="demo-panel-gamut" class="demo-panel">
-          <div class="gamut-demo-wrap">
+        <!-- 3. Saturation Control Interactive Panel -->
+        <div id="demo-panel-saturation" class="demo-panel">
+          <div class="saturation-demo-wrap">
             <div class="prompt-selector-group" style="text-align: center;">
               <span class="selector-label">Select Scene:</span>
-              <div class="prompt-pills" style="justify-content: center;">
-                <button class="prompt-pill active" onclick="selectGamutScene('parrot')">Scarlet Macaw Parrot</button>
-                <button class="prompt-pill" onclick="selectGamutScene('vangogh')">Van Gogh Starry Night</button>
+              <div class="prompt-pills" style="justify-content: center;" id="saturation-scene-pills">
+                <!-- Injected via JS -->
               </div>
             </div>
 
+            <!-- Simulated Dynamic Prompt -->
             <div class="active-prompt-box" style="width: 100%; text-align: center;">
-              <span id="gamut-active-prompt"></span>
+              <span id="saturation-active-prompt"></span>
             </div>
 
-            <div class="gamut-slider-wrap">
-              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <label for="gamut-range" style="font-weight: 700; font-size: 0.95rem; color: var(--slate-800);">
-                  Chroma Reduction Ratio:
-                </label>
-                <span id="gamut-ratio-badge" style="font-family: var(--font-mono); font-weight: 700; font-size: 1.1rem; color: var(--primary);">
-                  0% (Baseline)
+            <!-- Saturation Controls -->
+            <div class="saturation-slider-wrap">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                <span class="selector-label" style="margin: 0;">Chromatic Saturation Setting:</span>
+                <span id="saturation-level-badge" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; background: var(--primary); color: white; padding: 4px 14px; border-radius: 9999px;">
+                  100% Saturation (Baseline)
                 </span>
               </div>
-              <input type="range" id="gamut-range" min="0" max="5" step="1" value="0" oninput="onGamutSliderChange(this.value)">
+              <div class="prompt-pills" style="justify-content: center; margin-bottom: 14px;" id="saturation-pct-pills">
+                <!-- Percentage buttons: 100%, 90%, 80%, 70%, 60%, 50% -->
+              </div>
+              <input type="range" id="saturation-slider" min="0" max="5" step="1" value="0" oninput="onSaturationSliderChange(this.value)">
               <div class="slider-labels">
-                <span>0% (GT)</span>
-                <span>-10%</span>
-                <span>-20%</span>
-                <span>-30%</span>
-                <span>-40%</span>
-                <span>-50%</span>
+                <span>100% (Baseline)</span>
+                <span>90% (-10%)</span>
+                <span>80% (-20%)</span>
+                <span>70% (-30%)</span>
+                <span>60% (-40%)</span>
+                <span>50% (-50%)</span>
               </div>
             </div>
 
-            <div class="gamut-preview-card">
-              <img id="gamut-img" src="" alt="Chroma Reduced Generation">
+            <!-- Preview Card -->
+            <div class="saturation-preview-card">
+              <img id="saturation-img" src="" alt="Saturation Control Steered Generation">
             </div>
           </div>
         </div>
@@ -1081,7 +1177,7 @@
     </div>
   </section>
 
-  <!-- Section 4: BibTeX -->
+  <!-- BibTeX Section -->
   <section id="citation">
     <div class="container">
       <div class="section-header">
@@ -1091,11 +1187,11 @@
 
       <div class="bibtex-box">
         <button class="copy-btn" onclick="copyBibtex()"><i class="fa-regular fa-copy"></i> Copy</button>
-        <pre id="bibtex-text">@inproceedings{santamaria2026coloralignment,
+        <pre id="bibtex-text">@article{santamaria2025coloralignment,
   title={On Color Alignment in VAE Latent Spaces and Its Applications},
-  author={Santamaria, Juli{'a}n and Wang, Kai and Malo, Jes{'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
-  booktitle={arXiv preprint},
-  year={2026}
+  author={Santamaria, Julian and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  journal={arXiv preprint arXiv:XXXX.XXXXX},
+  year={2025}
 }</pre>
       </div>
     </div>
@@ -1115,69 +1211,17 @@
     const DATA = {
   "colortuning": {
     "banana": {
-      "name": "Ripe Banana",
-      "prompt": "A ripe banana on a kitchen countertop",
-      "type": "Distinct Hues",
+      "name": "Banana",
+      "prompt": "A banana on a kitchen countertop",
       "swatches": [
         {
-          "hex": "#DC143C",
+          "hex": "#0E89AB",
           "rgb": [
-            220,
-            20,
-            60
+            14,
+            137,
+            171
           ],
-          "img": "img/colortuning/banana/DC143C.webp",
-          "deltaE": 2.04,
-          "deltaC": 1.9,
-          "deltaL": 0.74
-        },
-        {
-          "hex": "#FF4500",
-          "rgb": [
-            255,
-            69,
-            0
-          ],
-          "img": "img/colortuning/banana/FF4500.webp",
-          "deltaE": 3.36,
-          "deltaC": 2.45,
-          "deltaL": 1.14
-        },
-        {
-          "hex": "#AB6B0E",
-          "rgb": [
-            171,
-            107,
-            14
-          ],
-          "img": "img/colortuning/banana/AB6B0E.webp",
-          "deltaE": 2.52,
-          "deltaC": 1.68,
-          "deltaL": 1.14
-        },
-        {
-          "hex": "#64AB0E",
-          "rgb": [
-            100,
-            171,
-            14
-          ],
-          "img": "img/colortuning/banana/64AB0E.webp",
-          "deltaE": 1.32,
-          "deltaC": 0.91,
-          "deltaL": 1.06
-        },
-        {
-          "hex": "#DA70D6",
-          "rgb": [
-            218,
-            112,
-            214
-          ],
-          "img": "img/colortuning/banana/DA70D6.webp",
-          "deltaE": 1.8,
-          "deltaC": 2.23,
-          "deltaL": 0.82
+          "img": "img/colortuning/banana/0E89AB.webp"
         },
         {
           "hex": "#1D49DB",
@@ -1186,10 +1230,16 @@
             73,
             219
           ],
-          "img": "img/colortuning/banana/1D49DB.webp",
-          "deltaE": 2.28,
-          "deltaC": 2.34,
-          "deltaL": 0.58
+          "img": "img/colortuning/banana/1D49DB.webp"
+        },
+        {
+          "hex": "#64AB0E",
+          "rgb": [
+            100,
+            171,
+            14
+          ],
+          "img": "img/colortuning/banana/64AB0E.webp"
         },
         {
           "hex": "#AB0E48",
@@ -1198,30 +1248,59 @@
             14,
             72
           ],
-          "img": "img/colortuning/banana/AB0E48.webp",
-          "deltaE": 3.6,
-          "deltaC": 1.68,
-          "deltaL": 1.22
+          "img": "img/colortuning/banana/AB0E48.webp"
         },
         {
-          "hex": "#0E89AB",
+          "hex": "#AB6B0E",
           "rgb": [
-            14,
-            137,
-            171
+            171,
+            107,
+            14
           ],
-          "img": "img/colortuning/banana/0E89AB.webp",
-          "deltaE": 3.36,
-          "deltaC": 2.01,
-          "deltaL": 0.74
+          "img": "img/colortuning/banana/AB6B0E.webp"
+        },
+        {
+          "hex": "#DA70D6",
+          "rgb": [
+            218,
+            112,
+            214
+          ],
+          "img": "img/colortuning/banana/DA70D6.webp"
+        },
+        {
+          "hex": "#DC143C",
+          "rgb": [
+            220,
+            20,
+            60
+          ],
+          "img": "img/colortuning/banana/DC143C.webp"
+        },
+        {
+          "hex": "#FF4500",
+          "rgb": [
+            255,
+            69,
+            0
+          ],
+          "img": "img/colortuning/banana/FF4500.webp"
         }
       ]
     },
     "dog": {
-      "name": "Golden Retriever Dog",
+      "name": "Dog",
       "prompt": "A dog sitting calmly in an indoor room",
-      "type": "Distinct Hues",
       "swatches": [
+        {
+          "hex": "#008F86",
+          "rgb": [
+            0,
+            143,
+            134
+          ],
+          "img": "img/colortuning/dog/008F86.webp"
+        },
         {
           "hex": "#0F52BA",
           "rgb": [
@@ -1229,34 +1308,7 @@
             82,
             186
           ],
-          "img": "img/colortuning/dog/0F52BA.webp",
-          "deltaE": 3.0,
-          "deltaC": 2.01,
-          "deltaL": 1.06
-        },
-        {
-          "hex": "#800020",
-          "rgb": [
-            128,
-            0,
-            32
-          ],
-          "img": "img/colortuning/dog/800020.webp",
-          "deltaE": 2.52,
-          "deltaC": 1.57,
-          "deltaL": 0.5
-        },
-        {
-          "hex": "#C46C08",
-          "rgb": [
-            196,
-            108,
-            8
-          ],
-          "img": "img/colortuning/dog/C46C08.webp",
-          "deltaE": 1.56,
-          "deltaC": 1.13,
-          "deltaL": 1.14
+          "img": "img/colortuning/dog/0F52BA.webp"
         },
         {
           "hex": "#315BDB",
@@ -1265,34 +1317,7 @@
             91,
             219
           ],
-          "img": "img/colortuning/dog/315BDB.webp",
-          "deltaE": 2.76,
-          "deltaC": 1.9,
-          "deltaL": 0.66
-        },
-        {
-          "hex": "#B8860B",
-          "rgb": [
-            184,
-            134,
-            11
-          ],
-          "img": "img/colortuning/dog/B8860B.webp",
-          "deltaE": 3.84,
-          "deltaC": 1.79,
-          "deltaL": 0.58
-        },
-        {
-          "hex": "#008F86",
-          "rgb": [
-            0,
-            143,
-            134
-          ],
-          "img": "img/colortuning/dog/008F86.webp",
-          "deltaE": 2.52,
-          "deltaC": 2.45,
-          "deltaL": 0.82
+          "img": "img/colortuning/dog/315BDB.webp"
         },
         {
           "hex": "#72AD55",
@@ -1301,10 +1326,34 @@
             173,
             85
           ],
-          "img": "img/colortuning/dog/72AD55.webp",
-          "deltaE": 3.6,
-          "deltaC": 1.68,
-          "deltaL": 1.14
+          "img": "img/colortuning/dog/72AD55.webp"
+        },
+        {
+          "hex": "#800020",
+          "rgb": [
+            128,
+            0,
+            32
+          ],
+          "img": "img/colortuning/dog/800020.webp"
+        },
+        {
+          "hex": "#B8860B",
+          "rgb": [
+            184,
+            134,
+            11
+          ],
+          "img": "img/colortuning/dog/B8860B.webp"
+        },
+        {
+          "hex": "#C46C08",
+          "rgb": [
+            196,
+            108,
+            8
+          ],
+          "img": "img/colortuning/dog/C46C08.webp"
         },
         {
           "hex": "#EDA6A6",
@@ -1313,42 +1362,14 @@
             166,
             166
           ],
-          "img": "img/colortuning/dog/EDA6A6.webp",
-          "deltaE": 2.88,
-          "deltaC": 2.34,
-          "deltaL": 0.9
+          "img": "img/colortuning/dog/EDA6A6.webp"
         }
       ]
     },
     "flower": {
-      "name": "Cosmos Flower",
-      "prompt": "A blooming flower in a lush garden",
-      "type": "Monochromatic Variations",
+      "name": "Flower",
+      "prompt": "A flower in a ceramic vase",
       "swatches": [
-        {
-          "hex": "#821E5F",
-          "rgb": [
-            130,
-            30,
-            95
-          ],
-          "img": "img/colortuning/flower/821E5F.webp",
-          "deltaE": 3.72,
-          "deltaC": 1.68,
-          "deltaL": 0.58
-        },
-        {
-          "hex": "#AA277C",
-          "rgb": [
-            170,
-            39,
-            124
-          ],
-          "img": "img/colortuning/flower/AA277C.webp",
-          "deltaE": 1.2,
-          "deltaC": 2.34,
-          "deltaL": 1.3
-        },
         {
           "hex": "#376C37",
           "rgb": [
@@ -1356,10 +1377,7 @@
             108,
             55
           ],
-          "img": "img/colortuning/flower/376C37.webp",
-          "deltaE": 1.2,
-          "deltaC": 1.9,
-          "deltaL": 1.22
+          "img": "img/colortuning/flower/376C37.webp"
         },
         {
           "hex": "#45B045",
@@ -1368,34 +1386,7 @@
             176,
             69
           ],
-          "img": "img/colortuning/flower/45B045.webp",
-          "deltaE": 3.84,
-          "deltaC": 1.13,
-          "deltaL": 0.58
-        },
-        {
-          "hex": "#DE219C",
-          "rgb": [
-            222,
-            33,
-            156
-          ],
-          "img": "img/colortuning/flower/DE219C.webp",
-          "deltaE": 3.84,
-          "deltaC": 1.35,
-          "deltaL": 0.58
-        },
-        {
-          "hex": "#EF3EB1",
-          "rgb": [
-            239,
-            62,
-            177
-          ],
-          "img": "img/colortuning/flower/EF3EB1.webp",
-          "deltaE": 2.04,
-          "deltaC": 2.01,
-          "deltaL": 1.22
+          "img": "img/colortuning/flower/45B045.webp"
         },
         {
           "hex": "#60B560",
@@ -1404,10 +1395,16 @@
             181,
             96
           ],
-          "img": "img/colortuning/flower/60B560.webp",
-          "deltaE": 2.16,
-          "deltaC": 0.91,
-          "deltaL": 1.38
+          "img": "img/colortuning/flower/60B560.webp"
+        },
+        {
+          "hex": "#821E5F",
+          "rgb": [
+            130,
+            30,
+            95
+          ],
+          "img": "img/colortuning/flower/821E5F.webp"
         },
         {
           "hex": "#99E099",
@@ -1416,17 +1413,40 @@
             224,
             153
           ],
-          "img": "img/colortuning/flower/99E099.webp",
-          "deltaE": 3.24,
-          "deltaC": 1.68,
-          "deltaL": 0.66
+          "img": "img/colortuning/flower/99E099.webp"
+        },
+        {
+          "hex": "#AA277C",
+          "rgb": [
+            170,
+            39,
+            124
+          ],
+          "img": "img/colortuning/flower/AA277C.webp"
+        },
+        {
+          "hex": "#DE219C",
+          "rgb": [
+            222,
+            33,
+            156
+          ],
+          "img": "img/colortuning/flower/DE219C.webp"
+        },
+        {
+          "hex": "#EF3EB1",
+          "rgb": [
+            239,
+            62,
+            177
+          ],
+          "img": "img/colortuning/flower/EF3EB1.webp"
         }
       ]
     },
     "vase": {
-      "name": "Artisan Ceramic Vase",
-      "prompt": "A decorative ceramic vase placed on a display shelf",
-      "type": "Monochromatic Variations",
+      "name": "Vase",
+      "prompt": "A ceramic vase on a wooden table",
       "swatches": [
         {
           "hex": "#544F4F",
@@ -1435,10 +1455,7 @@
             79,
             79
           ],
-          "img": "img/colortuning/vase/544F4F.webp",
-          "deltaE": 2.88,
-          "deltaC": 2.23,
-          "deltaL": 0.66
+          "img": "img/colortuning/vase/544F4F.webp"
         },
         {
           "hex": "#706161",
@@ -1447,34 +1464,7 @@
             97,
             97
           ],
-          "img": "img/colortuning/vase/706161.webp",
-          "deltaE": 3.12,
-          "deltaC": 1.9,
-          "deltaL": 0.98
-        },
-        {
-          "hex": "#B21F1F",
-          "rgb": [
-            178,
-            31,
-            31
-          ],
-          "img": "img/colortuning/vase/B21F1F.webp",
-          "deltaE": 1.32,
-          "deltaC": 1.13,
-          "deltaL": 1.46
-        },
-        {
-          "hex": "#B51919",
-          "rgb": [
-            181,
-            25,
-            25
-          ],
-          "img": "img/colortuning/vase/B51919.webp",
-          "deltaE": 1.68,
-          "deltaC": 2.45,
-          "deltaL": 0.5
+          "img": "img/colortuning/vase/706161.webp"
         },
         {
           "hex": "#887777",
@@ -1483,10 +1473,7 @@
             119,
             119
           ],
-          "img": "img/colortuning/vase/887777.webp",
-          "deltaE": 3.72,
-          "deltaC": 1.68,
-          "deltaL": 1.46
+          "img": "img/colortuning/vase/887777.webp"
         },
         {
           "hex": "#9E8F8F",
@@ -1495,10 +1482,25 @@
             143,
             143
           ],
-          "img": "img/colortuning/vase/9E8F8F.webp",
-          "deltaE": 3.12,
-          "deltaC": 2.56,
-          "deltaL": 0.98
+          "img": "img/colortuning/vase/9E8F8F.webp"
+        },
+        {
+          "hex": "#B21F1F",
+          "rgb": [
+            178,
+            31,
+            31
+          ],
+          "img": "img/colortuning/vase/B21F1F.webp"
+        },
+        {
+          "hex": "#B51919",
+          "rgb": [
+            181,
+            25,
+            25
+          ],
+          "img": "img/colortuning/vase/B51919.webp"
         },
         {
           "hex": "#CF2525",
@@ -1507,10 +1509,7 @@
             37,
             37
           ],
-          "img": "img/colortuning/vase/CF2525.webp",
-          "deltaE": 2.4,
-          "deltaC": 2.78,
-          "deltaL": 0.74
+          "img": "img/colortuning/vase/CF2525.webp"
         },
         {
           "hex": "#E64747",
@@ -1519,18 +1518,23 @@
             71,
             71
           ],
-          "img": "img/colortuning/vase/E64747.webp",
-          "deltaE": 2.16,
-          "deltaC": 2.67,
-          "deltaL": 1.22
+          "img": "img/colortuning/vase/E64747.webp"
         }
       ]
     },
     "bedsheet": {
-      "name": "Bedroom Bedsheet",
-      "prompt": "A neatly made bed with smooth bedsheet and pillows",
-      "type": "Pastel Tones",
+      "name": "Bedsheet",
+      "prompt": "A folded bedsheet in a tidy bedroom",
       "swatches": [
+        {
+          "hex": "#AEC6CF",
+          "rgb": [
+            174,
+            198,
+            207
+          ],
+          "img": "img/colortuning/bedsheet/AEC6CF.webp"
+        },
         {
           "hex": "#DFE7FD",
           "rgb": [
@@ -1538,10 +1542,7 @@
             231,
             253
           ],
-          "img": "img/colortuning/bedsheet/DFE7FD.webp",
-          "deltaE": 2.28,
-          "deltaC": 1.68,
-          "deltaL": 1.38
+          "img": "img/colortuning/bedsheet/DFE7FD.webp"
         },
         {
           "hex": "#E2ECE9",
@@ -1550,46 +1551,7 @@
             236,
             233
           ],
-          "img": "img/colortuning/bedsheet/E2ECE9.webp",
-          "deltaE": 2.16,
-          "deltaC": 1.9,
-          "deltaL": 0.98
-        },
-        {
-          "hex": "#FFF5BA",
-          "rgb": [
-            255,
-            245,
-            186
-          ],
-          "img": "img/colortuning/bedsheet/FFF5BA.webp",
-          "deltaE": 3.48,
-          "deltaC": 2.78,
-          "deltaL": 1.3
-        },
-        {
-          "hex": "#E9F59D",
-          "rgb": [
-            233,
-            245,
-            157
-          ],
-          "img": "img/colortuning/bedsheet/E9F59D.webp",
-          "deltaE": 3.84,
-          "deltaC": 2.12,
-          "deltaL": 0.98
-        },
-        {
-          "hex": "#FFF1E6",
-          "rgb": [
-            255,
-            241,
-            230
-          ],
-          "img": "img/colortuning/bedsheet/FFF1E6.webp",
-          "deltaE": 1.8,
-          "deltaC": 1.57,
-          "deltaL": 0.9
+          "img": "img/colortuning/bedsheet/E2ECE9.webp"
         },
         {
           "hex": "#E2F0CB",
@@ -1598,10 +1560,16 @@
             240,
             203
           ],
-          "img": "img/colortuning/bedsheet/E2F0CB.webp",
-          "deltaE": 2.76,
-          "deltaC": 2.56,
-          "deltaL": 1.46
+          "img": "img/colortuning/bedsheet/E2F0CB.webp"
+        },
+        {
+          "hex": "#E9F59D",
+          "rgb": [
+            233,
+            245,
+            157
+          ],
+          "img": "img/colortuning/bedsheet/E9F59D.webp"
         },
         {
           "hex": "#FFB7B2",
@@ -1610,78 +1578,32 @@
             183,
             178
           ],
-          "img": "img/colortuning/bedsheet/FFB7B2.webp",
-          "deltaE": 2.28,
-          "deltaC": 1.13,
-          "deltaL": 0.74
+          "img": "img/colortuning/bedsheet/FFB7B2.webp"
         },
         {
-          "hex": "#AEC6CF",
+          "hex": "#FFF1E6",
           "rgb": [
-            174,
-            198,
-            207
+            255,
+            241,
+            230
           ],
-          "img": "img/colortuning/bedsheet/AEC6CF.webp",
-          "deltaE": 3.72,
-          "deltaC": 1.79,
-          "deltaL": 0.66
+          "img": "img/colortuning/bedsheet/FFF1E6.webp"
+        },
+        {
+          "hex": "#FFF5BA",
+          "rgb": [
+            255,
+            245,
+            186
+          ],
+          "img": "img/colortuning/bedsheet/FFF5BA.webp"
         }
       ]
     },
     "mug": {
-      "name": "Ceramic Coffee Mug",
-      "prompt": "A ceramic mug on a minimalist wooden table",
-      "type": "Pastel Tones",
+      "name": "Mug",
+      "prompt": "A ceramic mug on a wooden desk",
       "swatches": [
-        {
-          "hex": "#D19D7D",
-          "rgb": [
-            209,
-            157,
-            125
-          ],
-          "img": "img/colortuning/mug/D19D7D.webp",
-          "deltaE": 3.12,
-          "deltaC": 2.78,
-          "deltaL": 1.06
-        },
-        {
-          "hex": "#CCA981",
-          "rgb": [
-            204,
-            169,
-            129
-          ],
-          "img": "img/colortuning/mug/CCA981.webp",
-          "deltaE": 2.52,
-          "deltaC": 1.9,
-          "deltaL": 0.5
-        },
-        {
-          "hex": "#F4C2C2",
-          "rgb": [
-            244,
-            194,
-            194
-          ],
-          "img": "img/colortuning/mug/F4C2C2.webp",
-          "deltaE": 1.8,
-          "deltaC": 1.46,
-          "deltaL": 1.06
-        },
-        {
-          "hex": "#C1E1C1",
-          "rgb": [
-            193,
-            225,
-            193
-          ],
-          "img": "img/colortuning/mug/C1E1C1.webp",
-          "deltaE": 1.92,
-          "deltaC": 1.9,
-          "deltaL": 0.66
-        },
         {
           "hex": "#8197CC",
           "rgb": [
@@ -1689,10 +1611,7 @@
             151,
             204
           ],
-          "img": "img/colortuning/mug/8197CC.webp",
-          "deltaE": 1.32,
-          "deltaC": 1.24,
-          "deltaL": 0.5
+          "img": "img/colortuning/mug/8197CC.webp"
         },
         {
           "hex": "#81CCCC",
@@ -1701,22 +1620,16 @@
             204,
             204
           ],
-          "img": "img/colortuning/mug/81CCCC.webp",
-          "deltaE": 3.84,
-          "deltaC": 1.46,
-          "deltaL": 1.22
+          "img": "img/colortuning/mug/81CCCC.webp"
         },
         {
-          "hex": "#E6E6FA",
+          "hex": "#C1E1C1",
           "rgb": [
-            230,
-            230,
-            250
+            193,
+            225,
+            193
           ],
-          "img": "img/colortuning/mug/E6E6FA.webp",
-          "deltaE": 3.6,
-          "deltaC": 2.12,
-          "deltaL": 1.06
+          "img": "img/colortuning/mug/C1E1C1.webp"
         },
         {
           "hex": "#C3B1E1",
@@ -1725,132 +1638,223 @@
             177,
             225
           ],
-          "img": "img/colortuning/mug/C3B1E1.webp",
-          "deltaE": 1.68,
-          "deltaC": 0.8,
-          "deltaL": 1.38
+          "img": "img/colortuning/mug/C3B1E1.webp"
+        },
+        {
+          "hex": "#CCA981",
+          "rgb": [
+            204,
+            169,
+            129
+          ],
+          "img": "img/colortuning/mug/CCA981.webp"
+        },
+        {
+          "hex": "#D19D7D",
+          "rgb": [
+            209,
+            157,
+            125
+          ],
+          "img": "img/colortuning/mug/D19D7D.webp"
+        },
+        {
+          "hex": "#E6E6FA",
+          "rgb": [
+            230,
+            230,
+            250
+          ],
+          "img": "img/colortuning/mug/E6E6FA.webp"
+        },
+        {
+          "hex": "#F4C2C2",
+          "rgb": [
+            244,
+            194,
+            194
+          ],
+          "img": "img/colortuning/mug/F4C2C2.webp"
         }
       ]
     }
   },
-  "transfer": [
-    {
-      "id": "car_cyberpunk",
-      "prompt": "Vintage coupe car beside architectural pavilion",
-      "palette": "Cyberpunk Neon Palette",
-      "main_obj": "car",
-      "sec_obj": "pavilion",
-      "img": "img/color_transfer/car_cyberpunk.webp"
-    },
-    {
-      "id": "sailboat_sunset",
-      "prompt": "A sailboat gliding across calm ocean water at dusk",
-      "palette": "Sunset Gradient Palette",
-      "main_obj": "sailboat",
-      "sec_obj": "ocean water",
-      "img": "img/color_transfer/sailboat_sunset.webp"
-    },
-    {
-      "id": "jeep_forest",
-      "prompt": "An off-road jeep on a mountain trail surrounded by dense pines",
-      "palette": "Forest Botanical Palette",
-      "main_obj": "jeep",
-      "sec_obj": "pine trees",
-      "img": "img/color_transfer/jeep_forest.webp"
-    },
-    {
-      "id": "mug_terracotta",
-      "prompt": "A ceramic coffee mug on a table in front of a window",
-      "palette": "Terracotta Warm Palette",
-      "main_obj": "mug",
-      "sec_obj": "tabletop",
-      "img": "img/color_transfer/mug_terracotta.webp"
-    },
-    {
-      "id": "vase_nordic",
-      "prompt": "An artistic ceramic vase with dried floral stems in a bright studio",
-      "palette": "Nordic Pastel Palette",
-      "main_obj": "vase",
-      "sec_obj": "flowers",
-      "img": "img/color_transfer/vase_nordic.webp"
-    },
-    {
-      "id": "dog_ocean",
-      "prompt": "A playful golden retriever sitting in a modern living space",
-      "palette": "Ocean Abyss Palette",
-      "main_obj": "dog",
-      "sec_obj": "interior",
-      "img": "img/color_transfer/dog_ocean.webp"
-    }
-  ],
-  "gamut": {
+  "transfer": {
+    "palettes": [
+      {
+        "id": "palette_teal_amber",
+        "name": "Teal & Amber",
+        "prompt": "An elegant vintage coupe car parked beside an architectural pavilion at dusk",
+        "colors": [
+          "#33535D",
+          "#2D545E",
+          "#C98D49",
+          "#E8DFCF",
+          "#202427"
+        ],
+        "pal_img": "img/color_transfer/palette/pal_0.webp",
+        "gen_img": "img/color_transfer/palette/gen_0.webp"
+      },
+      {
+        "id": "palette_sage_gold",
+        "name": "Sage & Warm Sand",
+        "prompt": "A rugged off-road expedition vehicle traveling through a dense pine forest",
+        "colors": [
+          "#6B7265",
+          "#606C5A",
+          "#CAB89C",
+          "#35373B",
+          "#E0D4C6"
+        ],
+        "pal_img": "img/color_transfer/palette/pal_1.webp",
+        "gen_img": "img/color_transfer/palette/gen_1.webp"
+      },
+      {
+        "id": "palette_slate_coral",
+        "name": "Slate & Soft Coral",
+        "prompt": "A wooden sailboat gliding across calm ocean water under evening skies",
+        "colors": [
+          "#99A9AA",
+          "#8FA6B3",
+          "#D4A358",
+          "#D98A79",
+          "#A9BAA2"
+        ],
+        "pal_img": "img/color_transfer/palette/pal_2.webp",
+        "gen_img": "img/color_transfer/palette/gen_2.webp"
+      },
+      {
+        "id": "palette_nordic_mineral",
+        "name": "Nordic Mineral",
+        "prompt": "A ceramic vase with blooming flowers on a rustic wooden dining table",
+        "colors": [
+          "#566A6A",
+          "#4D6568",
+          "#D9CEBD",
+          "#2C3239",
+          "#8B9785"
+        ],
+        "pal_img": "img/color_transfer/palette/pal_3.webp",
+        "gen_img": "img/color_transfer/palette/gen_3.webp"
+      }
+    ],
+    "references": [
+      {
+        "id": "ref_mug",
+        "name": "Ceramic Mug",
+        "ref_title": "Photographic Reference (Ceramic Mug)",
+        "prompt": "A photo of a ceramic mug on a wooden desk",
+        "ref_img": "img/color_transfer/reference/ref_mug.webp",
+        "gen_img": "img/color_transfer/reference/gen_mug.webp"
+      },
+      {
+        "id": "ref_hokusai",
+        "name": "The Great Wave",
+        "ref_title": "Katsushika Hokusai, The Great Wave off Kanagawa",
+        "prompt": "A wooden sailboat navigating ocean waves under morning light",
+        "ref_img": "img/color_transfer/reference/ref_0.webp",
+        "gen_img": "img/color_transfer/reference/gen_0.webp"
+      },
+      {
+        "id": "ref_irises",
+        "name": "Van Gogh Irises",
+        "ref_title": "Vincent van Gogh, Irises (1890)",
+        "prompt": "A ceramic botanical flower vase with blooming flowers on a sunlit table",
+        "ref_img": "img/color_transfer/reference/ref_2.webp",
+        "gen_img": "img/color_transfer/reference/gen_2.webp"
+      },
+      {
+        "id": "ref_rousseau",
+        "name": "Repast of the Lion",
+        "ref_title": "Henri Rousseau, The Repast of the Lion",
+        "prompt": "An off-road expedition vehicle parked in a lush jungle forest",
+        "ref_img": "img/color_transfer/reference/ref_1.webp",
+        "gen_img": "img/color_transfer/reference/gen_1.webp"
+      }
+    ]
+  },
+  "saturation": {
     "parrot": {
-      "prompt": "A colorful scarlet macaw parrot perched on a branch, vibrant plumage, jungle background",
-      "panels": [
+      "name": "Macaw Parrot",
+      "prompt_base": "A colorful scarlet macaw parrot perched on a tropical branch",
+      "levels": [
         {
           "reduction": 0,
-          "label": "0% (Baseline)",
-          "img": "img/gamut/parrot_red0.webp"
+          "pct_label": "100%",
+          "label": "100% Saturation (Baseline)",
+          "img": "img/saturation/parrot_red0.webp"
         },
         {
           "reduction": 10,
-          "label": "10%",
-          "img": "img/gamut/parrot_red10.webp"
+          "pct_label": "90%",
+          "label": "90% Saturation (-10%)",
+          "img": "img/saturation/parrot_red10.webp"
         },
         {
           "reduction": 20,
-          "label": "20%",
-          "img": "img/gamut/parrot_red20.webp"
+          "pct_label": "80%",
+          "label": "80% Saturation (-20%)",
+          "img": "img/saturation/parrot_red20.webp"
         },
         {
           "reduction": 30,
-          "label": "30%",
-          "img": "img/gamut/parrot_red30.webp"
+          "pct_label": "70%",
+          "label": "70% Saturation (-30%)",
+          "img": "img/saturation/parrot_red30.webp"
         },
         {
           "reduction": 40,
-          "label": "40%",
-          "img": "img/gamut/parrot_red40.webp"
+          "pct_label": "60%",
+          "label": "60% Saturation (-40%)",
+          "img": "img/saturation/parrot_red40.webp"
         },
         {
           "reduction": 50,
-          "label": "50%",
-          "img": "img/gamut/parrot_red50.webp"
+          "pct_label": "50%",
+          "label": "50% Saturation (-50%)",
+          "img": "img/saturation/parrot_red50.webp"
         }
       ]
     },
     "vangogh": {
-      "prompt": "A landscape painting of swirling starry night sky in the style of Van Gogh",
-      "panels": [
+      "name": "Starry Night",
+      "prompt_base": "A landscape painting of swirling starry night sky in the style of Van Gogh",
+      "levels": [
         {
           "reduction": 0,
-          "label": "0% (Baseline)",
-          "img": "img/gamut/vangogh_red0.webp"
+          "pct_label": "100%",
+          "label": "100% Saturation (Baseline)",
+          "img": "img/saturation/vangogh_red0.webp"
         },
         {
           "reduction": 10,
-          "label": "10%",
-          "img": "img/gamut/vangogh_red10.webp"
+          "pct_label": "90%",
+          "label": "90% Saturation (-10%)",
+          "img": "img/saturation/vangogh_red10.webp"
         },
         {
           "reduction": 20,
-          "label": "20%",
-          "img": "img/gamut/vangogh_red20.webp"
+          "pct_label": "80%",
+          "label": "80% Saturation (-20%)",
+          "img": "img/saturation/vangogh_red20.webp"
         },
         {
           "reduction": 30,
-          "label": "30%",
-          "img": "img/gamut/vangogh_red30.webp"
+          "pct_label": "70%",
+          "label": "70% Saturation (-30%)",
+          "img": "img/saturation/vangogh_red30.webp"
         },
         {
           "reduction": 40,
-          "label": "40%",
-          "img": "img/gamut/vangogh_red40.webp"
+          "pct_label": "60%",
+          "label": "60% Saturation (-40%)",
+          "img": "img/saturation/vangogh_red40.webp"
         },
         {
           "reduction": 50,
-          "label": "50%",
-          "img": "img/gamut/vangogh_red50.webp"
+          "pct_label": "50%",
+          "label": "50% Saturation (-50%)",
+          "img": "img/saturation/vangogh_red50.webp"
         }
       ]
     }
@@ -1860,17 +1864,19 @@
     // State
     let currentTuningObj = 'banana';
     let currentTuningSwatchIdx = 0;
+
+    let currentTransferSubmode = 'palettes'; // 'palettes' or 'references'
     let currentTransferIdx = 0;
-    let currentGamutScene = 'parrot';
-    let currentGamutLevel = 0;
+
+    let currentSaturationScene = 'parrot';
+    let currentSaturationIdx = 0;
 
     // Tabs logic: Model in Autoencoders
     function selectModelTab(modelKey) {
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      document.querySelectorAll('#latent-color-subspace .tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('#latent-color-subspace .tab-content').forEach(c => c.classList.remove('active'));
       
-      const btn = event.target;
-      btn.classList.add('active');
+      event.target.classList.add('active');
       document.getElementById('tab-' + modelKey).classList.add('active');
     }
 
@@ -1946,60 +1952,146 @@
       const img = document.getElementById('tuning-preview-img');
       img.src = sw.img;
 
-      document.getElementById('metric-delta-e').innerHTML = '&Delta;E<sub>00</sub>: ' + sw.deltaE.toFixed(2);
-      document.getElementById('metric-delta-c').innerHTML = '&Delta;C*: ' + sw.deltaC.toFixed(2);
-      document.getElementById('metric-hex').textContent = sw.hex;
+      document.getElementById('tuning-hex-text').textContent = sw.hex;
+      document.getElementById('tuning-indicator').style.backgroundColor = sw.hex;
     }
 
     // 2. Color Transfer Init & Updates
-    function initColorTransfer() {
-      const pillsWrap = document.getElementById('transfer-pills');
-      pillsWrap.innerHTML = '';
+    function selectTransferSubmode(submode) {
+      currentTransferSubmode = submode;
+      currentTransferIdx = 0;
 
-      DATA.transfer.forEach((item, idx) => {
-        const btn = document.createElement('button');
-        btn.className = 'transfer-pill' + (idx === currentTransferIdx ? ' active' : '');
-        btn.textContent = item.palette;
+      document.getElementById('btn-transfer-palettes').classList.toggle('active', submode === 'palettes');
+      document.getElementById('btn-transfer-references').classList.toggle('active', submode === 'references');
+
+      renderTransferSelectorGrid();
+      updateTransferDisplay();
+    }
+
+    function renderTransferSelectorGrid() {
+      const grid = document.getElementById('transfer-selector-grid');
+      grid.innerHTML = '';
+
+      const items = DATA.transfer[currentTransferSubmode];
+      items.forEach((item, idx) => {
+        const btn = document.createElement('div');
+        btn.className = 'transfer-card-btn' + (idx === currentTransferIdx ? ' active' : '');
         btn.onclick = () => {
-          document.querySelectorAll('.transfer-pill').forEach(p => p.classList.remove('active'));
+          document.querySelectorAll('.transfer-card-btn').forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentTransferIdx = idx;
-          updateColorTransferDisplay();
+          updateTransferDisplay();
         };
-        pillsWrap.appendChild(btn);
+
+        if (currentTransferSubmode === 'palettes') {
+          const strip = document.createElement('div');
+          strip.className = 'palette-chips-strip';
+          item.colors.forEach(col => {
+            const chip = document.createElement('div');
+            chip.className = 'palette-chip';
+            chip.style.backgroundColor = col;
+            strip.appendChild(chip);
+          });
+          btn.appendChild(strip);
+        } else {
+          const thumb = document.createElement('img');
+          thumb.src = item.ref_img;
+          thumb.style.width = '100%';
+          thumb.style.height = '48px';
+          thumb.style.objectFit = 'cover';
+          thumb.style.borderRadius = '4px';
+          btn.appendChild(thumb);
+        }
+
+        const title = document.createElement('span');
+        title.className = 'transfer-btn-title';
+        title.textContent = item.name;
+        btn.appendChild(title);
+
+        grid.appendChild(btn);
+      });
+    }
+
+    function updateTransferDisplay() {
+      const item = DATA.transfer[currentTransferSubmode][currentTransferIdx];
+
+      document.getElementById('transfer-active-prompt').textContent = '“' + item.prompt + '”';
+
+      if (currentTransferSubmode === 'palettes') {
+        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-palette"></i> Selected Palette (' + item.name + ')';
+        document.getElementById('transfer-left-img').src = item.pal_img;
+      } else {
+        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-image"></i> Reference: ' + item.ref_title;
+        document.getElementById('transfer-left-img').src = item.ref_img;
+      }
+
+      document.getElementById('transfer-right-img').src = item.gen_img;
+    }
+
+    // 3. Saturation Control Init & Updates
+    function initSaturationControl() {
+      const scenePills = document.getElementById('saturation-scene-pills');
+      scenePills.innerHTML = '';
+
+      Object.keys(DATA.saturation).forEach((sceneKey) => {
+        const scene = DATA.saturation[sceneKey];
+        const btn = document.createElement('button');
+        btn.className = 'prompt-pill' + (sceneKey === currentSaturationScene ? ' active' : '');
+        btn.textContent = scene.name;
+        btn.onclick = () => {
+          document.querySelectorAll('#saturation-scene-pills .prompt-pill').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentSaturationScene = sceneKey;
+          updateSaturationDisplay();
+        };
+        scenePills.appendChild(btn);
       });
 
-      updateColorTransferDisplay();
+      const pctPills = document.getElementById('saturation-pct-pills');
+      pctPills.innerHTML = '';
+      const levels = DATA.saturation[currentSaturationScene].levels;
+      levels.forEach((lvl, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'prompt-pill' + (idx === currentSaturationIdx ? ' active' : '');
+        btn.textContent = lvl.pct_label;
+        btn.id = 'sat-pill-' + idx;
+        btn.onclick = () => {
+          currentSaturationIdx = idx;
+          document.getElementById('saturation-slider').value = idx;
+          updateSaturationDisplay();
+        };
+        pctPills.appendChild(btn);
+      });
+
+      updateSaturationDisplay();
     }
 
-    function updateColorTransferDisplay() {
-      const item = DATA.transfer[currentTransferIdx];
-      document.getElementById('transfer-img').src = item.img;
-      document.getElementById('transfer-prompt-text').textContent = item.prompt;
-      document.getElementById('transfer-palette-name').textContent = item.palette;
-      document.getElementById('transfer-zones-text').textContent = 'Main: ' + item.main_obj + ' | Ambient: ' + item.sec_obj;
+    function onSaturationSliderChange(val) {
+      currentSaturationIdx = parseInt(val, 10);
+      updateSaturationDisplay();
     }
 
-    // 3. Gamut Reduction Init & Updates
-    function selectGamutScene(sceneKey) {
-      currentGamutScene = sceneKey;
-      document.querySelectorAll('#demo-panel-gamut .prompt-pill').forEach(b => b.classList.remove('active'));
-      event.target.classList.add('active');
-      updateGamutDisplay();
-    }
+    function updateSaturationDisplay() {
+      const scene = DATA.saturation[currentSaturationScene];
+      const level = scene.levels[currentSaturationIdx];
 
-    function onGamutSliderChange(val) {
-      currentGamutLevel = parseInt(val, 10);
-      updateGamutDisplay();
-    }
+      // Simulated dynamic prompt showing the saturation setting
+      let dynamicPrompt = scene.prompt_base;
+      if (level.reduction > 0) {
+        dynamicPrompt += ' (' + level.pct_label + ' saturation / -' + level.reduction + '% chroma)';
+      } else {
+        dynamicPrompt += ' (100% saturation / baseline)';
+      }
+      document.getElementById('saturation-active-prompt').textContent = '“' + dynamicPrompt + '”';
 
-    function updateGamutDisplay() {
-      const sceneData = DATA.gamut[currentGamutScene];
-      document.getElementById('gamut-active-prompt').textContent = '“' + sceneData.prompt + '”';
+      document.getElementById('saturation-level-badge').textContent = level.label;
+      document.getElementById('saturation-img').src = level.img;
 
-      const panel = sceneData.panels[currentGamutLevel];
-      document.getElementById('gamut-img').src = panel.img;
-      document.getElementById('gamut-ratio-badge').textContent = panel.label;
+      // Update pills active state
+      for (let i = 0; i < 6; i++) {
+        const p = document.getElementById('sat-pill-' + i);
+        if (p) p.classList.toggle('active', i === currentSaturationIdx);
+      }
     }
 
     // Copy BibTeX
@@ -2017,8 +2109,9 @@
     // On Load
     document.addEventListener('DOMContentLoaded', () => {
       initColorTuning();
-      initColorTransfer();
-      updateGamutDisplay();
+      renderTransferSelectorGrid();
+      updateTransferDisplay();
+      initSaturationControl();
     });
   </script>
 </body>

@@ -48,11 +48,11 @@ env/
 venv/
 
 # Excluded experimental branches & directories
-gamut/
-illuminant/
-white_balance/
-whute_balance_2/
-results/
+/gamut/
+/illuminant/
+/white_balance/
+/whute_balance_2/
+/results/
 PixArt/
 pixart/
 

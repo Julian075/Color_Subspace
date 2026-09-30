@@ -2,7 +2,7 @@
 
 # ON COLOR ALIGNMENT IN VAE LATENT SPACES AND ITS APPLICATIONS
 
-[Julián Santamaria](https://julian075.github.io/)<sup>†1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://www.jvazquez-corral.net/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>1,2</sup>
+[Julian Santamaria](https://julian075.github.io/)<sup>†1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://www.jvazquez-corral.net/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>1,2</sup>
 
 <small>
 <sup>1</sup> Computer Vision Center (CVC), Barcelona, Spain &nbsp;|&nbsp;
@@ -101,9 +101,9 @@ python SDXL/inference.py \
 
 ---
 
-### Mode 2: Multi-Zone Semantic Color Transfer
+### Mode 2: Color Transfer (Palettes & Reference Images)
 
-Steers the scene's color distribution toward a design palette or photographic reference image. The script extracts dominant and focal color clusters, detects semantic regions (subject vs. secondary elements vs. background) via SAM, and applies independent latent shifts across zones:
+Steers the scene's color distribution toward a design palette or photographic reference image. The script extracts dominant and focal color clusters, detects semantic regions via SAM, and applies independent latent shifts across zones:
 
 ```bash
 # Color transfer from a reference image or palette card
@@ -118,17 +118,17 @@ python color_transfer/flux_multizone_color_transfer.py \
 
 ---
 
-### Mode 3: Spatially Adaptive Gamut Reduction / Saturation Control
+### Mode 3: Saturation Control
 
-Modulates image saturation continuously toward narrower gamuts directly during generation. Rather than a destructive uniform translation, this method contracts chroma ($a^*, b^*$) pixel-by-pixel toward neutral gray while preserving lightness $L^*$:
+Modulates image saturation continuously directly during generation. Rather than a destructive uniform translation, this method contracts chroma ($a^*, b^*$) pixel-by-pixel toward neutral gray while preserving lightness $L^*$:
 
 ```bash
-# Continuously desaturate scene chroma by 40%
+# Continuously modulate scene saturation by 40%
 python color_transfer/flux_spatial_gamut_reduction.py \
     --prompt "A colorful scarlet macaw parrot perched on a branch, vibrant plumage, jungle background" \
     --reduction 0.40 \
     --device "cuda:0" \
-    --out-dir "outputs/gamut_reduction" \
+    --out-dir "outputs/saturation_control" \
     --prefix "macaw_red40"
 ```
 
@@ -172,10 +172,10 @@ Color_Subspace/
 If you find this work or codebase helpful in your research, please cite:
 
 ```bibtex
-@inproceedings{santamaria2026coloralignment,
+@article{santamaria2025coloralignment,
   title={On Color Alignment in VAE Latent Spaces and Its Applications},
-  author={Santamaria, Juli{\'a}n and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
-  booktitle={arXiv preprint},
-  year={2026}
+  author={Santamaria, Julian and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  journal={arXiv preprint arXiv:XXXX.XXXXX},
+  year={2025}
 }
 ```
