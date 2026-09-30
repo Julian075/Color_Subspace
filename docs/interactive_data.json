@@ -81,15 +81,6 @@
             14
           ],
           "img": "img/colortuning/dog/AB6B0E.webp"
-        },
-        {
-          "hex": "#FEBB03",
-          "rgb": [
-            254,
-            187,
-            3
-          ],
-          "img": "img/colortuning/dog/FEBB03.webp"
         }
       ]
     },
@@ -215,15 +206,6 @@
           "img": "img/colortuning/mug/F279D2.webp"
         },
         {
-          "hex": "#F2CC79",
-          "rgb": [
-            242,
-            204,
-            121
-          ],
-          "img": "img/colortuning/mug/F2CC79.webp"
-        },
-        {
           "hex": "#F5B7B1",
           "rgb": [
             245,
@@ -249,15 +231,6 @@
             178
           ],
           "img": "img/colortuning/mug/FFB7B2.webp"
-        },
-        {
-          "hex": "#FFDAB9",
-          "rgb": [
-            255,
-            218,
-            185
-          ],
-          "img": "img/colortuning/mug/FFDAB9.webp"
         },
         {
           "hex": "#FFF5BA",
@@ -593,15 +566,6 @@
           "img": "img/colortuning/teddy_bear/D8BFD8.webp"
         },
         {
-          "hex": "#E0B0FF",
-          "rgb": [
-            224,
-            176,
-            255
-          ],
-          "img": "img/colortuning/teddy_bear/E0B0FF.webp"
-        },
-        {
           "hex": "#E6E6FA",
           "rgb": [
             230,
@@ -627,24 +591,6 @@
             220
           ],
           "img": "img/colortuning/teddy_bear/FFD1DC.webp"
-        },
-        {
-          "hex": "#FFDAB9",
-          "rgb": [
-            255,
-            218,
-            185
-          ],
-          "img": "img/colortuning/teddy_bear/FFDAB9.webp"
-        },
-        {
-          "hex": "#FFE5B4",
-          "rgb": [
-            255,
-            229,
-            180
-          ],
-          "img": "img/colortuning/teddy_bear/FFE5B4.webp"
         }
       ]
     },
@@ -898,20 +844,20 @@
     ],
     "references": [
       {
-        "id": "castle",
-        "name": "Starry Night Castle",
-        "ref_title": "Van Gogh \u2013 Starry Night",
+        "id": "wave",
+        "name": "The Great Wave",
+        "ref_title": "Hokusai \u2013 The Great Wave",
         "ref_img": "img/color_transfer/reference/ref_0.webp",
         "gen_img": "img/color_transfer/reference/gen_0.webp",
-        "prompt": "a photo of a medieval stone castle perched on a rocky cliff under an open sky"
+        "prompt": "a photo of a classic wooden sailboat navigating ocean waves under morning light"
       },
       {
-        "id": "boat",
-        "name": "Great Wave Boat",
-        "ref_title": "Hokusai \u2013 The Great Wave",
+        "id": "aurora",
+        "name": "Aurora Borealis",
+        "ref_title": "Arctic Aurora Borealis",
         "ref_img": "img/color_transfer/reference/ref_1.webp",
         "gen_img": "img/color_transfer/reference/gen_1.webp",
-        "prompt": "a photo of a wooden fishing boat moored at a rustic coastal harbor with gentle water"
+        "prompt": "a photo of a rustic wooden cabin in a snowy mountain forest under the night sky"
       },
       {
         "id": "greenhouse",
@@ -922,20 +868,20 @@
         "prompt": "a photo of a peaceful botanical conservatory with a calm reflection pool and iron glass architecture"
       },
       {
-        "id": "motorcycle",
-        "name": "Tokyo Neon Motorcycle",
-        "ref_title": "Tokyo Neon at Night",
+        "id": "irises",
+        "name": "Van Gogh Irises",
+        "ref_title": "Van Gogh \u2013 Irises",
         "ref_img": "img/color_transfer/reference/ref_3.webp",
         "gen_img": "img/color_transfer/reference/gen_3.webp",
-        "prompt": "a photo of a custom modern motorcycle parked on a wet city street"
+        "prompt": "a photo of a ceramic flower vase with blooming blue irises on a sunlit table"
       },
       {
-        "id": "vase",
-        "name": "Golden Porcelain Vase",
-        "ref_title": "Gustav Klimt \u2013 The Kiss",
+        "id": "telescope",
+        "name": "Classical Library Telescope",
+        "ref_title": "Vermeer \u2013 Classical Fine Art",
         "ref_img": "img/color_transfer/reference/ref_4.webp",
         "gen_img": "img/color_transfer/reference/gen_4.webp",
-        "prompt": "a photo of an elegant golden porcelain vase with flowers on a smooth countertop"
+        "prompt": "a photo of a brass telescope on a wooden tripod in a scholarly library by a sunlit window"
       }
     ]
   },

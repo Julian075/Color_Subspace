@@ -12,10 +12,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
-  <!-- KaTeX Math Rendering -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false});"></script>
 
   <style>
     :root {
@@ -916,7 +912,7 @@
       <div class="tabs-nav">
         <button class="tab-btn active" onclick="selectModelTab('flux')">FLUX.1-dev</button>
         <button class="tab-btn" onclick="selectModelTab('flux2')">FLUX.2-dev</button>
-        <button class="tab-btn" onclick="selectModelTab('sd3')">Stable Diffusion 3</button>
+        <button class="tab-btn" onclick="selectModelTab('sd3')">SD 3</button>
         <button class="tab-btn" onclick="selectModelTab('sdxl')">SDXL 1.0</button>
       </div>
 
@@ -972,19 +968,19 @@
         <div class="app-card">
           <h3>ColorTuning: Numerical Color Precision</h3>
           <p>
-            Exploits the discovered orthogonal directions to steer generation towards exact numerical colors (HEX, RGB, CIELAB). Replaces the numerical code with an ISCC-NBS Level 2 proxy color name to initiate diffusion in the target chromatic basin. At a calibrated gate step $s$, predicts clean latent $\hat{z}_0$, segments the object via SAM, and measures mean CIELAB color. A lightweight ResMLP predicts the displacement along the color basis $(u_1, u_2, u_3)$, injected inside the object mask with a linearly decaying schedule.
+            Exploits the discovered orthogonal directions to steer generation towards exact numerical colors (HEX, RGB, CIELAB). Replaces the numerical code with an ISCC-NBS Level 2 proxy color name to initiate diffusion in the target chromatic basin. At a calibrated gate step <i>s</i>, predicts clean latent <i>ẑ</i><sub>0</sub>, segments the object via SAM, and measures the CIELAB color. A lightweight ResMLP predicts the displacement along the color basis (<i>u</i><sub>1</sub>, <i>u</i><sub>2</sub>, <i>u</i><sub>3</sub>), injected inside the object mask with a linearly decaying schedule.
           </p>
         </div>
         <div class="app-card">
           <h3>Saturation Control</h3>
           <p>
-            Continuously modulates the chroma of the generated scene or specific objects without altering semantic structure or hue. Preserves lightness $L_i$ and hue angle while scaling chroma to $(L_i, (1-\alpha)a_i, (1-\alpha)b_i)$ for reduction factor $\alpha \in [0, 1]$. Evaluates dense spatial displacements across the grid, synthesizing images within narrower color gamuts directly at generation time without post-processing.
+            Continuously modulates the chroma of the generated scene or specific objects without altering semantic structure or hue. Preserves lightness <i>L</i><sub><i>i</i></sub> and hue angle while scaling chroma to (<i>L</i><sub><i>i</i></sub>, (1 &minus; &alpha;)<i>a</i><sub><i>i</i></sub>, (1 &minus; &alpha;)<i>b</i><sub><i>i</i></sub>) for reduction factor &alpha; &isin; [0, 1]. Evaluates dense spatial displacements across the grid, synthesizing images within narrower color gamuts directly at generation time without post-processing.
           </p>
         </div>
         <div class="app-card">
           <h3>Color Transfer</h3>
           <p>
-            Steers the scene's color distribution to match either a discrete color palette or an exemplar reference image. Extracts principal colors via CIELAB $k$-means clustering with CIEDE2000 distance constraints, and uses the most chromatic color as a prompt proxy. At the gate step, semantic regions are identified and steered toward target palette colors via the latent color basis, faithfully reproducing the reference palette while generating the prompt content.
+            Steers the scene's color distribution to match either a discrete color palette or an exemplar reference image. Extracts principal colors via CIELAB <i>k</i>-means clustering with CIEDE2000 distance constraints, and uses the most chromatic color as a prompt proxy. At the gate step, semantic regions are identified and steered toward target palette colors via the latent color basis, faithfully reproducing the reference palette while generating the prompt content.
           </p>
         </div>
       </div>
@@ -1263,15 +1259,6 @@
             14
           ],
           "img": "img/colortuning/dog/AB6B0E.webp"
-        },
-        {
-          "hex": "#FEBB03",
-          "rgb": [
-            254,
-            187,
-            3
-          ],
-          "img": "img/colortuning/dog/FEBB03.webp"
         }
       ]
     },
@@ -1397,15 +1384,6 @@
           "img": "img/colortuning/mug/F279D2.webp"
         },
         {
-          "hex": "#F2CC79",
-          "rgb": [
-            242,
-            204,
-            121
-          ],
-          "img": "img/colortuning/mug/F2CC79.webp"
-        },
-        {
           "hex": "#F5B7B1",
           "rgb": [
             245,
@@ -1431,15 +1409,6 @@
             178
           ],
           "img": "img/colortuning/mug/FFB7B2.webp"
-        },
-        {
-          "hex": "#FFDAB9",
-          "rgb": [
-            255,
-            218,
-            185
-          ],
-          "img": "img/colortuning/mug/FFDAB9.webp"
         },
         {
           "hex": "#FFF5BA",
@@ -1775,15 +1744,6 @@
           "img": "img/colortuning/teddy_bear/D8BFD8.webp"
         },
         {
-          "hex": "#E0B0FF",
-          "rgb": [
-            224,
-            176,
-            255
-          ],
-          "img": "img/colortuning/teddy_bear/E0B0FF.webp"
-        },
-        {
           "hex": "#E6E6FA",
           "rgb": [
             230,
@@ -1809,24 +1769,6 @@
             220
           ],
           "img": "img/colortuning/teddy_bear/FFD1DC.webp"
-        },
-        {
-          "hex": "#FFDAB9",
-          "rgb": [
-            255,
-            218,
-            185
-          ],
-          "img": "img/colortuning/teddy_bear/FFDAB9.webp"
-        },
-        {
-          "hex": "#FFE5B4",
-          "rgb": [
-            255,
-            229,
-            180
-          ],
-          "img": "img/colortuning/teddy_bear/FFE5B4.webp"
         }
       ]
     },
@@ -2080,20 +2022,20 @@
     ],
     "references": [
       {
-        "id": "castle",
-        "name": "Starry Night Castle",
-        "ref_title": "Van Gogh \u2013 Starry Night",
+        "id": "wave",
+        "name": "The Great Wave",
+        "ref_title": "Hokusai \u2013 The Great Wave",
         "ref_img": "img/color_transfer/reference/ref_0.webp",
         "gen_img": "img/color_transfer/reference/gen_0.webp",
-        "prompt": "a photo of a medieval stone castle perched on a rocky cliff under an open sky"
+        "prompt": "a photo of a classic wooden sailboat navigating ocean waves under morning light"
       },
       {
-        "id": "boat",
-        "name": "Great Wave Boat",
-        "ref_title": "Hokusai \u2013 The Great Wave",
+        "id": "aurora",
+        "name": "Aurora Borealis",
+        "ref_title": "Arctic Aurora Borealis",
         "ref_img": "img/color_transfer/reference/ref_1.webp",
         "gen_img": "img/color_transfer/reference/gen_1.webp",
-        "prompt": "a photo of a wooden fishing boat moored at a rustic coastal harbor with gentle water"
+        "prompt": "a photo of a rustic wooden cabin in a snowy mountain forest under the night sky"
       },
       {
         "id": "greenhouse",
@@ -2104,20 +2046,20 @@
         "prompt": "a photo of a peaceful botanical conservatory with a calm reflection pool and iron glass architecture"
       },
       {
-        "id": "motorcycle",
-        "name": "Tokyo Neon Motorcycle",
-        "ref_title": "Tokyo Neon at Night",
+        "id": "irises",
+        "name": "Van Gogh Irises",
+        "ref_title": "Van Gogh \u2013 Irises",
         "ref_img": "img/color_transfer/reference/ref_3.webp",
         "gen_img": "img/color_transfer/reference/gen_3.webp",
-        "prompt": "a photo of a custom modern motorcycle parked on a wet city street"
+        "prompt": "a photo of a ceramic flower vase with blooming blue irises on a sunlit table"
       },
       {
-        "id": "vase",
-        "name": "Golden Porcelain Vase",
-        "ref_title": "Gustav Klimt \u2013 The Kiss",
+        "id": "telescope",
+        "name": "Classical Library Telescope",
+        "ref_title": "Vermeer \u2013 Classical Fine Art",
         "ref_img": "img/color_transfer/reference/ref_4.webp",
         "gen_img": "img/color_transfer/reference/gen_4.webp",
-        "prompt": "a photo of an elegant golden porcelain vase with flowers on a smooth countertop"
+        "prompt": "a photo of a brass telescope on a wooden tripod in a scholarly library by a sunlit window"
       }
     ]
   },
