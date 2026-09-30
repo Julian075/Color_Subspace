@@ -568,7 +568,7 @@
     .preview-image-wrap {
       position: relative;
       width: 100%;
-      max-width: 440px;
+      max-width: 360px;
       aspect-ratio: 1 / 1;
       border-radius: var(--radius-md);
       overflow: hidden;
@@ -844,7 +844,7 @@
 
   <!-- Header -->
   <header>
-
+    <div class="container">
       <h1 class="paper-title">ON COLOR ALIGNMENT IN VAE LATENT SPACES<br>AND ITS APPLICATIONS</h1>
 
       <div class="authors-list">
@@ -983,8 +983,12 @@
           </p>
         </div>
       </div>
+    </div>
+  </section>
 
-      <div class="container-wide">
+  <!-- Interactive Demonstration -->
+  <section id="interactive-demo">
+    <div class="container-wide">
       <div class="section-header">
         <span class="section-tag">Demonstration</span>
         <h2 class="section-title">Interactive Demonstration</h2>
@@ -1108,9 +1112,9 @@
             <!-- Saturation Controls -->
             <div class="saturation-slider-wrap">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                <span class="selector-label" style="margin: 0;">Chromatic Saturation Setting:</span>
+                <span class="selector-label" style="margin: 0;">Saturation Setting:</span>
                 <span id="saturation-level-badge" style="font-family: var(--font-mono); font-weight: 700; font-size: 0.95rem; background: var(--primary); color: white; padding: 4px 14px; border-radius: 9999px;">
-                  100% Saturation (Baseline)
+                  100% Saturation
                 </span>
               </div>
               <div class="prompt-pills" style="justify-content: center; margin-bottom: 14px;" id="saturation-pct-pills">
@@ -1118,12 +1122,12 @@
               </div>
               <input type="range" id="saturation-slider" min="0" max="5" step="1" value="0" oninput="onSaturationSliderChange(this.value)">
               <div class="slider-labels">
-                <span>100% (Baseline)</span>
-                <span>90% (-10%)</span>
-                <span>80% (-20%)</span>
-                <span>70% (-30%)</span>
-                <span>60% (-40%)</span>
-                <span>50% (-50%)</span>
+                <span>100%</span>
+                <span>90%</span>
+                <span>80%</span>
+                <span>70%</span>
+                <span>60%</span>
+                <span>50%</span>
               </div>
             </div>
 
@@ -1135,8 +1139,6 @@
         </div>
 
       </div>
-    </div>
-
     </div>
   </section>
 
@@ -1153,7 +1155,7 @@
         <button class="copy-btn" onclick="copyBibtex()"><i class="fa-regular fa-copy"></i> Copy</button>
         <pre id="bibtex-text">@article{santamaria2025coloralignment,
   title={On Color Alignment in VAE Latent Spaces and Its Applications},
-  author={Santamaria, Julian and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  author={Santamaria, Julian D. and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
   journal={arXiv preprint arXiv:XXXX.XXXXX},
   year={2025}
 }</pre>
@@ -1171,6 +1173,7 @@
   </footer>
 
   <!-- Embedded Interactive Data -->
+  <!-- Embedded Interactive Data & Scripts -->
   <script>
     const DATA = {
   "colortuning": {
@@ -1179,15 +1182,6 @@
       "prompt": "A banana on a kitchen countertop",
       "swatches": [
         {
-          "hex": "#0E89AB",
-          "rgb": [
-            14,
-            137,
-            171
-          ],
-          "img": "img/colortuning/banana/0E89AB.webp"
-        },
-        {
           "hex": "#1D49DB",
           "rgb": [
             29,
@@ -1195,33 +1189,6 @@
             219
           ],
           "img": "img/colortuning/banana/1D49DB.webp"
-        },
-        {
-          "hex": "#64AB0E",
-          "rgb": [
-            100,
-            171,
-            14
-          ],
-          "img": "img/colortuning/banana/64AB0E.webp"
-        },
-        {
-          "hex": "#AB0E48",
-          "rgb": [
-            171,
-            14,
-            72
-          ],
-          "img": "img/colortuning/banana/AB0E48.webp"
-        },
-        {
-          "hex": "#AB6B0E",
-          "rgb": [
-            171,
-            107,
-            14
-          ],
-          "img": "img/colortuning/banana/AB6B0E.webp"
         },
         {
           "hex": "#DA70D6",
@@ -1254,34 +1221,271 @@
     },
     "dog": {
       "name": "Dog",
-      "prompt": "A dog sitting calmly in an indoor room",
+      "prompt": "A dog resting in a sunlit room",
       "swatches": [
         {
-          "hex": "#008F86",
+          "hex": "#0E89AB",
           "rgb": [
-            0,
-            143,
-            134
+            14,
+            137,
+            171
           ],
-          "img": "img/colortuning/dog/008F86.webp"
+          "img": "img/colortuning/dog/0E89AB.webp"
         },
         {
-          "hex": "#0F52BA",
+          "hex": "#64AB0E",
           "rgb": [
-            15,
-            82,
-            186
+            100,
+            171,
+            14
           ],
-          "img": "img/colortuning/dog/0F52BA.webp"
+          "img": "img/colortuning/dog/64AB0E.webp"
         },
         {
-          "hex": "#315BDB",
+          "hex": "#AB0E48",
           "rgb": [
-            49,
-            91,
+            171,
+            14,
+            72
+          ],
+          "img": "img/colortuning/dog/AB0E48.webp"
+        },
+        {
+          "hex": "#AB6B0E",
+          "rgb": [
+            171,
+            107,
+            14
+          ],
+          "img": "img/colortuning/dog/AB6B0E.webp"
+        },
+        {
+          "hex": "#FEBB03",
+          "rgb": [
+            254,
+            187,
+            3
+          ],
+          "img": "img/colortuning/dog/FEBB03.webp"
+        }
+      ]
+    },
+    "mug": {
+      "name": "Mug",
+      "prompt": "A ceramic mug on a wooden table",
+      "swatches": [
+        {
+          "hex": "#131611",
+          "rgb": [
+            19,
+            22,
+            17
+          ],
+          "img": "img/colortuning/mug/131611.webp"
+        },
+        {
+          "hex": "#161411",
+          "rgb": [
+            22,
+            20,
+            17
+          ],
+          "img": "img/colortuning/mug/161411.webp"
+        },
+        {
+          "hex": "#21261D",
+          "rgb": [
+            33,
+            38,
+            29
+          ],
+          "img": "img/colortuning/mug/21261D.webp"
+        },
+        {
+          "hex": "#373B3B",
+          "rgb": [
+            55,
+            59,
+            59
+          ],
+          "img": "img/colortuning/mug/373B3B.webp"
+        },
+        {
+          "hex": "#AEC6CF",
+          "rgb": [
+            174,
+            198,
+            207
+          ],
+          "img": "img/colortuning/mug/AEC6CF.webp"
+        },
+        {
+          "hex": "#B0E0E6",
+          "rgb": [
+            176,
+            224,
+            230
+          ],
+          "img": "img/colortuning/mug/B0E0E6.webp"
+        },
+        {
+          "hex": "#B68DD6",
+          "rgb": [
+            182,
+            141,
+            214
+          ],
+          "img": "img/colortuning/mug/B68DD6.webp"
+        },
+        {
+          "hex": "#C3E6CB",
+          "rgb": [
+            195,
+            230,
+            203
+          ],
+          "img": "img/colortuning/mug/C3E6CB.webp"
+        },
+        {
+          "hex": "#C6E2E9",
+          "rgb": [
+            198,
+            226,
+            233
+          ],
+          "img": "img/colortuning/mug/C6E2E9.webp"
+        },
+        {
+          "hex": "#D0DBDB",
+          "rgb": [
+            208,
+            219,
             219
           ],
-          "img": "img/colortuning/dog/315BDB.webp"
+          "img": "img/colortuning/mug/D0DBDB.webp"
+        },
+        {
+          "hex": "#D0F0C0",
+          "rgb": [
+            208,
+            240,
+            192
+          ],
+          "img": "img/colortuning/mug/D0F0C0.webp"
+        },
+        {
+          "hex": "#E9F59D",
+          "rgb": [
+            233,
+            245,
+            157
+          ],
+          "img": "img/colortuning/mug/E9F59D.webp"
+        },
+        {
+          "hex": "#F279D2",
+          "rgb": [
+            242,
+            121,
+            210
+          ],
+          "img": "img/colortuning/mug/F279D2.webp"
+        },
+        {
+          "hex": "#F2CC79",
+          "rgb": [
+            242,
+            204,
+            121
+          ],
+          "img": "img/colortuning/mug/F2CC79.webp"
+        },
+        {
+          "hex": "#F5B7B1",
+          "rgb": [
+            245,
+            183,
+            177
+          ],
+          "img": "img/colortuning/mug/F5B7B1.webp"
+        },
+        {
+          "hex": "#FDFD96",
+          "rgb": [
+            253,
+            253,
+            150
+          ],
+          "img": "img/colortuning/mug/FDFD96.webp"
+        },
+        {
+          "hex": "#FFB7B2",
+          "rgb": [
+            255,
+            183,
+            178
+          ],
+          "img": "img/colortuning/mug/FFB7B2.webp"
+        },
+        {
+          "hex": "#FFDAB9",
+          "rgb": [
+            255,
+            218,
+            185
+          ],
+          "img": "img/colortuning/mug/FFDAB9.webp"
+        },
+        {
+          "hex": "#FFF5BA",
+          "rgb": [
+            255,
+            245,
+            186
+          ],
+          "img": "img/colortuning/mug/FFF5BA.webp"
+        },
+        {
+          "hex": "#FFFACD",
+          "rgb": [
+            255,
+            250,
+            205
+          ],
+          "img": "img/colortuning/mug/FFFACD.webp"
+        }
+      ]
+    },
+    "parrot": {
+      "name": "Parrot",
+      "prompt": "A parrot perched on a branch",
+      "swatches": [
+        {
+          "hex": "#315DBD",
+          "rgb": [
+            49,
+            93,
+            189
+          ],
+          "img": "img/colortuning/parrot/315DBD.webp"
+        },
+        {
+          "hex": "#55AD88",
+          "rgb": [
+            85,
+            173,
+            136
+          ],
+          "img": "img/colortuning/parrot/55AD88.webp"
+        },
+        {
+          "hex": "#6731BD",
+          "rgb": [
+            103,
+            49,
+            189
+          ],
+          "img": "img/colortuning/parrot/6731BD.webp"
         },
         {
           "hex": "#72AD55",
@@ -1290,25 +1494,34 @@
             173,
             85
           ],
-          "img": "img/colortuning/dog/72AD55.webp"
+          "img": "img/colortuning/parrot/72AD55.webp"
         },
         {
-          "hex": "#800020",
+          "hex": "#A16FA8",
           "rgb": [
-            128,
-            0,
-            32
+            161,
+            111,
+            168
           ],
-          "img": "img/colortuning/dog/800020.webp"
+          "img": "img/colortuning/parrot/A16FA8.webp"
         },
         {
-          "hex": "#B8860B",
+          "hex": "#A39898",
           "rgb": [
-            184,
-            134,
-            11
+            163,
+            152,
+            152
           ],
-          "img": "img/colortuning/dog/B8860B.webp"
+          "img": "img/colortuning/parrot/A39898.webp"
+        },
+        {
+          "hex": "#BD3167",
+          "rgb": [
+            189,
+            49,
+            103
+          ],
+          "img": "img/colortuning/parrot/BD3167.webp"
         },
         {
           "hex": "#C46C08",
@@ -1317,7 +1530,43 @@
             108,
             8
           ],
-          "img": "img/colortuning/dog/C46C08.webp"
+          "img": "img/colortuning/parrot/C46C08.webp"
+        },
+        {
+          "hex": "#D34900",
+          "rgb": [
+            211,
+            73,
+            0
+          ],
+          "img": "img/colortuning/parrot/D34900.webp"
+        },
+        {
+          "hex": "#D44600",
+          "rgb": [
+            212,
+            70,
+            0
+          ],
+          "img": "img/colortuning/parrot/D44600.webp"
+        },
+        {
+          "hex": "#E08A24",
+          "rgb": [
+            224,
+            138,
+            36
+          ],
+          "img": "img/colortuning/parrot/E08A24.webp"
+        },
+        {
+          "hex": "#E15A00",
+          "rgb": [
+            225,
+            90,
+            0
+          ],
+          "img": "img/colortuning/parrot/E15A00.webp"
         },
         {
           "hex": "#EDA6A6",
@@ -1326,41 +1575,14 @@
             166,
             166
           ],
-          "img": "img/colortuning/dog/EDA6A6.webp"
+          "img": "img/colortuning/parrot/EDA6A6.webp"
         }
       ]
     },
     "flower": {
       "name": "Flower",
-      "prompt": "A flower in a ceramic vase",
+      "prompt": "A blooming flower in a garden",
       "swatches": [
-        {
-          "hex": "#376C37",
-          "rgb": [
-            55,
-            108,
-            55
-          ],
-          "img": "img/colortuning/flower/376C37.webp"
-        },
-        {
-          "hex": "#45B045",
-          "rgb": [
-            69,
-            176,
-            69
-          ],
-          "img": "img/colortuning/flower/45B045.webp"
-        },
-        {
-          "hex": "#60B560",
-          "rgb": [
-            96,
-            181,
-            96
-          ],
-          "img": "img/colortuning/flower/60B560.webp"
-        },
         {
           "hex": "#821E5F",
           "rgb": [
@@ -1369,15 +1591,6 @@
             95
           ],
           "img": "img/colortuning/flower/821E5F.webp"
-        },
-        {
-          "hex": "#99E099",
-          "rgb": [
-            153,
-            224,
-            153
-          ],
-          "img": "img/colortuning/flower/99E099.webp"
         },
         {
           "hex": "#AA277C",
@@ -1389,6 +1602,42 @@
           "img": "img/colortuning/flower/AA277C.webp"
         },
         {
+          "hex": "#C83795",
+          "rgb": [
+            200,
+            55,
+            149
+          ],
+          "img": "img/colortuning/flower/C83795.webp"
+        },
+        {
+          "hex": "#D02F98",
+          "rgb": [
+            208,
+            47,
+            152
+          ],
+          "img": "img/colortuning/flower/D02F98.webp"
+        },
+        {
+          "hex": "#D855AA",
+          "rgb": [
+            216,
+            85,
+            170
+          ],
+          "img": "img/colortuning/flower/D855AA.webp"
+        },
+        {
+          "hex": "#DA52AB",
+          "rgb": [
+            218,
+            82,
+            171
+          ],
+          "img": "img/colortuning/flower/DA52AB.webp"
+        },
+        {
           "hex": "#DE219C",
           "rgb": [
             222,
@@ -1398,6 +1647,42 @@
           "img": "img/colortuning/flower/DE219C.webp"
         },
         {
+          "hex": "#E17ABD",
+          "rgb": [
+            225,
+            122,
+            189
+          ],
+          "img": "img/colortuning/flower/E17ABD.webp"
+        },
+        {
+          "hex": "#E449AE",
+          "rgb": [
+            228,
+            73,
+            174
+          ],
+          "img": "img/colortuning/flower/E449AE.webp"
+        },
+        {
+          "hex": "#E99FCF",
+          "rgb": [
+            233,
+            159,
+            207
+          ],
+          "img": "img/colortuning/flower/E99FCF.webp"
+        },
+        {
+          "hex": "#EC13A0",
+          "rgb": [
+            236,
+            19,
+            160
+          ],
+          "img": "img/colortuning/flower/EC13A0.webp"
+        },
+        {
           "hex": "#EF3EB1",
           "rgb": [
             239,
@@ -1405,186 +1690,48 @@
             177
           ],
           "img": "img/colortuning/flower/EF3EB1.webp"
+        },
+        {
+          "hex": "#F2C5E2",
+          "rgb": [
+            242,
+            197,
+            226
+          ],
+          "img": "img/colortuning/flower/F2C5E2.webp"
+        },
+        {
+          "hex": "#FAEAF5",
+          "rgb": [
+            250,
+            234,
+            245
+          ],
+          "img": "img/colortuning/flower/FAEAF5.webp"
         }
       ]
     },
-    "vase": {
-      "name": "Vase",
-      "prompt": "A ceramic vase on a wooden table",
+    "teddy_bear": {
+      "name": "Teddy Bear",
+      "prompt": "A plush teddy bear on a shelf",
       "swatches": [
         {
-          "hex": "#544F4F",
+          "hex": "#AFEEEE",
           "rgb": [
-            84,
-            79,
-            79
+            175,
+            238,
+            238
           ],
-          "img": "img/colortuning/vase/544F4F.webp"
+          "img": "img/colortuning/teddy_bear/AFEEEE.webp"
         },
         {
-          "hex": "#706161",
+          "hex": "#B0E0E6",
           "rgb": [
-            112,
-            97,
-            97
-          ],
-          "img": "img/colortuning/vase/706161.webp"
-        },
-        {
-          "hex": "#887777",
-          "rgb": [
-            136,
-            119,
-            119
-          ],
-          "img": "img/colortuning/vase/887777.webp"
-        },
-        {
-          "hex": "#9E8F8F",
-          "rgb": [
-            158,
-            143,
-            143
-          ],
-          "img": "img/colortuning/vase/9E8F8F.webp"
-        },
-        {
-          "hex": "#B21F1F",
-          "rgb": [
-            178,
-            31,
-            31
-          ],
-          "img": "img/colortuning/vase/B21F1F.webp"
-        },
-        {
-          "hex": "#B51919",
-          "rgb": [
-            181,
-            25,
-            25
-          ],
-          "img": "img/colortuning/vase/B51919.webp"
-        },
-        {
-          "hex": "#CF2525",
-          "rgb": [
-            207,
-            37,
-            37
-          ],
-          "img": "img/colortuning/vase/CF2525.webp"
-        },
-        {
-          "hex": "#E64747",
-          "rgb": [
-            230,
-            71,
-            71
-          ],
-          "img": "img/colortuning/vase/E64747.webp"
-        }
-      ]
-    },
-    "bedsheet": {
-      "name": "Bedsheet",
-      "prompt": "A folded bedsheet in a tidy bedroom",
-      "swatches": [
-        {
-          "hex": "#AEC6CF",
-          "rgb": [
-            174,
-            198,
-            207
-          ],
-          "img": "img/colortuning/bedsheet/AEC6CF.webp"
-        },
-        {
-          "hex": "#DFE7FD",
-          "rgb": [
-            223,
-            231,
-            253
-          ],
-          "img": "img/colortuning/bedsheet/DFE7FD.webp"
-        },
-        {
-          "hex": "#E2ECE9",
-          "rgb": [
-            226,
-            236,
-            233
-          ],
-          "img": "img/colortuning/bedsheet/E2ECE9.webp"
-        },
-        {
-          "hex": "#E2F0CB",
-          "rgb": [
-            226,
-            240,
-            203
-          ],
-          "img": "img/colortuning/bedsheet/E2F0CB.webp"
-        },
-        {
-          "hex": "#E9F59D",
-          "rgb": [
-            233,
-            245,
-            157
-          ],
-          "img": "img/colortuning/bedsheet/E9F59D.webp"
-        },
-        {
-          "hex": "#FFB7B2",
-          "rgb": [
-            255,
-            183,
-            178
-          ],
-          "img": "img/colortuning/bedsheet/FFB7B2.webp"
-        },
-        {
-          "hex": "#FFF1E6",
-          "rgb": [
-            255,
-            241,
+            176,
+            224,
             230
           ],
-          "img": "img/colortuning/bedsheet/FFF1E6.webp"
-        },
-        {
-          "hex": "#FFF5BA",
-          "rgb": [
-            255,
-            245,
-            186
-          ],
-          "img": "img/colortuning/bedsheet/FFF5BA.webp"
-        }
-      ]
-    },
-    "mug": {
-      "name": "Mug",
-      "prompt": "A ceramic mug on a wooden desk",
-      "swatches": [
-        {
-          "hex": "#8197CC",
-          "rgb": [
-            129,
-            151,
-            204
-          ],
-          "img": "img/colortuning/mug/8197CC.webp"
-        },
-        {
-          "hex": "#81CCCC",
-          "rgb": [
-            129,
-            204,
-            204
-          ],
-          "img": "img/colortuning/mug/81CCCC.webp"
+          "img": "img/colortuning/teddy_bear/B0E0E6.webp"
         },
         {
           "hex": "#C1E1C1",
@@ -1593,7 +1740,7 @@
             225,
             193
           ],
-          "img": "img/colortuning/mug/C1E1C1.webp"
+          "img": "img/colortuning/teddy_bear/C1E1C1.webp"
         },
         {
           "hex": "#C3B1E1",
@@ -1602,25 +1749,34 @@
             177,
             225
           ],
-          "img": "img/colortuning/mug/C3B1E1.webp"
+          "img": "img/colortuning/teddy_bear/C3B1E1.webp"
         },
         {
-          "hex": "#CCA981",
+          "hex": "#D0F0C0",
           "rgb": [
-            204,
-            169,
-            129
+            208,
+            240,
+            192
           ],
-          "img": "img/colortuning/mug/CCA981.webp"
+          "img": "img/colortuning/teddy_bear/D0F0C0.webp"
         },
         {
-          "hex": "#D19D7D",
+          "hex": "#D8BFD8",
           "rgb": [
-            209,
-            157,
-            125
+            216,
+            191,
+            216
           ],
-          "img": "img/colortuning/mug/D19D7D.webp"
+          "img": "img/colortuning/teddy_bear/D8BFD8.webp"
+        },
+        {
+          "hex": "#E0B0FF",
+          "rgb": [
+            224,
+            176,
+            255
+          ],
+          "img": "img/colortuning/teddy_bear/E0B0FF.webp"
         },
         {
           "hex": "#E6E6FA",
@@ -1629,7 +1785,7 @@
             230,
             250
           ],
-          "img": "img/colortuning/mug/E6E6FA.webp"
+          "img": "img/colortuning/teddy_bear/E6E6FA.webp"
         },
         {
           "hex": "#F4C2C2",
@@ -1638,7 +1794,208 @@
             194,
             194
           ],
-          "img": "img/colortuning/mug/F4C2C2.webp"
+          "img": "img/colortuning/teddy_bear/F4C2C2.webp"
+        },
+        {
+          "hex": "#FFD1DC",
+          "rgb": [
+            255,
+            209,
+            220
+          ],
+          "img": "img/colortuning/teddy_bear/FFD1DC.webp"
+        },
+        {
+          "hex": "#FFDAB9",
+          "rgb": [
+            255,
+            218,
+            185
+          ],
+          "img": "img/colortuning/teddy_bear/FFDAB9.webp"
+        },
+        {
+          "hex": "#FFE5B4",
+          "rgb": [
+            255,
+            229,
+            180
+          ],
+          "img": "img/colortuning/teddy_bear/FFE5B4.webp"
+        }
+      ]
+    },
+    "backpack": {
+      "name": "Backpack",
+      "prompt": "A backpack on a bench",
+      "swatches": [
+        {
+          "hex": "#004B49",
+          "rgb": [
+            0,
+            75,
+            73
+          ],
+          "img": "img/colortuning/backpack/004B49.webp"
+        },
+        {
+          "hex": "#0F2080",
+          "rgb": [
+            15,
+            32,
+            128
+          ],
+          "img": "img/colortuning/backpack/0F2080.webp"
+        },
+        {
+          "hex": "#0F52BA",
+          "rgb": [
+            15,
+            82,
+            186
+          ],
+          "img": "img/colortuning/backpack/0F52BA.webp"
+        },
+        {
+          "hex": "#301934",
+          "rgb": [
+            48,
+            25,
+            52
+          ],
+          "img": "img/colortuning/backpack/301934.webp"
+        },
+        {
+          "hex": "#50C878",
+          "rgb": [
+            80,
+            200,
+            120
+          ],
+          "img": "img/colortuning/backpack/50C878.webp"
+        },
+        {
+          "hex": "#6A0DAD",
+          "rgb": [
+            106,
+            13,
+            173
+          ],
+          "img": "img/colortuning/backpack/6A0DAD.webp"
+        },
+        {
+          "hex": "#800020",
+          "rgb": [
+            128,
+            0,
+            32
+          ],
+          "img": "img/colortuning/backpack/800020.webp"
+        },
+        {
+          "hex": "#9B111E",
+          "rgb": [
+            155,
+            17,
+            30
+          ],
+          "img": "img/colortuning/backpack/9B111E.webp"
+        },
+        {
+          "hex": "#B8860B",
+          "rgb": [
+            184,
+            134,
+            11
+          ],
+          "img": "img/colortuning/backpack/B8860B.webp"
+        }
+      ]
+    },
+    "vase": {
+      "name": "Vase",
+      "prompt": "A ceramic vase on a mantelpiece",
+      "swatches": [
+        {
+          "hex": "#2AA12A",
+          "rgb": [
+            42,
+            161,
+            42
+          ],
+          "img": "img/colortuning/vase/2AA12A.webp"
+        },
+        {
+          "hex": "#337133",
+          "rgb": [
+            51,
+            113,
+            51
+          ],
+          "img": "img/colortuning/vase/337133.webp"
+        },
+        {
+          "hex": "#376C37",
+          "rgb": [
+            55,
+            108,
+            55
+          ],
+          "img": "img/colortuning/vase/376C37.webp"
+        },
+        {
+          "hex": "#45B045",
+          "rgb": [
+            69,
+            176,
+            69
+          ],
+          "img": "img/colortuning/vase/45B045.webp"
+        },
+        {
+          "hex": "#609F60",
+          "rgb": [
+            96,
+            159,
+            96
+          ],
+          "img": "img/colortuning/vase/609F60.webp"
+        },
+        {
+          "hex": "#60B560",
+          "rgb": [
+            96,
+            181,
+            96
+          ],
+          "img": "img/colortuning/vase/60B560.webp"
+        },
+        {
+          "hex": "#7CB17C",
+          "rgb": [
+            124,
+            177,
+            124
+          ],
+          "img": "img/colortuning/vase/7CB17C.webp"
+        },
+        {
+          "hex": "#99E099",
+          "rgb": [
+            153,
+            224,
+            153
+          ],
+          "img": "img/colortuning/vase/99E099.webp"
+        },
+        {
+          "hex": "#B6D3B6",
+          "rgb": [
+            182,
+            211,
+            182
+          ],
+          "img": "img/colortuning/vase/B6D3B6.webp"
         }
       ]
     }
@@ -1646,94 +2003,116 @@
   "transfer": {
     "palettes": [
       {
-        "id": "palette_teal_amber",
-        "name": "Teal & Amber",
-        "prompt": "An elegant vintage coupe car parked beside an architectural pavilion at dusk",
+        "id": "mug",
+        "name": "Ceramic Coffee Mug",
         "colors": [
-          "#33535D",
-          "#2D545E",
-          "#C98D49",
-          "#E8DFCF",
-          "#202427"
+          "#C85A32",
+          "#BC6C25",
+          "#A2482B",
+          "#DDA15E",
+          "#F4EBD9"
         ],
         "pal_img": "img/color_transfer/palette/pal_0.webp",
-        "gen_img": "img/color_transfer/palette/gen_0.webp"
+        "gen_img": "img/color_transfer/palette/gen_0.webp",
+        "prompt": "a photo of a ceramic coffee mug resting on a wooden desk in a bright room"
       },
       {
-        "id": "palette_sage_gold",
-        "name": "Sage & Warm Sand",
-        "prompt": "A rugged off-road expedition vehicle traveling through a dense pine forest",
+        "id": "coupe",
+        "name": "Vintage Coupe Car",
         "colors": [
-          "#6B7265",
-          "#606C5A",
-          "#CAB89C",
-          "#35373B",
-          "#E0D4C6"
+          "#2D545E",
+          "#C88D48",
+          "#556066",
+          "#E8DFD0",
+          "#212529"
         ],
         "pal_img": "img/color_transfer/palette/pal_1.webp",
-        "gen_img": "img/color_transfer/palette/gen_1.webp"
+        "gen_img": "img/color_transfer/palette/gen_1.webp",
+        "prompt": "a photo of an elegant vintage coupe car parked beside an architectural glass pavilion at dusk"
       },
       {
-        "id": "palette_slate_coral",
-        "name": "Slate & Soft Coral",
-        "prompt": "A wooden sailboat gliding across calm ocean water under evening skies",
+        "id": "tea",
+        "name": "Ceramic Teapot & Cups",
         "colors": [
-          "#99A9AA",
-          "#8FA6B3",
-          "#D4A358",
-          "#D98A79",
-          "#A9BAA2"
+          "#606C5A",
+          "#CBB89D",
+          "#35373B",
+          "#DDD3C4",
+          "#EBE6DD"
         ],
         "pal_img": "img/color_transfer/palette/pal_2.webp",
-        "gen_img": "img/color_transfer/palette/gen_2.webp"
+        "gen_img": "img/color_transfer/palette/gen_2.webp",
+        "prompt": "a photo of a handcrafted artisan ceramic teapot with delicate cups on a low oak tea table"
       },
       {
-        "id": "palette_nordic_mineral",
-        "name": "Nordic Mineral",
-        "prompt": "A ceramic vase with blooming flowers on a rustic wooden dining table",
+        "id": "typewriter",
+        "name": "Mechanical Typewriter",
         "colors": [
-          "#566A6A",
-          "#4D6568",
-          "#D9CEBD",
-          "#2C3239",
-          "#8B9785"
+          "#8FA6B2",
+          "#D98A7B",
+          "#D4A359",
+          "#A8BBA2",
+          "#F2EAD3"
         ],
         "pal_img": "img/color_transfer/palette/pal_3.webp",
-        "gen_img": "img/color_transfer/palette/gen_3.webp"
+        "gen_img": "img/color_transfer/palette/gen_3.webp",
+        "prompt": "a photo of a classic mechanical typewriter on a polished wooden reception desk in a hotel lobby"
+      },
+      {
+        "id": "armchair",
+        "name": "Minimalist Armchair",
+        "colors": [
+          "#4C6568",
+          "#8A9684",
+          "#C6CDD1",
+          "#2B3238",
+          "#D8CEBE"
+        ],
+        "pal_img": "img/color_transfer/palette/pal_4.webp",
+        "gen_img": "img/color_transfer/palette/gen_4.webp",
+        "prompt": "a photo of a modern minimalist armchair with a soft wool throw blanket in a sunlit studio"
       }
     ],
     "references": [
       {
-        "id": "ref_mug",
-        "name": "Ceramic Mug",
-        "ref_title": "Photographic Reference (Ceramic Mug)",
-        "prompt": "A photo of a ceramic mug on a wooden desk",
-        "ref_img": "img/color_transfer/reference/ref_mug.webp",
-        "gen_img": "img/color_transfer/reference/gen_mug.webp"
-      },
-      {
-        "id": "ref_hokusai",
-        "name": "The Great Wave",
-        "ref_title": "Katsushika Hokusai, The Great Wave off Kanagawa",
-        "prompt": "A wooden sailboat navigating ocean waves under morning light",
+        "id": "castle",
+        "name": "Starry Night Castle",
+        "ref_title": "Van Gogh \u2013 Starry Night",
         "ref_img": "img/color_transfer/reference/ref_0.webp",
-        "gen_img": "img/color_transfer/reference/gen_0.webp"
+        "gen_img": "img/color_transfer/reference/gen_0.webp",
+        "prompt": "a photo of a medieval stone castle perched on a rocky cliff under an open sky"
       },
       {
-        "id": "ref_irises",
-        "name": "Van Gogh Irises",
-        "ref_title": "Vincent van Gogh, Irises (1890)",
-        "prompt": "A ceramic botanical flower vase with blooming flowers on a sunlit table",
-        "ref_img": "img/color_transfer/reference/ref_2.webp",
-        "gen_img": "img/color_transfer/reference/gen_2.webp"
-      },
-      {
-        "id": "ref_rousseau",
-        "name": "Repast of the Lion",
-        "ref_title": "Henri Rousseau, The Repast of the Lion",
-        "prompt": "An off-road expedition vehicle parked in a lush jungle forest",
+        "id": "boat",
+        "name": "Great Wave Boat",
+        "ref_title": "Hokusai \u2013 The Great Wave",
         "ref_img": "img/color_transfer/reference/ref_1.webp",
-        "gen_img": "img/color_transfer/reference/gen_1.webp"
+        "gen_img": "img/color_transfer/reference/gen_1.webp",
+        "prompt": "a photo of a wooden fishing boat moored at a rustic coastal harbor with gentle water"
+      },
+      {
+        "id": "greenhouse",
+        "name": "Water Lilies Conservatory",
+        "ref_title": "Monet \u2013 Water Lilies",
+        "ref_img": "img/color_transfer/reference/ref_2.webp",
+        "gen_img": "img/color_transfer/reference/gen_2.webp",
+        "prompt": "a photo of a peaceful botanical conservatory with a calm reflection pool and iron glass architecture"
+      },
+      {
+        "id": "motorcycle",
+        "name": "Tokyo Neon Motorcycle",
+        "ref_title": "Tokyo Neon at Night",
+        "ref_img": "img/color_transfer/reference/ref_3.webp",
+        "gen_img": "img/color_transfer/reference/gen_3.webp",
+        "prompt": "a photo of a custom modern motorcycle parked on a wet city street"
+      },
+      {
+        "id": "vase",
+        "name": "Golden Porcelain Vase",
+        "ref_title": "Gustav Klimt \u2013 The Kiss",
+        "ref_img": "img/color_transfer/reference/ref_4.webp",
+        "gen_img": "img/color_transfer/reference/gen_4.webp",
+        "prompt": "a photo of an elegant golden porcelain vase with flowers on a smooth countertop"
       }
     ]
   },
@@ -1743,81 +2122,105 @@
       "prompt_base": "A colorful scarlet macaw parrot perched on a tropical branch",
       "levels": [
         {
-          "reduction": 0,
+          "pct": 100,
           "pct_label": "100%",
-          "label": "100% Saturation (Baseline)",
           "img": "img/saturation/parrot_red0.webp"
         },
         {
-          "reduction": 10,
+          "pct": 90,
           "pct_label": "90%",
-          "label": "90% Saturation (-10%)",
           "img": "img/saturation/parrot_red10.webp"
         },
         {
-          "reduction": 20,
+          "pct": 80,
           "pct_label": "80%",
-          "label": "80% Saturation (-20%)",
           "img": "img/saturation/parrot_red20.webp"
         },
         {
-          "reduction": 30,
+          "pct": 70,
           "pct_label": "70%",
-          "label": "70% Saturation (-30%)",
           "img": "img/saturation/parrot_red30.webp"
         },
         {
-          "reduction": 40,
+          "pct": 60,
           "pct_label": "60%",
-          "label": "60% Saturation (-40%)",
           "img": "img/saturation/parrot_red40.webp"
         },
         {
-          "reduction": 50,
+          "pct": 50,
           "pct_label": "50%",
-          "label": "50% Saturation (-50%)",
           "img": "img/saturation/parrot_red50.webp"
+        }
+      ]
+    },
+    "balloons": {
+      "name": "Hot Air Balloons",
+      "prompt_base": "Hot air balloons floating above a scenic canyon valley at sunrise",
+      "levels": [
+        {
+          "pct": 100,
+          "pct_label": "100%",
+          "img": "img/saturation/balloons_red0.webp"
+        },
+        {
+          "pct": 90,
+          "pct_label": "90%",
+          "img": "img/saturation/balloons_red10.webp"
+        },
+        {
+          "pct": 80,
+          "pct_label": "80%",
+          "img": "img/saturation/balloons_red20.webp"
+        },
+        {
+          "pct": 70,
+          "pct_label": "70%",
+          "img": "img/saturation/balloons_red30.webp"
+        },
+        {
+          "pct": 60,
+          "pct_label": "60%",
+          "img": "img/saturation/balloons_red40.webp"
+        },
+        {
+          "pct": 50,
+          "pct_label": "50%",
+          "img": "img/saturation/balloons_red50.webp"
         }
       ]
     },
     "vangogh": {
       "name": "Starry Night",
-      "prompt_base": "A landscape painting of swirling starry night sky in the style of Van Gogh",
+      "prompt_base": "Starry night over a quiet village with swirling clouds and luminous stars",
       "levels": [
         {
-          "reduction": 0,
+          "pct": 100,
           "pct_label": "100%",
-          "label": "100% Saturation (Baseline)",
           "img": "img/saturation/vangogh_red0.webp"
         },
         {
-          "reduction": 10,
+          "pct": 90,
           "pct_label": "90%",
-          "label": "90% Saturation (-10%)",
           "img": "img/saturation/vangogh_red10.webp"
         },
         {
-          "reduction": 20,
+          "pct": 80,
           "pct_label": "80%",
-          "label": "80% Saturation (-20%)",
           "img": "img/saturation/vangogh_red20.webp"
         },
         {
-          "reduction": 30,
+          "pct": 70,
           "pct_label": "70%",
-          "label": "70% Saturation (-30%)",
           "img": "img/saturation/vangogh_red30.webp"
         },
         {
-          "reduction": 40,
+          "pct": 60,
           "pct_label": "60%",
-          "label": "60% Saturation (-40%)",
           "img": "img/saturation/vangogh_red40.webp"
         },
         {
-          "reduction": 50,
+          "pct": 50,
           "pct_label": "50%",
-          "label": "50% Saturation (-50%)",
           "img": "img/saturation/vangogh_red50.webp"
         }
       ]
@@ -1836,20 +2239,22 @@
     let currentSaturationIdx = 0;
 
     // Tabs logic: Model in Autoencoders
-    function selectModelTab(modelKey) {
+    function selectModelTab(modelKey, btn) {
       document.querySelectorAll('#latent-color-subspace .tab-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('#latent-color-subspace .tab-content').forEach(c => c.classList.remove('active'));
       
-      event.target.classList.add('active');
+      const targetBtn = btn || (typeof event !== 'undefined' && event.target ? event.target : null);
+      if (targetBtn) targetBtn.classList.add('active');
       document.getElementById('tab-' + modelKey).classList.add('active');
     }
 
     // Tabs logic: Demo Modes
-    function selectDemoMode(modeKey) {
+    function selectDemoMode(modeKey, btn) {
       document.querySelectorAll('.demo-nav-btn').forEach(b => b.classList.remove('active'));
       document.querySelectorAll('.demo-panel').forEach(p => p.classList.remove('active'));
 
-      event.currentTarget.classList.add('active');
+      const targetBtn = btn || (typeof event !== 'undefined' && (event.currentTarget || event.target) ? (event.currentTarget || event.target) : null);
+      if (targetBtn) targetBtn.classList.add('active');
       document.getElementById('demo-panel-' + modeKey).classList.add('active');
     }
 
@@ -1858,7 +2263,7 @@
       const pillsWrap = document.getElementById('tuning-prompt-pills');
       pillsWrap.innerHTML = '';
 
-      Object.keys(DATA.colortuning).forEach((objKey, idx) => {
+      Object.keys(DATA.colortuning).forEach((objKey) => {
         const obj = DATA.colortuning[objKey];
         const btn = document.createElement('button');
         btn.className = 'prompt-pill' + (objKey === currentTuningObj ? ' active' : '');
@@ -1882,6 +2287,10 @@
 
       const swatchesWrap = document.getElementById('tuning-swatches-grid');
       swatchesWrap.innerHTML = '';
+
+      if (currentTuningSwatchIdx >= objData.swatches.length) {
+        currentTuningSwatchIdx = 0;
+      }
 
       objData.swatches.forEach((sw, idx) => {
         const card = document.createElement('div');
@@ -1911,6 +2320,10 @@
 
     function updateColorTuningPreview() {
       const objData = DATA.colortuning[currentTuningObj];
+      if (!objData || !objData.swatches || objData.swatches.length === 0) return;
+      if (currentTuningSwatchIdx >= objData.swatches.length) {
+        currentTuningSwatchIdx = 0;
+      }
       const sw = objData.swatches[currentTuningSwatchIdx];
 
       const img = document.getElementById('tuning-preview-img');
@@ -1950,6 +2363,8 @@
         if (currentTransferSubmode === 'palettes') {
           const strip = document.createElement('div');
           strip.className = 'palette-chips-strip';
+          strip.style.height = '32px';
+          strip.style.borderRadius = '6px';
           item.colors.forEach(col => {
             const chip = document.createElement('div');
             chip.className = 'palette-chip';
@@ -1957,20 +2372,27 @@
             strip.appendChild(chip);
           });
           btn.appendChild(strip);
+
+          const title = document.createElement('span');
+          title.className = 'transfer-btn-title';
+          title.style.marginTop = '6px';
+          title.textContent = item.name;
+          btn.appendChild(title);
         } else {
           const thumb = document.createElement('img');
           thumb.src = item.ref_img;
           thumb.style.width = '100%';
-          thumb.style.height = '48px';
+          thumb.style.height = '64px';
           thumb.style.objectFit = 'cover';
-          thumb.style.borderRadius = '4px';
+          thumb.style.borderRadius = '6px';
           btn.appendChild(thumb);
-        }
 
-        const title = document.createElement('span');
-        title.className = 'transfer-btn-title';
-        title.textContent = item.name;
-        btn.appendChild(title);
+          const title = document.createElement('span');
+          title.className = 'transfer-btn-title';
+          title.style.marginTop = '6px';
+          title.textContent = item.ref_title || item.name;
+          btn.appendChild(title);
+        }
 
         grid.appendChild(btn);
       });
@@ -1982,10 +2404,10 @@
       document.getElementById('transfer-active-prompt').textContent = '“' + item.prompt + '”';
 
       if (currentTransferSubmode === 'palettes') {
-        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-palette"></i> Selected Palette (' + item.name + ')';
+        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-palette"></i> Selected Color Palette';
         document.getElementById('transfer-left-img').src = item.pal_img;
       } else {
-        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-image"></i> Reference: ' + item.ref_title;
+        document.getElementById('transfer-left-title').innerHTML = '<i class="fa-solid fa-image"></i> Reference: ' + (item.ref_title || item.name);
         document.getElementById('transfer-left-img').src = item.ref_img;
       }
 
@@ -2039,19 +2461,14 @@
       const scene = DATA.saturation[currentSaturationScene];
       const level = scene.levels[currentSaturationIdx];
 
-      // Simulated dynamic prompt showing the saturation setting
-      let dynamicPrompt = scene.prompt_base;
-      if (level.reduction > 0) {
-        dynamicPrompt += ' (' + level.pct_label + ' saturation / -' + level.reduction + '% chroma)';
-      } else {
-        dynamicPrompt += ' (100% saturation / baseline)';
-      }
+      // Simulated dynamic prompt showing the saturation setting without chroma mentions
+      const dynamicPrompt = scene.prompt_base + ' (' + level.pct_label + ' saturation)';
       document.getElementById('saturation-active-prompt').textContent = '“' + dynamicPrompt + '”';
 
-      document.getElementById('saturation-level-badge').textContent = level.label;
+      document.getElementById('saturation-level-badge').textContent = level.pct_label + ' Saturation';
       document.getElementById('saturation-img').src = level.img;
 
-      // Update pills active state
+      // Update percentage pills active state
       for (let i = 0; i < 6; i++) {
         const p = document.getElementById('sat-pill-' + i);
         if (p) p.classList.toggle('active', i === currentSaturationIdx);

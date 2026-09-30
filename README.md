@@ -33,9 +33,7 @@
 
 ## 📖 Overview
 
-Modern text-to-image diffusion models struggle with fine-grained numerical color specifications due to text tokenizer bottlenecks and chromatic entanglements. 
-
-This repository presents a training-free framework exploiting the natural organization of VAE latent spaces. By identifying an orthogonal color subspace aligned with perceptual CIELAB dimensions, latent trajectories are steered in-flight via lightweight residual mapping and calibrated temporal scheduling. This formulation naturally enables fine-grained numerical color steering, multi-zone semantic color transfer from palettes or reference images, and continuous spatially-adaptive gamut reduction without model retraining.
+Variational autoencoders (VAEs) are a key part of modern text-to-image models, which generate images within their latent space. VAEs are known to disentangle the main factors of variation in the data, and color is known to be one of the most structured of these in natural images: decorrelating it yields one luminance axis and two opponent-color axes. Color should therefore be expected to emerge as a distinct factor in the VAE latent space. Yet how these latent spaces represent color remains largely unexplored. In this work, we show that the VAEs of text-to-image models share a color subspace aligned with brightness and opponent-colors. Through a linear approximation of the encoder and targeted latent steering, we find this subspace consistently across a broad range of VAEs, from SD1.5 to FLUX.2 and Z-Image. Building on this characterization, we propose three applications: *ColorTuning*, which achieves state-of-the-art in precise numerical color generation on the fine-grained CSS3/X11 system of GenColorBench, *saturation control*, to adjust the global chromatic intensity, and *color transfer*, to change the palette to match a reference.
 
 ---
 
@@ -57,18 +55,18 @@ pip install -r requirements.txt
 
 ---
 
-## 🏛️ Architecture Matrix & Pre-Calibrated Checkpoints
+## 🏛️ Supported Models & Latent Steering Configurations
 
 All models share a standardized pipeline while honoring their specific latent dimensions and scheduling characteristics:
 
-| Architecture | Directory | Latent Channels | Gate Fraction | Optimal Schedule |
+| Architecture | Directory | Latent Channels | Gate Fraction | Schedule |
 | :--- | :--- | :---: | :---: | :--- |
-| **FLUX.1-dev** | [`Flux/`](Flux/) | 16 | 0.50 | Ascending, ramp-down |
-| **FLUX.2-dev** | [`Flux2/`](Flux2/) | 32 | 0.65 | Ascending, ramp-down |
+| **FLUX.1-dev** | [`Flux/`](Flux/) | 16 | 0.50 | Ascending |
+| **FLUX.2-dev** | [`Flux2/`](Flux2/) | 32 | 0.65 | Ascending |
 | **SD 3.0 Medium** | [`SD3/`](SD3/) | 16 | 0.75 | Triangular ($n=3$) |
-| **SD 3.5 Medium** | [`sd3.5_m/`](sd3.5_m/) | 16 | 0.60 | Ascending, ramp-down |
-| **SDXL 1.0** | [`SDXL/`](SDXL/) | 4 | 0.40 | Flat, single-step |
-| **Z-Image** | [`z-image/`](z-image/) | 16 | 0.60 | Flat, single-step |
+| **SD 3.5 Medium** | [`sd3.5_m/`](sd3.5_m/) | 16 | 0.60 | Ascending |
+| **SDXL 1.0** | [`SDXL/`](SDXL/) | 4 | 0.40 | Constant |
+| **Z-Image** | [`z-image/`](z-image/) | 16 | 0.60 | Constant |
 
 Each model directory contains:
 * `fase_a_pca_out/pca_axes.json`: Discovered orthogonal color axes ($u_1, u_2, u_3$).
@@ -174,7 +172,7 @@ If you find this work or codebase helpful in your research, please cite:
 ```bibtex
 @article{santamaria2025coloralignment,
   title={On Color Alignment in VAE Latent Spaces and Its Applications},
-  author={Santamaria, Julian and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
+  author={Santamaria, Julian D. and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
   journal={arXiv preprint arXiv:XXXX.XXXXX},
   year={2025}
 }
