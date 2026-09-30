@@ -879,7 +879,7 @@
     <div class="teaser-figure">
       <img src="img/teaser.webp" alt="On Color Alignment in VAE Latent Spaces and Its Applications">
       <p class="teaser-caption">
-        <strong>Figure 1: Overview of Color Alignment and Applications.</strong> Across diverse modern diffusion architectures (FLUX, FLUX.2, SD3, SD3.5, SDXL, PixArt, Z-Image), VAE latent representations inherently organize chromaticity along a low-dimensional, orthogonal color subspace. By characterizing these latent directions, our closed-loop steering framework enables precise numerical color control (ColorTuning), saturation control, and color transfer directly at generation time without retraining.
+        <strong>A color space hides in plain sight in the latent space of an autoencoder. Train a VAE with three latent channels on natural images, encode an image (left), add a constant offset &delta; to one channel, and decode: the image changes color while preserving its content. Sweeping two channels (right; ch2 across columns, ch3 across rows) spans an opponent-color plane and all intermediate mixtures, while the remaining channel (bottom row) controls brightness.
       </p>
     </div>
   </div>
