@@ -870,9 +870,6 @@
         <a href="https://github.com/julian075/Color_Subspace" class="btn btn-outline" target="_blank">
           <i class="fa-brands fa-github"></i> GitHub Code
         </a>
-        <a href="#interactive-demo" class="btn btn-outline">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> Interactive Demo
-        </a>
       </div>
     </div>
   </header>
@@ -891,7 +888,6 @@
   <section id="abstract">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Overview</span>
         <h2 class="section-title">Abstract</h2>
       </div>
       <div class="abstract-card">
@@ -904,7 +900,6 @@
   <section id="latent-color-subspace">
     <div class="container">
       <div class="section-header">
-        <span class="section-tag">Section 3</span>
         <h2 class="section-title">Color in Autoencoder Latent Space</h2>
         <p class="section-desc">
           Traversing principal latent directions in pretrained VAEs reveals an opponent-color plane and brightness axis that emerge spontaneously from natural image statistics.
@@ -961,7 +956,6 @@
   <section id="applications">
     <div class="container-wide">
       <div class="section-header">
-        <span class="section-tag">Section 4</span>
         <h2 class="section-title">Applications</h2>
         <p class="section-desc">
           Building on the characterization of the color basis, we propose three generation-time applications in text-to-image diffusion models.
@@ -970,21 +964,18 @@
 
       <div class="app-cards-grid">
         <div class="app-card">
-          <span class="app-card-badge">Section 4.2</span>
           <h3>ColorTuning: Numerical Color Precision</h3>
           <p>
             Closed-loop trajectory steering during denoising. Converts numerical color codes into proxy color names for prompt text conditioning, and applies residual ResMLP displacements inside SAM3 object masks to achieve exact CIELAB targets on GenColorBench.
           </p>
         </div>
         <div class="app-card">
-          <span class="app-card-badge">Section 4.3</span>
           <h3>Saturation Control</h3>
           <p>
             By traversing the corresponding latent directions, our method continuously modulates the saturation of the generated image (from 100% to 50% at 10% intervals), facilitating synthesis within narrower color gamuts without post-processing.
           </p>
         </div>
         <div class="app-card">
-          <span class="app-card-badge">Section 4.3</span>
           <h3>Color Transfer</h3>
           <p>
             Given a text prompt and a reference image or color palette, our method leverages the discovered latent directions to match the color distribution while simultaneously generating the content specified by the prompt.
@@ -992,39 +983,12 @@
         </div>
       </div>
 
-      <!-- Qualitative Results Figures from Paper -->
-      <div class="figure-card">
-        <img src="img/qualitative_results/qualitative_results_v2.webp" alt="ColorTuning Qualitative Comparisons on GenColorBench">
-        <p class="figure-caption">
-          <strong>ColorTuning benchmark results on GenColorBench.</strong> Faithful reproduction of requested numerical colors across challenging tones, subtle color gradations, and pastel ranges.
-        </p>
-      </div>
-
-      <div class="figure-card">
-        <img src="img/qualitative_results/sat_v3.webp" alt="Saturation Control Latent Interventions">
-        <p class="figure-caption">
-          <strong>Saturation control during generation.</strong> From left to right, latent interventions continuously reduce the chromatic intensity of the generated scene from 100% down to 50% in 10% steps.
-        </p>
-      </div>
-
-      <div class="figure-card">
-        <img src="img/qualitative_results/color_apli_v2.webp" alt="Color Transfer Examples">
-        <p class="figure-caption">
-          <strong>Color transfer during generation.</strong> In each pair, the left image provides the reference color distribution and the right image is the generated result steered to match it.
-        </p>
-      </div>
-
-    </div>
-  </section>
-
-  <!-- Section 5: Interactive Demonstrations -->
-  <section id="interactive-demo">
-    <div class="container-wide">
+      <div class="container-wide">
       <div class="section-header">
         <span class="section-tag">Demonstration</span>
         <h2 class="section-title">Interactive Demonstration</h2>
         <p class="section-desc">
-          Explore the three generation-time modes interactively with precomputed outputs.
+          Explore the three generation-time modes.
         </p>
       </div>
 
@@ -1171,7 +1135,10 @@
 
       </div>
     </div>
+
+    </div>
   </section>
+
 
   <!-- BibTeX Section -->
   <section id="citation">
