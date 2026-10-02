@@ -172,32 +172,481 @@
       transform: translateY(-1px);
     }
 
-    /* Teaser */
+    /* Modern Interactive Teaser */
     .teaser-section {
       margin: 40px auto 0;
     }
 
-    .teaser-figure {
+    .teaser-card {
       background: var(--white);
       border: 1px solid var(--slate-200);
       border-radius: var(--radius-lg);
-      padding: 18px;
-      box-shadow: var(--shadow-sm);
+      padding: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
     }
 
-    .teaser-figure img {
+    /* Teaser Comparison Layout (Input vs Latent Decoded) */
+    .teaser-comparison-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
       width: 100%;
-      height: auto;
-      border-radius: var(--radius-md);
+    }
+
+    @media (max-width: 600px) {
+      .teaser-comparison-row {
+        flex-direction: column;
+        gap: 14px;
+      }
+    }
+
+    .teaser-input-box, .teaser-output-box {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .teaser-box-tag {
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--slate-600);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .teaser-static-img-wrap {
+      width: 100%;
+      max-width: 220px;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+      border: 1px solid var(--slate-200);
+      background: var(--slate-100);
+    }
+
+    .teaser-static-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
       display: block;
     }
 
+    .teaser-arrow-badge {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: var(--slate-400);
+      font-size: 1.1rem;
+      flex-shrink: 0;
+    }
+
+    .teaser-math-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    /* Interactive Latent Explorer Grid */
+    .teaser-interactive-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 28px;
+      align-items: center;
+    }
+
+    @media (max-width: 860px) {
+      .teaser-interactive-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Viewport Display (Left) */
+    .teaser-viewport-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .teaser-canvas-wrap {
+      position: relative;
+      width: 100%;
+      max-width: 440px;
+      aspect-ratio: 1 / 1;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+      background: #000;
+      border: 1px solid var(--slate-200);
+    }
+
+    #teaser-canvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: cover;
+    }
+
+    .teaser-hud-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--white);
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      letter-spacing: 0.02em;
+    }
+
+    .live-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #10b981;
+      display: inline-block;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulseDot 1.8s infinite;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.85); }
+    }
+
+    .teaser-coords-badge {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      right: 14px;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      color: var(--white);
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .teaser-swatch-dot {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: inline-block;
+      border: 2px solid white;
+      vertical-align: middle;
+      box-shadow: 0 0 6px rgba(0,0,0,0.4);
+    }
+
+    /* Controls Bar below Viewport */
+    .teaser-actions-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      max-width: 440px;
+      justify-content: space-between;
+    }
+
+    .teaser-ctrl-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: var(--slate-100);
+      color: var(--slate-700);
+      border: 1px solid var(--slate-300);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .teaser-ctrl-btn:hover {
+      background: var(--slate-200);
+      color: var(--slate-900);
+    }
+
+    .teaser-ctrl-btn.active {
+      background: var(--primary);
+      color: var(--white);
+      border-color: var(--primary);
+    }
+
+    .teaser-speed-group {
+      display: inline-flex;
+      background: var(--slate-100);
+      border-radius: 9999px;
+      padding: 2px;
+      border: 1px solid var(--slate-300);
+    }
+
+    .teaser-speed-btn {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      background: transparent;
+      border: none;
+      color: var(--slate-600);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .teaser-speed-btn.active {
+      background: var(--white);
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Right Column: Interactive Color Pad & Brightness */
+    .teaser-controls-card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    .teaser-card-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--slate-800);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .teaser-card-subtitle {
+      font-size: 0.88rem;
+      color: var(--slate-500);
+      line-height: 1.5;
+      margin-top: -12px;
+    }
+
+    /* 2D Opponent Color Joypad */
+    .teaser-pad-container {
+      position: relative;
+      width: 100%;
+      max-width: 280px;
+      margin: 0 auto;
+    }
+
+    .teaser-axis-label-top {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #b45309;
+      margin-bottom: 4px;
+    }
+
+    .teaser-axis-label-bottom {
+      text-align: center;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #1d4ed8;
+      margin-top: 4px;
+    }
+
+    .teaser-pad-midrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .teaser-axis-label-side {
+      font-size: 0.78rem;
+      font-weight: 700;
+      writing-mode: vertical-lr;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      white-space: nowrap;
+    }
+
+    .teaser-axis-label-left {
+      color: #047857;
+    }
+
+    .teaser-axis-label-right {
+      color: #be123c;
+    }
+
+    .teaser-pad-area {
+      width: 220px;
+      height: 220px;
+      border-radius: var(--radius-md);
+      position: relative;
+      cursor: crosshair;
+      user-select: none;
+      touch-action: none;
+      border: 2px solid var(--slate-300);
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 4px 10px rgba(0,0,0,0.06);
+      background: radial-gradient(circle at 50% 50%, #ffffff 0%, rgba(255,255,255,0.7) 35%, transparent 80%),
+                  conic-gradient(from 0deg at 50% 50%, #e11d48, #d97706, #10b981, #06b6d4, #3b82f6, #8b5cf6, #e11d48);
+    }
+
+    .teaser-pad-axis-h {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: rgba(15, 23, 42, 0.25);
+      pointer-events: none;
+    }
+
+    .teaser-pad-axis-v {
+      position: absolute;
+      left: 50%;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      background: rgba(15, 23, 42, 0.25);
+      pointer-events: none;
+    }
+
+    .teaser-pad-puck {
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 3px solid var(--slate-900);
+      box-shadow: 0 0 12px rgba(0, 0, 0, 0.45), inset 0 0 4px rgba(0,0,0,0.2);
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .teaser-pad-area:active .teaser-pad-puck {
+      box-shadow: 0 0 18px var(--primary);
+    }
+
+    /* Lightness Slider */
+    .teaser-slider-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .teaser-slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--slate-700);
+    }
+
+    .teaser-slider-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--primary);
+      background: var(--primary-light);
+      padding: 2px 8px;
+      border-radius: 9999px;
+    }
+
+    .teaser-range-input {
+      width: 100%;
+      accent-color: var(--primary);
+      cursor: pointer;
+    }
+
+    .teaser-slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      color: var(--slate-400);
+      font-weight: 500;
+    }
+
+    /* Preset Chips */
+    .teaser-presets-wrap {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .teaser-preset-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--slate-500);
+      letter-spacing: 0.05em;
+      margin-right: 4px;
+    }
+
+    .teaser-chip {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--white);
+      color: var(--slate-700);
+      border: 1px solid var(--slate-300);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .teaser-chip:hover {
+      background: var(--slate-100);
+      border-color: var(--slate-400);
+      color: var(--slate-900);
+    }
+
+    .teaser-chip-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+
+
     .teaser-caption {
-      margin-top: 14px;
+      margin-top: 20px;
       font-size: 0.95rem;
       color: var(--slate-600);
-      line-height: 1.6;
+      line-height: 1.65;
       text-align: justify;
+      border-top: 1px solid var(--slate-200);
+      padding-top: 16px;
     }
 
     /* Sections */
@@ -876,12 +1325,140 @@
     </div>
   </header>
 
-  <!-- Teaser Figure -->
+  <!-- Modern Dynamic Teaser Section -->
   <div class="container teaser-section">
-    <div class="teaser-figure">
-      <img src="img/teaser.webp" alt="On Color Alignment in VAE Latent Spaces and Its Applications">
+    <div class="teaser-card">
+      <div class="teaser-interactive-layout">
+        <!-- Viewport Column (Left): Input & Decoded Comparison -->
+        <div class="teaser-viewport-box">
+          <div class="teaser-comparison-row">
+            <!-- Left: Encoded Input Photo -->
+            <div class="teaser-input-box">
+              <div class="teaser-box-tag"><i class="fa-solid fa-camera"></i> Input Image <strong>x</strong></div>
+              <div class="teaser-static-img-wrap">
+                <img src="img/teaser_input.webp" alt="Encoded Input Image">
+              </div>
+            </div>
+
+            <!-- Transfer Arrow -->
+            <div class="teaser-arrow-badge">
+              <i class="fa-solid fa-arrow-right"></i>
+              <span class="teaser-math-label">&delta; Shift</span>
+            </div>
+
+            <!-- Right: Dynamic Steered Decoding Canvas -->
+            <div class="teaser-output-box">
+              <div class="teaser-box-tag"><i class="fa-solid fa-wand-magic-sparkles"></i> Decoded <strong>D(z + &delta;)</strong></div>
+              <div class="teaser-canvas-wrap">
+                <canvas id="teaser-canvas" width="224" height="224"></canvas>
+                <!-- Video Loop mode container -->
+                <video id="teaser-video" src="img/teaser_orbit.mp4" loop muted playsinline style="display: none; width: 100%; height: 100%; object-fit: cover;"></video>
+                
+                <div class="teaser-hud-badge">
+                  <span class="live-dot" id="teaser-live-dot"></span>
+                  <span id="teaser-orbit-status">Auto-Orbit Active</span>
+                </div>
+                <div class="teaser-coords-badge">
+                  <div>
+                    <span class="teaser-swatch-dot" id="teaser-swatch-dot" style="background: #a52a2a;"></span>
+                    <span id="teaser-color-name" style="font-weight: 700; margin-left: 4px;">Opponent Mix</span>
+                  </div>
+                  <div>
+                    <span style="color: #94a3b8;">Ch2:</span> <span id="hud-ch2">+0.00</span> &nbsp;|&nbsp;
+                    <span style="color: #94a3b8;">Ch3:</span> <span id="hud-ch3">+0.00</span> &nbsp;|&nbsp;
+                    <span style="color: #94a3b8;">Ch1:</span> <span id="hud-ch1">0.00</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Controls below Viewport -->
+          <div class="teaser-actions-row">
+            <button id="teaser-orbit-btn" class="teaser-ctrl-btn active" onclick="toggleTeaserOrbit()">
+              <i class="fa-solid fa-pause"></i> <span id="orbit-btn-text">Pause Orbit</span>
+            </button>
+            <button class="teaser-ctrl-btn" onclick="resetTeaserToCenter()">
+              <i class="fa-solid fa-rotate-left"></i> Neutral (0,0)
+            </button>
+            <button id="teaser-view-mode-btn" class="teaser-ctrl-btn" onclick="toggleTeaserViewMode()">
+              <i class="fa-solid fa-video"></i> <span id="view-mode-text">Video Loop</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Controls Column (Right) -->
+        <div class="teaser-controls-card">
+          <div>
+            <div class="teaser-card-title">
+              <i class="fa-solid fa-arrows-split-up-and-left" style="color: var(--primary);"></i>
+              Opponent-Color Subspace (Ch 2 vs Ch 3)
+            </div>
+            <p class="teaser-card-subtitle">
+              Drag the reticle across the 2D plane to steer chromaticity along channels Ch 2 & Ch 3 in real time:
+            </p>
+          </div>
+
+          <!-- 2D Joypad -->
+          <div class="teaser-pad-container">
+            <div class="teaser-axis-label-top">+ Ch 3 (Yellow / Warm)</div>
+            <div class="teaser-pad-midrow">
+              <div class="teaser-axis-label-side teaser-axis-label-left">- Ch 2 (Green)</div>
+              <div class="teaser-pad-area" id="teaser-pad-area">
+                <div class="teaser-pad-axis-h"></div>
+                <div class="teaser-pad-axis-v"></div>
+                <div class="teaser-pad-puck" id="teaser-puck" style="left: 50%; top: 50%;"></div>
+              </div>
+              <div class="teaser-axis-label-side teaser-axis-label-right">+ Ch 2 (Magenta)</div>
+            </div>
+            <div class="teaser-axis-label-bottom">- Ch 3 (Blue / Cool)</div>
+          </div>
+
+          <!-- Lightness / Brightness Slider (Ch 1) -->
+          <div class="teaser-slider-group">
+            <div class="teaser-slider-header">
+              <span><i class="fa-solid fa-sun" style="color: #f59e0b;"></i> Ch 1: Brightness Axis</span>
+              <span class="teaser-slider-val" id="teaser-brightness-label">0.0 (Neutral)</span>
+            </div>
+            <input type="range" class="teaser-range-input" id="teaser-brightness-slider" min="0" max="10" step="1" value="5" oninput="onTeaserBrightnessChange(this.value)">
+            <div class="teaser-slider-ticks">
+              <span>-Δ (Darker)</span>
+              <span>0 (Baseline)</span>
+              <span>+Δ (Brighter)</span>
+            </div>
+          </div>
+
+          <!-- Presets Chips -->
+          <div class="teaser-presets-wrap">
+            <span class="teaser-preset-label">Presets:</span>
+            <button class="teaser-chip" onclick="applyTeaserPreset(5, 5, 5)">
+              <span class="teaser-chip-dot" style="background: #94a3b8;"></span> Neutral
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(5, 10, 5)">
+              <span class="teaser-chip-dot" style="background: #ec4899;"></span> Magenta (+Ch2)
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(5, 0, 5)">
+              <span class="teaser-chip-dot" style="background: #10b981;"></span> Green (-Ch2)
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(0, 5, 5)">
+              <span class="teaser-chip-dot" style="background: #eab308;"></span> Yellow (+Ch3)
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(10, 5, 5)">
+              <span class="teaser-chip-dot" style="background: #3b82f6;"></span> Blue (-Ch3)
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(5, 5, 10)">
+              <span class="teaser-chip-dot" style="background: #f8fafc; border: 1px solid #cbd5e1;"></span> High-Key (+Ch1)
+            </button>
+            <button class="teaser-chip" onclick="applyTeaserPreset(5, 5, 0)">
+              <span class="teaser-chip-dot" style="background: #1e293b;"></span> Low-Key (-Ch1)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Scientific Teaser Caption -->
       <p class="teaser-caption">
-        A color space hides in plain sight in the latent space of an autoencoder. Train a VAE with three latent channels on natural images, encode an image (left), add a constant offset &delta; to one channel, and decode: the image changes color while preserving its content. Sweeping two channels (right; ch2 across columns, ch3 across rows) spans an opponent-color plane and all intermediate mixtures, while the remaining channel (bottom row) controls brightness.
+        A color space hides in plain sight in the latent space of an autoencoder. Train a VAE with three latent channels on natural images, encode an image (left), add a constant offset &delta; to one channel, and decode: the image changes color while preserving its content. Sweeping two channels (right; Ch 2 across columns, Ch 3 across rows) spans an opponent-color plane and all intermediate mixtures, while the remaining channel (bottom row) controls brightness.
       </p>
     </div>
   </div>
@@ -2422,6 +2999,278 @@
       }
     }
 
+    /* ==========================================
+       Interactive Teaser Controller
+       ========================================== */
+    let teaserGridImg = new Image();
+    let teaserBrightImg = new Image();
+    let teaserCanvas, teaserCtx;
+    let teaserCol = 5;
+    let teaserRow = 5;
+    let teaserBright = 5;
+    let isOrbiting = true;
+    let orbitAngle = 0;
+    let orbitRadius = 4.4;
+    let orbitSpeed = 0.025;
+    let isVideoMode = false;
+    let isDraggingPad = false;
+    let isBrightnessActive = false;
+    let orbitAnimFrame = null;
+
+    const COLOR_NAMES_MAP = {
+      '5,5': { name: 'Neutral Baseline', hex: '#6b7280' },
+      '5,10': { name: 'Vibrant Magenta (+Ch2)', hex: '#e11d48' },
+      '5,0': { name: 'Deep Emerald (-Ch2)', hex: '#059669' },
+      '0,5': { name: 'Golden Amber (+Ch3)', hex: '#d97706' },
+      '10,5': { name: 'Azure Blue (-Ch3)', hex: '#2563eb' },
+      '0,10': { name: 'Warm Orange', hex: '#ea580c' },
+      '0,0': { name: 'Chartreuse Lime', hex: '#65a30d' },
+      '10,0': { name: 'Cyan Teal', hex: '#0891b2' },
+      '10,10': { name: 'Deep Violet', hex: '#7c3aed' }
+    };
+
+    function initTeaser() {
+      teaserCanvas = document.getElementById('teaser-canvas');
+      if (!teaserCanvas) return;
+      teaserCtx = teaserCanvas.getContext('2d');
+
+      teaserGridImg.src = 'img/teaser_plane_grid.webp';
+      teaserBrightImg.src = 'img/teaser_brightness_strip.webp';
+
+      let loadedCount = 0;
+      function onAssetLoaded() {
+        loadedCount++;
+        if (loadedCount >= 2) {
+          renderTeaserFrame();
+          startTeaserOrbit();
+        }
+      }
+
+      teaserGridImg.onload = onAssetLoaded;
+      teaserBrightImg.onload = onAssetLoaded;
+
+      initTeaserPadEvents();
+    }
+
+    function renderTeaserFrame() {
+      if (!teaserCtx || !teaserGridImg.complete) return;
+      const tileW = 224, tileH = 224;
+
+      if (isBrightnessActive) {
+        teaserCtx.drawImage(
+          teaserBrightImg,
+          teaserBright * tileW, 0, tileW, tileH,
+          0, 0, teaserCanvas.width, teaserCanvas.height
+        );
+      } else {
+        teaserCtx.drawImage(
+          teaserGridImg,
+          teaserCol * tileW, teaserRow * tileH, tileW, tileH,
+          0, 0, teaserCanvas.width, teaserCanvas.height
+        );
+      }
+
+      updateTeaserHUD();
+    }
+
+    function updateTeaserHUD() {
+      const deltaCh2 = ((teaserCol - 5) / 5).toFixed(2);
+      const deltaCh3 = ((5 - teaserRow) / 5).toFixed(2);
+      const deltaCh1 = ((teaserBright - 5) / 5).toFixed(2);
+
+      const ch2El = document.getElementById('hud-ch2');
+      const ch3El = document.getElementById('hud-ch3');
+      const ch1El = document.getElementById('hud-ch1');
+      if (ch2El) ch2El.textContent = (deltaCh2 >= 0 ? '+' : '') + deltaCh2;
+      if (ch3El) ch3El.textContent = (deltaCh3 >= 0 ? '+' : '') + deltaCh3;
+      if (ch1El) ch1El.textContent = (deltaCh1 >= 0 ? '+' : '') + deltaCh1;
+
+      // Color name & swatch
+      const key = `${teaserRow},${teaserCol}`;
+      let colorInfo = COLOR_NAMES_MAP[key];
+      if (!colorInfo) {
+        if (isBrightnessActive) {
+          colorInfo = {
+            name: teaserBright > 5 ? 'High-Key Luminance' : 'Low-Key Luminance',
+            hex: teaserBright > 5 ? '#e2e8f0' : '#334155'
+          };
+        } else {
+          const angle = Math.atan2(5 - teaserRow, teaserCol - 5);
+          const deg = (angle * 180 / Math.PI + 360) % 360;
+          colorInfo = {
+            name: `Opponent Hue (${Math.round(deg)}°)`,
+            hex: `hsl(${Math.round(deg)}, 70%, 50%)`
+          };
+        }
+      }
+
+      const swatchDot = document.getElementById('teaser-swatch-dot');
+      const nameEl = document.getElementById('teaser-color-name');
+      if (swatchDot) swatchDot.style.background = colorInfo.hex;
+      if (nameEl) nameEl.textContent = colorInfo.name;
+
+      // Update puck position on pad
+      const puck = document.getElementById('teaser-puck');
+      if (puck) {
+        const pctX = (teaserCol / 10) * 100;
+        const pctY = (teaserRow / 10) * 100;
+        puck.style.left = pctX + '%';
+        puck.style.top = pctY + '%';
+      }
+    }
+
+    function startTeaserOrbit() {
+      if (!isOrbiting) return;
+      if (orbitAnimFrame) cancelAnimationFrame(orbitAnimFrame);
+
+      function loop() {
+        if (!isOrbiting) return;
+        orbitAngle += orbitSpeed;
+        if (orbitAngle >= Math.PI * 2) orbitAngle -= Math.PI * 2;
+
+        teaserCol = Math.max(0, Math.min(10, Math.round(5 + orbitRadius * Math.cos(orbitAngle))));
+        teaserRow = Math.max(0, Math.min(10, Math.round(5 + orbitRadius * Math.sin(orbitAngle))));
+        isBrightnessActive = false;
+
+        renderTeaserFrame();
+        orbitAnimFrame = requestAnimationFrame(loop);
+      }
+
+      orbitAnimFrame = requestAnimationFrame(loop);
+    }
+
+    function toggleTeaserOrbit() {
+      isOrbiting = !isOrbiting;
+      const btn = document.getElementById('teaser-orbit-btn');
+      const statusText = document.getElementById('teaser-orbit-status');
+      const btnText = document.getElementById('orbit-btn-text');
+
+      if (isOrbiting) {
+        if (btn) btn.classList.add('active');
+        if (btnText) btnText.textContent = 'Pause Orbit';
+        if (statusText) statusText.textContent = 'Auto-Orbit Active';
+        document.getElementById('teaser-live-dot').style.display = 'inline-block';
+        startTeaserOrbit();
+      } else {
+        if (btn) btn.classList.remove('active');
+        if (btnText) btnText.textContent = 'Resume Orbit';
+        if (statusText) statusText.textContent = 'Interactive Control';
+        if (orbitAnimFrame) cancelAnimationFrame(orbitAnimFrame);
+      }
+    }
+
+    function initTeaserPadEvents() {
+      const pad = document.getElementById('teaser-pad-area');
+      if (!pad) return;
+
+      function handlePadEvent(e) {
+        const rect = pad.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        const relX = Math.max(0, Math.min(rect.width, clientX - rect.left));
+        const relY = Math.max(0, Math.min(rect.height, clientY - rect.top));
+
+        teaserCol = Math.max(0, Math.min(10, Math.round((relX / rect.width) * 10)));
+        teaserRow = Math.max(0, Math.min(10, Math.round((relY / rect.height) * 10)));
+        isBrightnessActive = false;
+
+        const brightSlider = document.getElementById('teaser-brightness-slider');
+        if (brightSlider) brightSlider.value = 5;
+        document.getElementById('teaser-brightness-label').textContent = '0.0 (Neutral)';
+
+        if (isOrbiting) {
+          toggleTeaserOrbit();
+        }
+
+        renderTeaserFrame();
+      }
+
+      pad.addEventListener('mousedown', (e) => {
+        isDraggingPad = true;
+        handlePadEvent(e);
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (isDraggingPad) handlePadEvent(e);
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDraggingPad = false;
+      });
+
+      pad.addEventListener('touchstart', (e) => {
+        isDraggingPad = true;
+        handlePadEvent(e);
+      }, { passive: false });
+
+      pad.addEventListener('touchmove', (e) => {
+        if (isDraggingPad) {
+          e.preventDefault();
+          handlePadEvent(e);
+        }
+      }, { passive: false });
+
+      pad.addEventListener('touchend', () => {
+        isDraggingPad = false;
+      });
+    }
+
+    function onTeaserBrightnessChange(val) {
+      teaserBright = parseInt(val, 10);
+      isBrightnessActive = (teaserBright !== 5);
+      const delta = ((teaserBright - 5) / 5).toFixed(1);
+      document.getElementById('teaser-brightness-label').textContent =
+        (delta > 0 ? '+' : '') + delta + (teaserBright === 5 ? ' (Neutral)' : '');
+
+      if (isOrbiting) toggleTeaserOrbit();
+      renderTeaserFrame();
+    }
+
+    function applyTeaserPreset(r, c, b) {
+      teaserRow = r;
+      teaserCol = c;
+      teaserBright = b;
+      isBrightnessActive = (b !== 5);
+
+      const brightSlider = document.getElementById('teaser-brightness-slider');
+      if (brightSlider) brightSlider.value = b;
+      const delta = ((b - 5) / 5).toFixed(1);
+      document.getElementById('teaser-brightness-label').textContent =
+        (delta > 0 ? '+' : '') + delta + (b === 5 ? ' (Neutral)' : '');
+
+      if (isOrbiting) toggleTeaserOrbit();
+      renderTeaserFrame();
+    }
+
+    function resetTeaserToCenter() {
+      applyTeaserPreset(5, 5, 5);
+    }
+
+    function toggleTeaserViewMode() {
+      isVideoMode = !isVideoMode;
+      const canvas = document.getElementById('teaser-canvas');
+      const video = document.getElementById('teaser-video');
+      const btnText = document.getElementById('view-mode-text');
+
+      if (isVideoMode) {
+        canvas.style.display = 'none';
+        video.style.display = 'block';
+        video.currentTime = 0;
+        video.play();
+        if (btnText) btnText.textContent = 'Interactive Mode';
+        if (isOrbiting) toggleTeaserOrbit();
+      } else {
+        video.pause();
+        video.style.display = 'none';
+        canvas.style.display = 'block';
+        if (btnText) btnText.textContent = 'Video Loop';
+        renderTeaserFrame();
+      }
+    }
+
+
+
     // Copy BibTeX
     function copyBibtex() {
       const text = document.getElementById('bibtex-text').textContent;
@@ -2436,6 +3285,7 @@
 
     // On Load
     document.addEventListener('DOMContentLoaded', () => {
+      initTeaser();
       initColorTuning();
       renderTransferSelectorGrid();
       updateTransferDisplay();

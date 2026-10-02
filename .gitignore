@@ -10,6 +10,8 @@
 !assets/**
 !img/**
 !docs/**
+docs/img/teaser_iclr.svg
+docs/img/*.svg
 
 # Documents & paper drafts
 *.pdf
