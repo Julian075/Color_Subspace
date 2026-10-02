@@ -188,17 +188,11 @@
 
     /* Teaser Layout: Visual Pipeline (Left) & Controls (Right) */
     .teaser-interactive-layout {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 36px;
-      align-items: start;
-    }
-
-    @media (max-width: 860px) {
-      .teaser-interactive-layout {
-        grid-template-columns: 1fr;
-        gap: 28px;
-      }
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      flex-wrap: wrap;
     }
 
     /* Left Column: Visual Pipeline */
@@ -206,8 +200,8 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 16px;
-      width: 100%;
+      gap: 12px;
+      width: 240px;
     }
 
     /* Top Row: Two separate stages: Input Image & Latent Encoding */
@@ -215,9 +209,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 16px;
+      gap: 10px;
       width: 100%;
-      max-width: 400px;
+      max-width: 230px;
     }
 
     .teaser-stage-card {
@@ -225,11 +219,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
     }
 
     .teaser-stage-label {
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       font-weight: 700;
       color: var(--slate-700);
       letter-spacing: 0.02em;
@@ -237,62 +231,73 @@
     }
 
     .teaser-img-frame {
-      width: 100%;
-      max-width: 160px;
-      aspect-ratio: 1 / 1;
-      border-radius: var(--radius-md);
-      overflow: hidden;
-      border: 1px solid var(--slate-200);
-      box-shadow: var(--shadow-sm);
-      background: var(--white);
+      width: 96px;
+      height: 96px;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2px;
     }
 
     .teaser-img-frame img {
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
       display: block;
-      border-radius: var(--radius-sm);
+    }
+
+    .teaser-input-img {
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
     }
 
     .teaser-stage-arrow {
       color: var(--slate-400);
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       flex-shrink: 0;
-      margin-top: 18px;
+      margin-top: 16px;
     }
 
-    /* Output Section: Large Decoded Viewport */
+    .teaser-pipeline-arrow {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      color: var(--slate-600);
+      font-family: var(--font-mono);
+      margin: 2px 0 0 0;
+    }
+
+    .teaser-pipeline-arrow i {
+      color: var(--primary);
+      font-size: 0.85rem;
+    }
+
+    /* Output Section: Compact Decoded Viewport (Native 224px sharp display) */
     .teaser-output-section {
       width: 100%;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 10px;
-      margin-top: 4px;
+      gap: 8px;
     }
 
     .teaser-canvas-wrap {
       position: relative;
-      width: 100%;
-      max-width: 380px;
-      aspect-ratio: 1 / 1;
-      border-radius: var(--radius-lg);
+      width: 224px;
+      height: 224px;
+      border-radius: var(--radius-md);
       overflow: hidden;
-      box-shadow: 0 14px 30px -6px rgba(0, 0, 0, 0.18), 0 8px 12px -6px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 10px 22px -4px rgba(0, 0, 0, 0.14), 0 4px 8px -3px rgba(0, 0, 0, 0.06);
       background: #000;
       border: 1px solid var(--slate-200);
     }
 
-    #teaser-canvas, #teaser-video-loop {
-      width: 100%;
-      height: 100%;
+    #teaser-canvas {
+      width: 224px;
+      height: 224px;
       display: block;
-      object-fit: cover;
+      image-rendering: auto;
     }
 
     /* Discrete tiny HUD dot on canvas */
@@ -333,16 +338,16 @@
     /* External Readout Strip BELOW Canvas (Doesn't cover image at all) */
     .teaser-readout-strip {
       width: 100%;
-      max-width: 380px;
+      max-width: 224px;
       background: var(--slate-100);
       border: 1px solid var(--slate-200);
-      padding: 8px 14px;
+      padding: 6px 10px;
       border-radius: var(--radius-md);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      font-size: 0.82rem;
-      gap: 8px;
+      font-size: 0.74rem;
+      gap: 4px;
       flex-wrap: wrap;
     }
 
@@ -366,7 +371,7 @@
 
     .teaser-coords-text {
       font-family: var(--font-mono);
-      font-size: 0.78rem;
+      font-size: 0.74rem;
       color: var(--slate-600);
     }
 
@@ -377,20 +382,20 @@
     /* Action Buttons Row */
     .teaser-actions-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       justify-content: center;
       width: 100%;
-      max-width: 380px;
-      margin-top: 4px;
+      max-width: 224px;
+      margin-top: 2px;
     }
 
     .teaser-ctrl-btn {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 7px 16px;
+      padding: 6px 14px;
       border-radius: 9999px;
-      font-size: 0.84rem;
+      font-size: 0.8rem;
       font-weight: 600;
       background: var(--white);
       color: var(--slate-700);
@@ -429,66 +434,125 @@
       text-align: center;
     }
 
-    /* 2D Pad Area & Minimal Inline Labels */
+    /* 2D Pad Container */
     .teaser-pad-container {
       width: 100%;
-      max-width: 290px;
+      max-width: 320px;
       margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .teaser-axis-label-top,
+    .teaser-axis-label-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      transition: all 0.2s ease;
     }
 
     .teaser-axis-label-top {
-      text-align: center;
-      font-size: 0.78rem;
-      font-weight: 700;
       color: #b45309;
-      margin-bottom: 6px;
     }
 
     .teaser-axis-label-bottom {
-      text-align: center;
-      font-size: 0.78rem;
-      font-weight: 700;
       color: #1d4ed8;
-      margin-top: 6px;
+    }
+
+    .teaser-axis-val-pill {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      background: var(--slate-100);
+      border: 1px solid var(--slate-200);
+      color: var(--slate-500);
+      transition: all 0.15s ease;
+    }
+
+    .teaser-axis-val-pill.active-ch2-pos {
+      background: #fee2e2;
+      color: #b91c1c;
+      border-color: #ef4444;
+      box-shadow: 0 0 6px rgba(239, 68, 68, 0.4);
+    }
+
+    .teaser-axis-val-pill.active-ch2-neg {
+      background: #d1fae5;
+      color: #047857;
+      border-color: #10b981;
+      box-shadow: 0 0 6px rgba(16, 185, 129, 0.4);
+    }
+
+    .teaser-axis-val-pill.active-ch3-pos {
+      background: #fef3c7;
+      color: #b45309;
+      border-color: #f59e0b;
+      box-shadow: 0 0 6px rgba(245, 158, 11, 0.4);
+    }
+
+    .teaser-axis-val-pill.active-ch3-neg {
+      background: #dbeafe;
+      color: #1d4ed8;
+      border-color: #3b82f6;
+      box-shadow: 0 0 6px rgba(59, 130, 246, 0.4);
     }
 
     .teaser-pad-midrow {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 6px;
+      gap: 8px;
+      width: 100%;
     }
 
     .teaser-axis-label-inline {
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       font-weight: 700;
-      width: 80px;
+      width: 62px;
       text-align: center;
       user-select: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
     }
 
+    /* CIE 1931 xy Chromaticity Pad */
     .teaser-pad-area {
-      width: 190px;
-      height: 190px;
+      width: 196px;
+      height: 196px;
       border-radius: var(--radius-md);
       position: relative;
       cursor: crosshair;
       user-select: none;
       touch-action: none;
       border: 2px solid var(--slate-300);
-      box-shadow: inset 0 2px 4px rgba(0,0,0,0.08);
-      background: radial-gradient(circle at 50% 50%, #ffffff 0%, rgba(255,255,255,0.7) 35%, transparent 80%),
-                  conic-gradient(from 0deg at 50% 50%, #e11d48, #d97706, #10b981, #06b6d4, #3b82f6, #8b5cf6, #e11d48);
+      box-shadow: inset 0 2px 6px rgba(0,0,0,0.12), 0 4px 10px rgba(0,0,0,0.06);
+      background-color: #ffffff;
+      background-image: url('img/cie.svg');
+      background-size: 132% 132%;
+      background-position: 25% 68%;
+      background-repeat: no-repeat;
+      overflow: hidden;
     }
 
+    /* Neutral Center Baseline Axes */
     .teaser-pad-axis-h {
       position: absolute;
       top: 50%;
       left: 0;
       right: 0;
       height: 1px;
-      background: rgba(15, 23, 42, 0.2);
+      background: rgba(15, 23, 42, 0.35);
       pointer-events: none;
+      z-index: 2;
     }
 
     .teaser-pad-axis-v {
@@ -497,10 +561,69 @@
       top: 0;
       bottom: 0;
       width: 1px;
-      background: rgba(15, 23, 42, 0.2);
+      background: rgba(15, 23, 42, 0.35);
       pointer-events: none;
+      z-index: 2;
     }
 
+    /* Dynamic Opponent Channel Active Indicator Bars */
+    .teaser-pad-bar-h {
+      position: absolute;
+      top: 50%;
+      height: 3px;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 3;
+      border-radius: 2px;
+    }
+
+    .teaser-pad-bar-v {
+      position: absolute;
+      left: 50%;
+      width: 3px;
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: 3;
+      border-radius: 2px;
+    }
+
+    /* Dynamic Crosshair Projection Lines */
+    .teaser-proj-line-h {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      border-top: 1px dashed rgba(15, 23, 42, 0.35);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .teaser-proj-line-v {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 1px;
+      border-left: 1px dashed rgba(15, 23, 42, 0.35);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    /* Neutral Origin Marker (0,0) */
+    .teaser-pad-origin {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #0f172a;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+      z-index: 4;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.9);
+    }
+
+    /* Draggable Puck */
     .teaser-pad-puck {
       position: absolute;
       width: 20px;
@@ -508,10 +631,11 @@
       border-radius: 50%;
       background: var(--white);
       border: 3px solid var(--slate-900);
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.45);
       transform: translate(-50%, -50%);
       pointer-events: none;
-      transition: box-shadow 0.15s ease;
+      z-index: 5;
+      transition: box-shadow 0.15s ease, border-color 0.15s ease;
     }
 
     .teaser-pad-area:active .teaser-pad-puck {
@@ -1306,7 +1430,7 @@
             <div class="teaser-stage-card">
               <div class="teaser-stage-label">Input Image <strong>x</strong></div>
               <div class="teaser-img-frame">
-                <img src="img/teaser_input.webp" alt="Input Image x">
+                <img src="img/teaser_input.webp" alt="Input Image x" class="teaser-input-img">
               </div>
             </div>
 
@@ -1315,19 +1439,24 @@
             </div>
 
             <div class="teaser-stage-card">
-              <div class="teaser-stage-label">Latent Encoding <strong>E(x)</strong></div>
+              <div class="teaser-stage-label">Latent Encoder <strong>Enc.</strong></div>
               <div class="teaser-img-frame">
-                <img src="img/teaser_enc.webp" alt="Latent Encoding E(x)">
+                <img src="img/teaser_enc.webp" alt="Latent Encoder Enc.">
               </div>
             </div>
           </div>
 
-          <!-- Bottom: Large Decoded Viewport -->
+          <!-- Connecting Arrow to Decoded Output -->
+          <div class="teaser-pipeline-arrow">
+            <i class="fa-solid fa-arrow-down"></i>
+            <span>+ &delta; Shift</span>
+          </div>
+
+          <!-- Bottom: Decoded Viewport -->
           <div class="teaser-output-section">
             <div class="teaser-stage-label">Decoded Output <strong>D(z + &delta;)</strong></div>
             <div class="teaser-canvas-wrap">
               <canvas id="teaser-canvas" width="224" height="224"></canvas>
-              <img id="teaser-video-loop" src="img/teaser_orbit.webp" alt="Color orbit loop" style="display: none;">
               
               <div class="teaser-mini-hud">
                 <span class="live-dot" id="teaser-live-dot"></span>
@@ -1356,9 +1485,6 @@
               <button class="teaser-ctrl-btn" onclick="resetTeaserToCenter()">
                 <i class="fa-solid fa-rotate-left"></i> Neutral
               </button>
-              <button id="teaser-view-mode-btn" class="teaser-ctrl-btn" onclick="toggleTeaserViewMode()">
-                <i class="fa-solid fa-video"></i> <span id="view-mode-text">Video Loop</span>
-              </button>
             </div>
           </div>
         </div>
@@ -1369,19 +1495,38 @@
             <h3>Opponent-Color Space</h3>
           </div>
 
-          <!-- 2D Joypad -->
+          <!-- 2D Joypad with CIE 1931 xy Chromaticity Diagram -->
           <div class="teaser-pad-container">
-            <div class="teaser-axis-label-top">+ Ch 3 (Yellow)</div>
+            <div class="teaser-axis-label-top" id="axis-label-top">
+              <span>+ Ch 3 (Yellow)</span>
+              <span class="teaser-axis-val-pill" id="axis-val-ch3-pos">+0.00</span>
+            </div>
             <div class="teaser-pad-midrow">
-              <div class="teaser-axis-label-inline" style="color: #059669;">- Ch 2<br>(Green)</div>
+              <div class="teaser-axis-label-inline" id="axis-label-left" style="color: #059669;">
+                <div>- Ch 2</div>
+                <div style="font-size: 0.72rem; opacity: 0.85;">(Green)</div>
+                <div class="teaser-axis-val-pill" id="axis-val-ch2-neg">-0.00</div>
+              </div>
               <div class="teaser-pad-area" id="teaser-pad-area">
                 <div class="teaser-pad-axis-h"></div>
                 <div class="teaser-pad-axis-v"></div>
+                <div class="teaser-pad-bar-h" id="teaser-bar-h"></div>
+                <div class="teaser-pad-bar-v" id="teaser-bar-v"></div>
+                <div class="teaser-proj-line-h" id="teaser-proj-h"></div>
+                <div class="teaser-proj-line-v" id="teaser-proj-v"></div>
+                <div class="teaser-pad-origin" title="Neutral Baseline (0,0)"></div>
                 <div class="teaser-pad-puck" id="teaser-puck" style="left: 50%; top: 50%;"></div>
               </div>
-              <div class="teaser-axis-label-inline" style="color: #dc2626;">+ Ch 2<br>(Red)</div>
+              <div class="teaser-axis-label-inline" id="axis-label-right" style="color: #dc2626;">
+                <div>+ Ch 2</div>
+                <div style="font-size: 0.72rem; opacity: 0.85;">(Red)</div>
+                <div class="teaser-axis-val-pill" id="axis-val-ch2-pos">+0.00</div>
+              </div>
             </div>
-            <div class="teaser-axis-label-bottom">- Ch 3 (Blue)</div>
+            <div class="teaser-axis-label-bottom" id="axis-label-bottom">
+              <span>- Ch 3 (Blue)</span>
+              <span class="teaser-axis-val-pill" id="axis-val-ch3-neg">-0.00</span>
+            </div>
           </div>
 
           <!-- Lightness / Brightness Slider (Ch 1) -->
@@ -2976,7 +3121,6 @@
     let orbitAngle = 0;
     let orbitRadius = 4.4;
     let orbitSpeed = 0.025;
-    let isVideoMode = false;
     let isDraggingPad = false;
     let isBrightnessActive = false;
     let orbitAnimFrame = null;
@@ -3075,11 +3219,78 @@
 
       // Update puck position on pad
       const puck = document.getElementById('teaser-puck');
+      const pctX = (teaserCol / 10) * 100;
+      const pctY = (teaserRow / 10) * 100;
       if (puck) {
-        const pctX = (teaserCol / 10) * 100;
-        const pctY = (teaserRow / 10) * 100;
         puck.style.left = pctX + '%';
         puck.style.top = pctY + '%';
+        puck.style.borderColor = colorInfo.hex;
+        puck.style.boxShadow = `0 0 10px ${colorInfo.hex}, inset 0 0 4px ${colorInfo.hex}`;
+      }
+
+      // Dynamic Opponent Channel Active Indicator Bars
+      const barH = document.getElementById('teaser-bar-h');
+      if (barH) {
+        if (teaserCol >= 5) {
+          barH.style.left = '50%';
+          barH.style.width = (pctX - 50) + '%';
+          barH.style.background = '#dc2626';
+          barH.style.boxShadow = '0 0 8px #dc2626';
+        } else {
+          barH.style.left = pctX + '%';
+          barH.style.width = (50 - pctX) + '%';
+          barH.style.background = '#059669';
+          barH.style.boxShadow = '0 0 8px #059669';
+        }
+      }
+
+      const barV = document.getElementById('teaser-bar-v');
+      if (barV) {
+        if (teaserRow <= 5) {
+          // Yellow direction (top)
+          barV.style.top = pctY + '%';
+          barV.style.height = (50 - pctY) + '%';
+          barV.style.background = '#d97706';
+          barV.style.boxShadow = '0 0 8px #d97706';
+        } else {
+          // Blue direction (bottom)
+          barV.style.top = '50%';
+          barV.style.height = (pctY - 50) + '%';
+          barV.style.background = '#2563eb';
+          barV.style.boxShadow = '0 0 8px #2563eb';
+        }
+      }
+
+      // Dynamic Crosshairs Projection Lines
+      const projH = document.getElementById('teaser-proj-h');
+      if (projH) projH.style.top = pctY + '%';
+      const projV = document.getElementById('teaser-proj-v');
+      if (projV) projV.style.left = pctX + '%';
+
+      // Axis value pills & active highlight states
+      const pillCh2Pos = document.getElementById('axis-val-ch2-pos');
+      const pillCh2Neg = document.getElementById('axis-val-ch2-neg');
+      const pillCh3Pos = document.getElementById('axis-val-ch3-pos');
+      const pillCh3Neg = document.getElementById('axis-val-ch3-neg');
+
+      const dCh2 = parseFloat(deltaCh2);
+      const dCh3 = parseFloat(deltaCh3);
+
+      if (pillCh2Pos) {
+        pillCh2Pos.textContent = dCh2 > 0 ? '+' + deltaCh2 : '+0.00';
+        pillCh2Pos.classList.toggle('active-ch2-pos', dCh2 > 0.05);
+      }
+      if (pillCh2Neg) {
+        pillCh2Neg.textContent = dCh2 < 0 ? deltaCh2 : '-0.00';
+        pillCh2Neg.classList.toggle('active-ch2-neg', dCh2 < -0.05);
+      }
+      if (pillCh3Pos) {
+        pillCh3Pos.textContent = dCh3 > 0 ? '+' + deltaCh3 : '+0.00';
+        pillCh3Pos.classList.toggle('active-ch3-pos', dCh3 > 0.05);
+      }
+      if (pillCh3Neg) {
+        pillCh3Neg.textContent = dCh3 < 0 ? deltaCh3 : '-0.00';
+        pillCh3Neg.classList.toggle('active-ch3-neg', dCh3 < -0.05);
       }
     }
 
@@ -3103,14 +3314,7 @@
       orbitAnimFrame = requestAnimationFrame(loop);
     }
 
-    function exitVideoModeIfNeeded() {
-      if (isVideoMode) {
-        toggleTeaserViewMode();
-      }
-    }
-
     function toggleTeaserOrbit() {
-      exitVideoModeIfNeeded();
       isOrbiting = !isOrbiting;
       const btn = document.getElementById('teaser-orbit-btn');
       const statusText = document.getElementById('teaser-orbit-status');
@@ -3125,7 +3329,7 @@
         startTeaserOrbit();
       } else {
         if (btn) btn.classList.remove('active');
-        if (btnText) btnText.textContent = 'Resume Orbit';
+        if (btnText) btnText.textContent = 'Auto-Orbit';
         if (statusText) statusText.textContent = 'Interactive';
         if (liveDot) liveDot.style.display = 'none';
         if (orbitAnimFrame) cancelAnimationFrame(orbitAnimFrame);
@@ -3137,7 +3341,6 @@
       if (!pad) return;
 
       function handlePadEvent(e) {
-        exitVideoModeIfNeeded();
         const rect = pad.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -3191,7 +3394,6 @@
     }
 
     function onTeaserBrightnessChange(val) {
-      exitVideoModeIfNeeded();
       teaserBright = parseInt(val, 10);
       isBrightnessActive = (teaserBright !== 5);
       const delta = ((teaserBright - 5) / 5).toFixed(1);
@@ -3203,7 +3405,6 @@
     }
 
     function applyTeaserPreset(r, c, b) {
-      exitVideoModeIfNeeded();
       teaserRow = r;
       teaserCol = c;
       teaserBright = b;
@@ -3221,41 +3422,6 @@
 
     function resetTeaserToCenter() {
       applyTeaserPreset(5, 5, 5);
-    }
-
-    function toggleTeaserViewMode() {
-      isVideoMode = !isVideoMode;
-      const canvas = document.getElementById('teaser-canvas');
-      const videoLoop = document.getElementById('teaser-video-loop');
-      const btnText = document.getElementById('view-mode-text');
-      const btn = document.getElementById('teaser-view-mode-btn');
-      const statusText = document.getElementById('teaser-orbit-status');
-      const liveDot = document.getElementById('teaser-live-dot');
-
-      if (isVideoMode) {
-        if (canvas) canvas.style.display = 'none';
-        if (videoLoop) videoLoop.style.display = 'block';
-        if (btnText) btnText.textContent = 'Interactive Mode';
-        if (btn) btn.classList.add('active');
-        if (statusText) statusText.textContent = 'Video Loop';
-        if (liveDot) liveDot.style.display = 'inline-block';
-        if (isOrbiting) {
-          isOrbiting = false;
-          const orbitBtn = document.getElementById('teaser-orbit-btn');
-          const orbitBtnText = document.getElementById('orbit-btn-text');
-          if (orbitBtn) orbitBtn.classList.remove('active');
-          if (orbitBtnText) orbitBtnText.textContent = 'Resume Orbit';
-          if (orbitAnimFrame) cancelAnimationFrame(orbitAnimFrame);
-        }
-      } else {
-        if (videoLoop) videoLoop.style.display = 'none';
-        if (canvas) canvas.style.display = 'block';
-        if (btnText) btnText.textContent = 'Video Loop';
-        if (btn) btn.classList.remove('active');
-        if (statusText) statusText.textContent = 'Interactive';
-        if (liveDot) liveDot.style.display = 'none';
-        renderTeaserFrame();
-      }
     }
 
 
