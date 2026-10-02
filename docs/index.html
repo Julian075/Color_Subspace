@@ -430,25 +430,17 @@
 
     .teaser-controls-header {
       text-align: center;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2px;
     }
 
     .teaser-controls-header h3 {
-      font-size: 1.05rem;
+      font-size: 1.0rem;
       font-weight: 700;
-      color: var(--slate-800);
+      color: var(--slate-700);
       margin: 0;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
     }
 
-    .teaser-controls-subtitle {
-      font-size: 0.74rem;
-      font-weight: 500;
-      color: var(--slate-500);
-      letter-spacing: 0.02em;
-    }
 
     /* 2D Pad Container */
     .teaser-pad-container {
@@ -545,7 +537,7 @@
       gap: 3px;
     }
 
-    /* CIE 1931 xy Chromaticity Pad */
+    /* CIE 1931 xy Chromaticity opponent-color pad — D65 at center */
     .teaser-pad-area {
       width: 220px;
       height: 220px;
@@ -1469,20 +1461,18 @@
         <!-- Controls Column (Right) -->
         <div class="teaser-controls-card">
           <div class="teaser-controls-header">
-            <h3>Opponent-Color Space</h3>
-            <span class="teaser-controls-subtitle">CIE 1931 xy Chromaticity Plane</span>
+            <h3>Color Space</h3>
           </div>
 
           <!-- 2D Joypad with CIE 1931 xy Chromaticity Diagram -->
           <div class="teaser-pad-container">
             <div class="teaser-axis-label-top" id="axis-label-top">
-              <span>+ Ch 3 (Yellow)</span>
+              <span>+ Ch 3</span>
               <span class="teaser-axis-val-pill" id="axis-val-ch3-pos">+0.00</span>
             </div>
             <div class="teaser-pad-midrow">
               <div class="teaser-axis-label-inline" id="axis-label-left" style="color: #059669;">
-                <div>- Ch 2</div>
-                <div style="font-size: 0.72rem; opacity: 0.85;">(Green)</div>
+                <div style="font-size: 0.8rem;">- Ch 2</div>
                 <div class="teaser-axis-val-pill" id="axis-val-ch2-neg">-0.00</div>
               </div>
               <div class="teaser-pad-area" id="teaser-pad-area">
@@ -1496,13 +1486,12 @@
                 <div class="teaser-pad-puck" id="teaser-puck" style="left: 50%; top: 50%;"></div>
               </div>
               <div class="teaser-axis-label-inline" id="axis-label-right" style="color: #dc2626;">
-                <div>+ Ch 2</div>
-                <div style="font-size: 0.72rem; opacity: 0.85;">(Red)</div>
+                <div style="font-size: 0.8rem;">+ Ch 2</div>
                 <div class="teaser-axis-val-pill" id="axis-val-ch2-pos">+0.00</div>
               </div>
             </div>
             <div class="teaser-axis-label-bottom" id="axis-label-bottom">
-              <span>- Ch 3 (Blue)</span>
+              <span>- Ch 3</span>
               <span class="teaser-axis-val-pill" id="axis-val-ch3-neg">-0.00</span>
             </div>
           </div>
@@ -3077,8 +3066,8 @@
     let teaserBright = 5;
     let isOrbiting = true;
     let orbitAngle = 0;
-    let orbitRadius = 4.4;
-    let orbitSpeed = 0.025;
+    let orbitRadius = 4;
+    let orbitSpeed = 0.022;
     let isDraggingPad = false;
     let isBrightnessActive = false;
     let orbitAnimFrame = null;
