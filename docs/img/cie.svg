@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
   "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
-<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-120 -120 760 760" xmlns="http://www.w3.org/2000/svg" version="1.1">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-67.5 66.8 490.0 490.0" xmlns="http://www.w3.org/2000/svg" version="1.1">
  <metadata>
   <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
    <cc:Work>
@@ -19,7 +19,7 @@
  <defs>
   <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
  </defs>
- <g id="figure_1" transform="translate(14.95,-143.00) rotate(-31.8,245.05,403.0)">
+ <g id="figure_1">
   <g id="patch_1">
    <path d="M 0 509.56 
 L 509.56 509.56 
@@ -2475,4 +2475,33 @@ z
 "/>
   </clipPath>
  </defs>
+
+  <!-- Opponent-Color Axes matching paper's latent alignment -->
+  <g id="opponent_axes" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">
+    <!-- Ch 2: Red - Green Axis -->
+    <line x1="117.86" y1="263.30" x2="260.01" y2="378.95"
+          stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" />
+    <!-- Red arrowhead -->
+    <polygon points="268.54,385.89 257.17,382.44 262.85,375.46" fill="#dc2626" />
+    <!-- Green arrowhead -->
+    <polygon points="109.33,256.36 115.02,266.79 120.70,259.81" fill="#059669" />
+
+    <!-- Ch 3: Yellow - Blue Axis -->
+    <line x1="96.95" y1="432.27" x2="203.77" y2="272.61"
+          stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" />
+    <!-- Yellow arrowhead -->
+    <polygon points="209.89,263.47 207.51,275.11 200.03,270.11" fill="#d97706" />
+    <!-- Blue arrowhead -->
+    <polygon points="90.83,441.41 100.69,434.77 93.21,429.77" fill="#2563eb" />
+
+    <!-- White Point D65 Center -->
+    <circle cx="177.52" cy="311.84" r="4" fill="#ffffff" stroke="#0f172a" stroke-width="2" />
+
+    <!-- Labels with white halo for legibility over the colorful diagram -->
+    <text x="274.54" y="401.89" font-size="15" font-weight="800" fill="#dc2626" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">+Ch 2</text>
+    <text x="63.33" y="252.36" font-size="15" font-weight="800" fill="#059669" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">-Ch 2</text>
+    <text x="215.89" y="259.47" font-size="15" font-weight="800" fill="#d97706" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">+Ch 3</text>
+    <text x="44.83" y="459.41" font-size="15" font-weight="800" fill="#2563eb" stroke="#ffffff" stroke-width="3" paint-order="stroke fill">-Ch 3</text>
+  </g>
+
 </svg>
