@@ -16,7 +16,7 @@
 <br>
 
 [![Project Page](https://img.shields.io/badge/Project-Page-green)](https://julian075.github.io/Color_Subspace/)
-[![arXiv](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/placeholder)
+[![arXiv](https://img.shields.io/badge/Paper-arXiv-red)](https://arxiv.org/abs/2610.07072)
 
 <br>
 
@@ -175,10 +175,10 @@ Color_Subspace/
 If you find this work or codebase helpful in your research, please cite:
 
 ```bibtex
-@article{santamaria2025coloralignment,
+@article{santamaria2026coloralignment,
   title={On Color Alignment in VAE Latent Spaces and Its Applications},
   author={Santamaria, Julian D. and Wang, Kai and Malo, Jes{\'u}s and Vazquez-Corral, Javier and Gomez-Villa, Alexandra},
-  journal={arXiv preprint arXiv:XXXX.XXXXX},
-  year={2025}
+  journal={arXiv preprint arXiv:2610.07072},
+  year={2026}
 }
 ```
