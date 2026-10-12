@@ -5,7 +5,7 @@
 [Julian D. Santamaria](https://julian075.github.io/)<sup>†1,2</sup> &nbsp;·&nbsp; [Kai Wang](https://wangkai930418.github.io/)<sup>3,4</sup> &nbsp;·&nbsp; [Jesús Malo](https://scholar.google.com/citations?user=0pgrklEAAAAJ&hl=en)<sup>5</sup> &nbsp;·&nbsp; [Javier Vazquez-Corral](https://jvazquezcorral.github.io/)<sup>1,2</sup> &nbsp;·&nbsp; [Alexandra Gomez-Villa](https://sites.google.com/view/alex-gomez-villa)<sup>1,2</sup>
 
 <small>
-<sup>1</sup> Computer Vision Center (CVC), Barcelona, Spain &nbsp;|&nbsp;
+<sup>1</sup> Computer Vision Center  (CVC), Barcelona, Spain &nbsp;|&nbsp;
 <sup>2</sup> Universitat Autònoma de Barcelona, Barcelona, Spain<br>
 <sup>3</sup> City University of Hong Kong (Dongguan), China &nbsp;|&nbsp;
 <sup>4</sup> City University of Hong Kong, China<br>
