@@ -28,7 +28,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
-
+import re
 # Ensure parent directory is in sys.path
 _PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if _PARENT_DIR not in sys.path:
@@ -285,11 +285,11 @@ def process_csv(csv_path: Path, output_dir: Path, pipe, vae, mlp_shift, seg_mode
         # Color-conditioned semantic prompt for FLUX
         color_name_selected, dist_to_name = utils.nearest_color_name(target_lab)
         
+        
         # If the benchmark prompt contains hex/rgb codes, build an enhanced semantic prompt
-        if "#" in raw_prompt or "rgb(" in raw_prompt:
-            prompt_text = f"a photo of a {color_name_selected} {obj_word}, studio lighting, high quality, 8k"
-        else:
-            prompt_text = raw_prompt
+        # Keep the benchmark prompt verbatim; only replace the numeric colour code (#hex / rgb(...)) by the proxy name
+        prompt_text = re.sub(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgb\s*\([^)]*\)", lambda _m: color_name_selected, raw_prompt, flags=re.IGNORECASE)
+
 
         print(f"  [{device}] [{idx+1}/{len(df)}] Prompt {prompt_id}: {obj_word} -> {target_color_raw} ('{color_name_selected}')")
 

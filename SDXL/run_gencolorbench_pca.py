@@ -29,7 +29,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from PIL import Image
-
+import re
 # Local imports
 from sdxl_core import (
     build_envelope_bands, envelope_weight,
@@ -373,10 +373,11 @@ def run_benchmark_task(csv_path: str, out_dir: str, ckpt_path: str,
         color_name_selected, _ = find_nearest_iscc_l2(target_lab)
         color_name_clean = color_name_selected.replace("_", " ")
 
-        if "#" in raw_prompt or "rgb(" in raw_prompt or "hex" in raw_prompt.lower():
-            prompt_text = f"a photo of a {color_name_clean} {obj_word}, studio lighting, high quality, 8k"
-        else:
-            prompt_text = raw_prompt
+        
+        # If the benchmark prompt contains hex/rgb codes, build an enhanced semantic prompt
+        # Keep the benchmark prompt verbatim; only replace the numeric colour code (#hex / rgb(...)) by the proxy name
+        prompt_text = re.sub(r"#[0-9a-fA-F]{6}\b|#[0-9a-fA-F]{3}\b|rgb\s*\([^)]*\)", lambda _m: color_name_selected, raw_prompt, flags=re.IGNORECASE)
+
 
         for seed_idx, s in enumerate(seeds, start=1):
             try:
