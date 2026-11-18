@@ -256,62 +256,59 @@ def resolve_local_model_path(model_id):
     return model_id
 
 
-def setup_flux(model_id=None, device="cuda", dtype=torch.bfloat16, num_latent_channels=32):
+def setup_flux(model_id=None, device="cuda", dtype=torch.bfloat16, num_latent_channels=32, placement="offload"):
     """
-    Loads FLUX.2 pipeline components in bfloat16 directly from local cache or repo ID.
+    Loads the FLUX.2 pipeline in bfloat16 from the local cache or the repo ID.
+    placement:
+      "offload"    (default, as in the paper runs) model CPU offload: each component (text encoder, 32B transformer,
+                   VAE) is moved whole to `device` when it runs; the transformer (~61 GB) fits on one 64/80 GB GPU.
+      "balanced"   needs 3+ GPUs: the transformer is split evenly over all visible GPUs except `device`; the text
+                   encoder and VAE stay on `device`. No CPU transfers, fastest.
+      "sequential" layer-by-layer CPU offload: fits in little GPU memory but is ~10x slower (about 1 min per step).
     """
     if model_id is None:
         model_id = DEFAULT_MODEL_ID
+    if placement not in ("offload", "balanced", "sequential"):
+        raise ValueError(f"placement must be offload, balanced or sequential (got {placement!r})")
 
     resolved_path = resolve_local_model_path(model_id)
-    print(f"Loading Pipeline from: {resolved_path} on {device} [{dtype}]...")
+    print(f"Loading Pipeline from: {resolved_path} [{dtype}], placement={placement}...")
 
-    pipe = None
     from diffusers import Flux2Pipeline
-
-    # 1. Try local snapshot path first if it exists
+    kw = {"torch_dtype": dtype}
+    dev = torch.device(device)
+    if placement == "balanced":
+        # A pipeline-level device_map places each component whole (the 61 GB transformer would fill one GPU),
+        # so the transformer is loaded on its own and split over the other GPUs; its accelerate hooks return
+        # the outputs to `device`.
+        from diffusers import Flux2Transformer2DModel
+        main = dev.index or 0
+        others = [i for i in range(torch.cuda.device_count()) if i != main]
+        if len(others) < 2:
+            raise ValueError("placement='balanced' needs at least 3 visible GPUs (use 'offload' on fewer)")
+        max_memory = {i: f"{int(torch.cuda.get_device_properties(i).total_memory / 2**30 * 0.85)}GiB" for i in others}
+        tr_kw = dict(subfolder="transformer", torch_dtype=dtype, device_map="balanced", max_memory=max_memory)
+        try:
+            kw["transformer"] = Flux2Transformer2DModel.from_pretrained(resolved_path, local_files_only=True, **tr_kw)
+        except Exception as e_local:
+            print(f"Notice: local transformer load failed ({e_local}); trying {model_id}")
+            kw["transformer"] = Flux2Transformer2DModel.from_pretrained(model_id, **tr_kw)
+    pipe = None
     if os.path.exists(resolved_path):
         try:
-            pipe = Flux2Pipeline.from_pretrained(resolved_path, torch_dtype=dtype, local_files_only=True)
+            pipe = Flux2Pipeline.from_pretrained(resolved_path, local_files_only=True, **kw)
         except Exception as e_local:
             print(f"Notice: Loading Flux2Pipeline with local_files_only from {resolved_path} failed: {e_local}")
-
-    # 2. Fall back to loading via model_id / hub (uses HF cache or downloads missing shards)
     if pipe is None:
-        try:
-            pipe = Flux2Pipeline.from_pretrained(model_id, torch_dtype=dtype)
-        except Exception as e_hub:
-            print(f"Flux2Pipeline.from_pretrained({model_id}) failed: {e_hub}. Trying AutoPipelineForText2Image...")
-            from diffusers import AutoPipelineForText2Image
-            pipe = AutoPipelineForText2Image.from_pretrained(
-                resolved_path if os.path.exists(resolved_path) else model_id,
-                torch_dtype=dtype
-            )
+        pipe = Flux2Pipeline.from_pretrained(model_id, **kw)
 
-    # Offload configuration
-    device_obj = torch.device(device)
-    if device_obj.type == "cuda" and torch.cuda.is_available():
-        dev_idx = device_obj.index if device_obj.index is not None else torch.cuda.current_device()
-        try:
-            free_bytes, total_bytes = torch.cuda.mem_get_info(dev_idx)
-        except Exception:
-            free_bytes = 0
-
-        # FLUX.2 transformer alone is ~61GB in bfloat16. If free VRAM < 65GB, model_cpu_offload will OOM.
-        if free_bytes < 65 * (1024**3):
-            free_gb = free_bytes / (1024**3)
-            print(f"Notice: Free VRAM on cuda:{dev_idx} is {free_gb:.1f} GB (< 65 GB required for full-model residency).")
-            print("Enabling sequential CPU offload (layer-by-layer offload to prevent CUDA OOM)...")
-            pipe.enable_sequential_cpu_offload(device=device)
-        else:
-            try:
-                pipe.enable_model_cpu_offload(device=device)
-                print("Enabled full-speed model CPU offload (32B transformer in VRAM during denoising).")
-            except Exception as e_offload:
-                print(f"Model CPU offload notice: {e_offload}. Enabling sequential CPU offload...")
-                pipe.enable_sequential_cpu_offload(device=device)
-    else:
-        pipe = pipe.to(device)
+    if placement == "balanced":
+        pipe.text_encoder.to(dev)
+        pipe.vae.to(dev)
+    elif placement == "offload":
+        pipe.enable_model_cpu_offload(device=device)
+    elif placement == "sequential":
+        pipe.enable_sequential_cpu_offload(device=device)
 
     vae = pipe.vae
     return pipe, vae

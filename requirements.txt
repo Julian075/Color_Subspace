@@ -1,19 +1,21 @@
-# Core Deep Learning & Diffusion
-torch>=2.4.0
-torchvision>=0.19.0
-diffusers>=0.30.0
-transformers>=4.49.0
-accelerate>=0.34.0
-safetensors>=0.4.5
-huggingface-hub>=0.25.0
+# Tested with Python 3.10, torch 2.5.1+cu121, torchvision 0.20.1+cu121 (install PyTorch first, see README).
+
+# Diffusion & models (SAM3 segmentation needs transformers >= 5)
+diffusers==0.39.0
+transformers==5.15.0
+accelerate==1.1.0
+safetensors==0.8.0
+huggingface_hub==1.26.0
+sentencepiece==0.2.1
+protobuf==7.36.0
 
 # Scientific computing, colorimetry & image processing
-numpy>=1.24.0
-scipy>=1.10.0
-scikit-learn>=1.3.0
-scikit-image>=0.21.0
-pillow>=10.0.0
+numpy==2.2.6
+scipy==1.15.3
+scikit-image==0.25.2
+pillow==12.3.0
+pandas==2.3.3
+matplotlib==3.10.9
 
-# Text processing & tokenizers
-sentencepiece>=0.1.99
-protobuf>=3.20.0
+# k-means palettes (color_transfer/) and MLP search (SD3/train_and_search_mlp_pca.py)
+scikit-learn

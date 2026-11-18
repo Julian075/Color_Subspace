@@ -44,19 +44,31 @@ This work shows that across diverse modern text-to-image architectures (from SD1
 
 ## 🛠️ Environment Setup
 
-Create and activate a conda environment named `colortuning` with Python 3.10 and PyTorch 2.4+ (CUDA 12.4+ / 12.8):
+Linux with an NVIDIA GPU (tested on A100 64 GB), conda. Tested with
+Python 3.10, PyTorch 2.5.1 (CUDA 12.1) and the package versions pinned in `requirements.txt`.
 
 ```bash
-# 1. Create and activate conda environment
+# 1. Create and activate the conda environment
 conda create -n colortuning python=3.10 -y
 conda activate colortuning
 
-# 2. Install PyTorch with CUDA support (CUDA 12.4+ / 12.8)
-pip install torch torchvision --index-url https://download.pytorch.org/whl/cu124
+# 2. PyTorch with CUDA (pick the index URL of your CUDA version)
+pip install torch==2.5.1 torchvision==0.20.1 --index-url https://download.pytorch.org/whl/cu121
 
-# 3. Install required dependencies
+# 3. Remaining packages (SAM3 needs transformers >= 5)
 pip install -r requirements.txt
+
+# 4. Hugging Face access: the weights are downloaded on first use. SAM3 (facebook/sam3), FLUX.1-dev, FLUX.2-dev and
+#    SD3 / SD3.5 Medium are gated: accept their licence on the Hugging Face model page, then log in once.
+hf auth login          # or: huggingface-cli login
+# optional: export HF_HOME=/path/with/space   (where the weights are stored)
+
+# 5. Test (FLUX.1-dev, one colour)
+python Flux/inference.py --prompt "a photo of a ceramic mug on a table" --target-color "#7B3F00" --object mug
 ```
+
+`inference.py` of every model (`Flux/`, `Flux2/`, `SD3/`, `sd3.5_m/`, `SDXL/`, `z-image/`) loads that model's PCA axes,
+schedule and MLP checkpoint from its own folder; no further configuration is needed.
 
 ---
 
@@ -101,6 +113,41 @@ python SDXL/inference.py \
     --object "car" \
     --device "cuda:0"
 ```
+
+The prompt is used as written; only its numeric colour codes (`#hex`, `rgb(...)`, `lab(...)`) are replaced by their
+nearest ISCC-NBS Level 2 name, exactly as in the GenColorBench evaluation (`run_gencolorbench_pca.py`). The target colour
+is `--target-color`, or the colour code written in the prompt:
+
+```bash
+python SD3/inference.py --prompt "A close-up of a boxing glove in the color #DC143C." --object "boxing glove"
+```
+
+**Several colours on one object.** Name the parts with `--part part=color` (repeatable). At the gate step SAM3
+segments the object and every part; each part gets its own measured colour and its own MLP displacement inside its mask,
+and the rest of the object is steered to `--target-color` (default: the first colour code of the prompt that is not a
+part colour; without one, only the parts are steered). The same option exists in all six models:
+
+```bash
+python Flux/inference.py \
+    --prompt "a photo of a wooden chair with a #B22222 seat and #1E90FF legs, white background" \
+    --object chair --target-color "#B22222" --part legs=#1E90FF
+
+python z-image/inference.py \
+    --prompt "a photo of a ceramic teapot with a #F0E68C lid on a table" \
+    --object teapot --target-color "#2E8B57" --part lid=#F0E68C
+```
+
+Other options: `--seed`, `--steps`, `--guidance`, `--resolution`, `--out-dir` (default `./inference_outputs`),
+`--metrics` (ΔE00, ΔE76, ΔC*, Δh° per object or part). FLUX.1 and FLUX.2 also accept lists (`--prompts`, `--colors`,
+`--objects`, `--seeds`, `--cartesian`) and load the models once for all of them.
+
+FLUX.2 placement (`--placement`, FLUX.2 only; measured on A100 64 GB, 28 steps, 1024²):
+
+| `--placement` | GPUs | Time per image | Peak memory |
+|---|---|---|---|
+| `offload` (default) | 1 | ~5.5 min (CPU↔GPU transfers of the 61 GB transformer; SAM3 runs on the CPU) | 61 GB |
+| `balanced` | 3+ | ~1 min (transformer split over the other GPUs; text encoder, VAE and SAM3 on `--device`) | 51 GB on `--device`, ~20 GB on the others |
+| `sequential` | 1 | ~30 min (layer-by-layer offload; only for GPUs under 64 GB) | low |
 
 ---
 
@@ -152,7 +199,9 @@ Color_Subspace/
 │   └── README.md
 ├── Flux/                            # FLUX.1-dev implementation & checkpoints
 │   ├── flux_core.py                 # Pipeline wrappers & packing/unpacking
-│   ├── inference.py                 # Numerical color generation inference
+│   ├── inference.py                 # Numerical color generation inference (one colour or several parts)
+│   ├── regions.py                   # Prompt colour names, per-part regions (several colours)
+│   ├── run_gencolorbench_pca.py     # GenColorBench generation (paper evaluation)
 │   ├── model_pca.py                 # ResMLP architecture & loader
 │   ├── utils.py                     # Colorimetry & SAM segmentation
 │   ├── iscc_nbs.py                  # Color name dictionary

@@ -57,4 +57,6 @@ venv/
 /results/
 PixArt/
 pixart/
+# SD3 with the envelope fix: not retrained yet
+SD3_v2/
 

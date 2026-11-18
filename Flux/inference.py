@@ -11,6 +11,12 @@ Applies the paper's downstream application method:
 
 Supports batch processing of multiple prompts, objects, and colors efficiently
 (models are loaded once and shared across all inferences).
+
+Prompt: kept verbatim; numeric colour codes are replaced by their nearest ISCC-NBS L2 name (as in the GenColorBench runner).
+Several colours on one object: --part part=color (repeatable); every part gets its own mask, measured colour and MLP
+shift, and the remaining object takes --target-color (see regions.py).
+  python inference.py --prompt "a photo of a chair with blue legs on a white background" --object chair \\
+      --target-color "#8B0000" --part legs=#1E90FF
 """
 
 from __future__ import annotations
@@ -46,6 +52,7 @@ from flux_core import (
     setup_flux,
 )
 import utils
+import regions
 from model_pca import load_mlp_pca
 
 MODEL_ID = "black-forest-labs/FLUX.1-dev"
@@ -500,34 +507,50 @@ def run_color_steering_inference(
     metrics: bool = False,
     models: Optional[Dict[str, Any]] = None,
     task_idx: Optional[int] = None,
+    parts: Optional[List[Tuple[str, str]]] = None,
 ) -> Dict[str, Any]:
     """
     Executes a single color-steered generation. If 'models' dictionary is provided,
     it reuses the preloaded pipeline, avoiding expensive model re-initializations.
+    parts: [(part word, color spec)] for several colours on the object (target_color_spec is then the colour of the
+    rest of the object, or None to leave it unsteered).
     """
     out_path = Path(out_dir)
     out_path.mkdir(parents=True, exist_ok=True)
+    parts = list(parts or [])
 
     # 1. Parse Target Color & Object using utils
     if target_color_spec is None:
-        color_in_prompt = utils.extract_color_spec_from_text(prompt)
-        target_color_spec = color_in_prompt or "#A52A2A"
+        if parts:
+            target_color_spec = regions.object_color_for_parts(prompt, parts)
+        else:
+            color_in_prompt = utils.extract_color_spec_from_text(prompt)
+            target_color_spec = color_in_prompt or "#A52A2A"
 
     if object_word is None or str(object_word).strip() == "":
         object_word = extract_base_object(prompt) or utils.extract_object_from_text(prompt)
 
-    target_lab = utils.parse_target_color(target_color_spec)
-    target_rgb = utils.lab_to_rgb_single_np(target_lab)
-    target_hex = f"#{target_rgb[0]:02X}{target_rgb[1]:02X}{target_rgb[2]:02X}"
-    nearest_name, _ = utils.nearest_color_name(target_lab)
+    if target_color_spec is not None:
+        target_lab = utils.parse_target_color(target_color_spec)
+        target_rgb = utils.lab_to_rgb_single_np(target_lab)
+        target_hex = f"#{target_rgb[0]:02X}{target_rgb[1]:02X}{target_rgb[2]:02X}"
+        nearest_name, _ = utils.nearest_color_name(target_lab)
+    else:
+        target_lab, target_rgb, target_hex, nearest_name = None, None, "none", None
 
-    clean_prompt = utils.clean_prompt_for_diffusion(prompt, nearest_name)
+    # Prompt as in the GenColorBench runner: verbatim, colour codes replaced by ISCC-NBS L2 names
+    clean_prompt = regions.prompt_with_color_names(prompt, None if parts else nearest_name)
 
     print("=" * 80)
     print("RUNNING FLUX.1 DOWNSTREAM OBJECT COLOR STEERING")
     print(f"Raw Prompt:       \"{prompt}\"")
     print(f"Target Object:    \"{object_word}\"")
-    print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest ISCC-NBS L2: '{nearest_name}')")
+    if target_lab is not None:
+        print(f"Target Color:     {target_hex} (RGB: {target_rgb}) -> CIELAB: L*={target_lab[0]:.1f}, a*={target_lab[1]:.1f}, b*={target_lab[2]:.1f} (nearest ISCC-NBS L2: '{nearest_name}')")
+    else:
+        print("Target Color:     none (only the parts are steered)")
+    for p_word, p_spec in parts:
+        print(f"Part:             \"{p_word}\" -> {p_spec} (nearest ISCC-NBS L2: '{regions.color_name(p_spec)}')")
     print(f"Semantic Prompt:  \"{clean_prompt}\"")
     print(f"Seed: {seed} | Steps: {steps} | Guidance: {guidance} | Res: {resolution}x{resolution} | Device: {device}")
     print("=" * 80)
@@ -548,7 +571,7 @@ def run_color_steering_inference(
 
     print(f"\nGenerating color-steered image with target {target_hex}...")
     state = {
-        "locked": False, "mask_latent": None, "mask_pixel": None,
+        "locked": False, "mask_latent": None, "mask_pixel": None, "regions": [],
         "init_lab": None, "m_pred": None, "img_x0": None, "failed": False, "reason": None
     }
     captured = {}
@@ -579,45 +602,59 @@ def run_color_steering_inference(
             img_x0 = decode_latents_4d(vae, unpack_to_4d(pipe_, pred_x0, resolution, resolution))
             state["img_x0"] = img_x0
 
-            mask_pixel = utils.get_object_mask(Image.fromarray(img_x0), object_word, seg_models)
-
             max_gate_step = int(steps * max(sched_cfg.get("gate_frac", DEFAULT_GATE_FRAC) * 0.65, 0.40))
-            if mask_pixel is None or mask_pixel.sum() < 50:
-                if step_index < max_gate_step:
+            if parts:
+                regs = regions.gate_regions(img_x0, object_word, target_lab, parts, seg_models)
+                if regs is None:
+                    if step_index < max_gate_step:
+                        return callback_kwargs
+                    state["locked"] = True
+                    state["failed"] = True
+                    state["reason"] = f"Parts {[p for p, _ in parts]} of '{object_word}' not found at the gate"
+                    print(f"  [Warning] {state['reason']}; the image is generated without steering.")
                     return callback_kwargs
-                print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count after retries. Using spatial center prior fallback.")
-                h_img, w_img = img_x0.shape[:2]
-                yy, xx = np.ogrid[:h_img, :w_img]
-                mask_pixel = ((xx - w_img / 2) ** 2 + (yy - h_img / 2) ** 2) <= (min(h_img, w_img) * 0.35) ** 2
+            else:
+                mask_pixel = utils.get_object_mask(Image.fromarray(img_x0), object_word, seg_models)
+                if mask_pixel is None or mask_pixel.sum() < 50:
+                    if step_index < max_gate_step:
+                        return callback_kwargs
+                    print(f"  [Warning] Mask detection for '{object_word}' yielded low pixel count after retries. Using spatial center prior fallback.")
+                    h_img, w_img = img_x0.shape[:2]
+                    yy, xx = np.ogrid[:h_img, :w_img]
+                    mask_pixel = ((xx - w_img / 2) ** 2 + (yy - h_img / 2) ** 2) <= (min(h_img, w_img) * 0.35) ** 2
+                regs = [{"name": object_word, "mask_pixel": mask_pixel, "target_lab": target_lab}]
 
             state["locked"] = True
 
-            init_lab = utils.measure_color_gt(img_x0, mask_pixel)
-            if init_lab is None:
-                state["failed"] = True
-                state["reason"] = "Initial color measurement failed"
-                return callback_kwargs
-
-            state["mask_pixel"] = mask_pixel
-            state["init_lab"] = init_lab
-            state["mask_latent"] = build_mask_latent(mask_pixel, latent_h, latent_w, device)
-
-            m_pred = mlp_shift.predict_m(init_lab, target_lab)
-            state["m_pred"] = m_pred
-            print(f"  [Gate Triggered @ Step {step_index}] Initial Lab: L*={init_lab[0]:.1f}, a*={init_lab[1]:.1f}, b*={init_lab[2]:.1f}")
-            print(f"  [MLP Predicted Shift]: m1={m_pred[0]:+.4f}, m2={m_pred[1]:+.4f}, m3={m_pred[2]:+.4f}")
+            # One measured colour and one MLP shift per region (one region without parts)
+            for r in regs:
+                init_lab = utils.measure_color_gt(img_x0, r["mask_pixel"])
+                if init_lab is None:
+                    state["failed"] = True
+                    state["reason"] = f"Initial color measurement failed ({r['name']})"
+                    return callback_kwargs
+                r["init_lab"] = init_lab
+                r["mask_latent"] = build_mask_latent(r["mask_pixel"], latent_h, latent_w, device)
+                r["m_pred"] = mlp_shift.predict_m(init_lab, r["target_lab"])
+                print(f"  [Gate Triggered @ Step {step_index}] '{r['name']}' Initial Lab: L*={init_lab[0]:.1f}, a*={init_lab[1]:.1f}, b*={init_lab[2]:.1f}")
+                print(f"  [MLP Predicted Shift]: m1={r['m_pred'][0]:+.4f}, m2={r['m_pred'][1]:+.4f}, m3={r['m_pred'][2]:+.4f}")
+            state["regions"] = regs
+            state["mask_pixel"] = regs[0]["mask_pixel"]
+            state["init_lab"] = regs[0]["init_lab"]
+            state["m_pred"] = regs[0]["m_pred"]
 
         if state["failed"] or w == 0.0 or state["m_pred"] is None:
             return callback_kwargs
 
+        # Sum of the per-region shifts, each restricted to its own mask
         unpacked = unpack_to_4d(pipe_, lat, resolution, resolution)
-        m = state["mask_latent"]
-        if m.shape[-2:] != unpacked.shape[-2:]:
-            m = F.interpolate(m, size=unpacked.shape[-2:], mode="nearest")
-
-        m1, m2, m3 = state["m_pred"]
-        shifted = shift_pca_4d(unpacked, m1 * w, m2 * w, m3 * w, u1, u2, u3, mask=m)
-        callback_kwargs["latents"] = pack_from_4d(pipe_, shifted, latent_h, latent_w)
+        for r in state["regions"]:
+            m = r["mask_latent"]
+            if m.shape[-2:] != unpacked.shape[-2:]:
+                m = F.interpolate(m, size=unpacked.shape[-2:], mode="nearest")
+            m1, m2, m3 = r["m_pred"]
+            unpacked = shift_pca_4d(unpacked, m1 * w, m2 * w, m3 * w, u1, u2, u3, mask=m)
+        callback_kwargs["latents"] = pack_from_4d(pipe_, unpacked, latent_h, latent_w)
         return callback_kwargs
 
     pipe.scheduler.step = patched_step
@@ -641,7 +678,8 @@ def run_color_steering_inference(
 
     hex_clean = target_hex.replace("#", "")
     safe_obj = re.sub(r"[^\w\-]", "_", str(object_word).strip().lower())
-    base_name = f"steered_{safe_obj}_{hex_clean}_seed_{seed}"
+    parts_tag = "".join("_" + re.sub(r"[^\w\-]", "_", f"{p}-{s}".lower().replace("#", "")) for p, s in parts)
+    base_name = f"steered_{safe_obj}_{hex_clean}{parts_tag}_seed_{seed}"
     steered_path = out_path / f"{base_name}.png"
     if steered_path.exists():
         suffix = f"_{task_idx:03d}" if task_idx is not None else "_1"
@@ -658,7 +696,23 @@ def run_color_steering_inference(
     achieved_lab = None
     delta_e = None
     color_metrics_res = None
-    if state["mask_pixel"] is not None or metrics:
+    region_results = []
+    if parts:
+        if state["regions"] and not state["failed"]:
+            region_results = regions.measure_regions(steered_np, object_word, parts, seg_models, state["regions"])
+            for r in region_results:
+                if r["achieved_lab"] is None:
+                    print(f"  '{r['name']}': achieved color not measurable")
+                    continue
+                print(f"  '{r['name']}': achieved L*={r['achieved_lab'][0]:.1f}, a*={r['achieved_lab'][1]:.1f}, b*={r['achieved_lab'][2]:.1f} | CIEDE2000 ΔE00: {r['delta_e00']:.2f}")
+                if metrics:
+                    mt = r["metrics"] = compute_color_metrics(r["target_lab"], r["achieved_lab"])
+                    print(f"      ΔE76 {mt['delta_e76']:.2f} | ΔC* {mt['delta_chroma']:+.2f} | Δh° {mt['delta_hue_deg']:+.2f} | ΔH* {mt['delta_H_ab']:+.2f}")
+            first = region_results[0] if region_results else {}
+            achieved_lab, delta_e, color_metrics_res = first.get("achieved_lab"), first.get("delta_e00"), first.get("metrics")
+        else:
+            print(f"\n  [Warning] Not steered: {state['reason']}")
+    elif state["mask_pixel"] is not None or metrics:
         final_mask = utils.get_object_mask(steered_img, object_word, seg_models)
         eval_mask = final_mask if (final_mask is not None and final_mask.sum() >= 50) else state["mask_pixel"]
         if eval_mask is not None:
@@ -668,7 +722,7 @@ def run_color_steering_inference(
                 print(f"  Achieved Color:  L*={achieved_lab[0]:.1f}, a*={achieved_lab[1]:.1f}, b*={achieved_lab[2]:.1f}")
                 print(f"  CIEDE2000 ΔE00:  {delta_e:.2f}")
 
-    if metrics:
+    if metrics and not parts:
         if achieved_lab is not None:
             color_metrics_res = compute_color_metrics(target_lab, achieved_lab)
             print("\n" + "=" * 65)
@@ -701,6 +755,8 @@ def run_color_steering_inference(
         "achieved_lab": achieved_lab,
         "delta_e00": delta_e,
         "metrics": color_metrics_res,
+        "regions": region_results,
+        "failed_reason": state["reason"] if state["failed"] else None,
     }
 
 
@@ -720,6 +776,7 @@ def run_batch_color_steering_inference(
     metrics: bool = False,
     cartesian: bool = False,
     models: Optional[Dict[str, Any]] = None,
+    parts: Optional[List[Tuple[str, str]]] = None,
 ) -> List[Dict[str, Any]]:
     """
     Executes a batch of color steering inferences.
@@ -769,6 +826,7 @@ def run_batch_color_steering_inference(
             metrics=metrics,
             models=models,
             task_idx=idx,
+            parts=parts,
         )
         results.append(res)
 
@@ -830,8 +888,16 @@ def main():
                         help="Print Delta E, Delta Chroma, and Delta Hue between output image and target color in terminal")
     parser.add_argument("--cartesian", "--grid", action="store_true",
                         help="Generate the full Cartesian product of prompts x objects x colors")
+    parser.add_argument("--part", action="append", default=[], metavar="PART=COLOR",
+                        help="Several colours: part word and its colour, repeatable (e.g. --part legs=#1E90FF). "
+                             "--target-color is then the colour of the rest of the object (default: the first colour "
+                             "code of the prompt that is not a part colour; none = only the parts are steered)")
 
     args = parser.parse_args()
+    try:
+        parts = regions.parse_parts(args.part)
+    except ValueError as e:
+        parser.error(str(e))
 
     # Determine prompts
     if args.list_prompts is not None:
@@ -870,6 +936,7 @@ def main():
         mlp_ckpt_path=args.mlp_ckpt_path,
         metrics=args.metrics,
         cartesian=args.cartesian,
+        parts=parts,
     )
 
 

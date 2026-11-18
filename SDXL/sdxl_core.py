@@ -144,6 +144,12 @@ def shift_pca_4d(latents_4d: torch.Tensor, u1: np.ndarray, u2: np.ndarray, u3: n
 # =========================== SDXL SETUP & LATENT MANAGEMENT ===========================
 def setup_sdxl(model_id: str = MODEL_ID, device: str = "cuda", dtype=DTYPE, num_latent_channels: int = NUM_LATENT_CHANNELS, use_cpu_offload: bool = False):
     print(f"Loading SDXL Pipeline ({model_id})...")
+    if os.environ.get("HF_HUB_OFFLINE") == "1" and not os.path.isdir(model_id):
+        # diffusers>=0.39 queries the Hub for variant files even offline; load from the cached snapshot instead.
+        from huggingface_hub import constants
+        repo_dir = os.path.join(constants.HF_HUB_CACHE, "models--" + model_id.replace("/", "--"))
+        with open(os.path.join(repo_dir, "refs", "main")) as f:
+            model_id = os.path.join(repo_dir, "snapshots", f.read().strip())
     pipe = StableDiffusionXLPipeline.from_pretrained(
         model_id,
         torch_dtype=dtype,
